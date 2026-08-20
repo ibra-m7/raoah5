@@ -104,32 +104,37 @@
 #     php artisan config:cache && \
 #     apache2-foreground
 
-
-# ===============================
-# 1. Build Frontend (Vite)
-# ===============================
+# =========================================================
+# 1. Frontend Build - Node + Vite
+# =========================================================
 FROM node:22-alpine AS frontend
 
 WORKDIR /app
 
+# Copy package files first for Docker cache
 COPY package*.json ./
+
+# Install frontend dependencies
 RUN npm ci
 
-COPY resources ./resources
-COPY vite.config.js ./
+# Copy the whole project
+COPY . .
 
+# Build Vite assets
 RUN npm run build
 
 
-# ===============================
-# 2. Install PHP Dependencies
-# ===============================
+# =========================================================
+# 2. PHP Dependencies - Composer
+# =========================================================
 FROM composer:2 AS dependencies
 
 WORKDIR /app
 
+# Copy Composer files first for Docker cache
 COPY composer.json composer.lock ./
 
+# Install Laravel dependencies
 RUN composer install \
     --no-dev \
     --no-interaction \
@@ -138,61 +143,71 @@ RUN composer install \
     --no-scripts
 
 
-# ===============================
-# 3. Final Laravel Image
-# ===============================
+# =========================================================
+# 3. Final Production Image - PHP + Apache
+# =========================================================
 FROM php:8.2-apache
 
 WORKDIR /var/www/html
 
 
-# ===============================
-# 4. System Dependencies
-# ===============================
+# =========================================================
+# 4. System Dependencies + PHP Extensions
+# =========================================================
 RUN apt-get update && apt-get install -y \
     git \
     unzip \
     libzip-dev \
     libpng-dev \
+    libjpeg-dev \
+    libfreetype6-dev \
     libonig-dev \
     libxml2-dev \
     libpq-dev \
+    && docker-php-ext-configure gd \
+        --with-freetype \
+        --with-jpeg \
     && docker-php-ext-install \
         pdo \
         pdo_pgsql \
+        mbstring \
+        exif \
+        pcntl \
+        bcmath \
+        gd \
         zip \
         opcache \
     && a2enmod rewrite headers \
     && rm -rf /var/lib/apt/lists/*
 
 
-# ===============================
+# =========================================================
 # 5. Composer
-# ===============================
+# =========================================================
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 
-# ===============================
-# 6. Laravel Dependencies
-# ===============================
+# =========================================================
+# 6. Copy Laravel Dependencies
+# =========================================================
 COPY --from=dependencies /app/vendor ./vendor
 
 
-# ===============================
-# 7. Laravel Application
-# ===============================
+# =========================================================
+# 7. Copy Laravel Application
+# =========================================================
 COPY . .
 
 
-# ===============================
-# 8. Vite Build
-# ===============================
+# =========================================================
+# 8. Copy Vite Production Build
+# =========================================================
 COPY --from=frontend /app/public/build ./public/build
 
 
-# ===============================
-# 9. Apache → Laravel public
-# ===============================
+# =========================================================
+# 9. Configure Apache
+# =========================================================
 ENV APACHE_DOCUMENT_ROOT=/var/www/html/public
 
 RUN sed -ri \
@@ -202,9 +217,9 @@ RUN sed -ri \
     /etc/apache2/conf-available/*.conf
 
 
-# ===============================
-# 10. Laravel Permissions
-# ===============================
+# =========================================================
+# 10. Laravel Storage + Cache Permissions
+# =========================================================
 RUN mkdir -p \
     storage/framework/cache \
     storage/framework/sessions \
@@ -217,28 +232,37 @@ RUN mkdir -p \
         public
 
 
-# ===============================
+# =========================================================
 # 11. PHP OPcache
-# ===============================
+# =========================================================
 RUN { \
-    echo 'opcache.enable=1'; \
-    echo 'opcache.enable_cli=1'; \
-    echo 'opcache.memory_consumption=128'; \
-    echo 'opcache.interned_strings_buffer=8'; \
-    echo 'opcache.max_accelerated_files=10000'; \
-    echo 'opcache.validate_timestamps=0'; \
+    echo "opcache.enable=1"; \
+    echo "opcache.enable_cli=1"; \
+    echo "opcache.memory_consumption=128"; \
+    echo "opcache.interned_strings_buffer=8"; \
+    echo "opcache.max_accelerated_files=20000"; \
+    echo "opcache.validate_timestamps=0"; \
 } > /usr/local/etc/php/conf.d/opcache.ini
 
 
-# ===============================
-# 12. Port
-# ===============================
+# =========================================================
+# 12. Laravel Production Environment
+# =========================================================
+ENV APP_ENV=production
+ENV APP_DEBUG=false
+
+
+# =========================================================
+# 13. Render Port
+# =========================================================
 EXPOSE 80
 
 
-# ===============================
-# 13. Start Laravel
-# ===============================
+# =========================================================
+# 14. Start Laravel + Apache
+# =========================================================
 CMD php artisan config:clear && \
     php artisan config:cache && \
+    php artisan route:cache && \
+    php artisan view:cache && \
     apache2-foreground
