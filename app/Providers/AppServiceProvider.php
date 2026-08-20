@@ -13,6 +13,7 @@ use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Facades\URL; // أضف هذا السطر
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -23,6 +24,12 @@ class AppServiceProvider extends ServiceProvider
         });
     }
 
+    public function boot(): void
+    {
+        if (env('APP_ENV') !== 'local') {
+            URL::forceScheme('https');
+        }
+    }
     public function boot(): void
     {
         RateLimiter::for('otp', function (Request $request) {
