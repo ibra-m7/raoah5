@@ -613,10 +613,16 @@ class OrderService
 
     private function nextNumber(): string
     {
-        $last = (int) (Order::query()
-            ->whereRaw("order_number REGEXP '^[0-9]+$'")
-            ->selectRaw('MAX(CAST(order_number AS UNSIGNED)) as seq')
-            ->value('seq') ?? 0);
+        $last = Order::query()
+            ->pluck('order_number')
+            ->reduce(function (int $max, mixed $value): int {
+                $raw = trim((string) $value);
+                if ($raw !== '' && ctype_digit($raw)) {
+                    return max($max, (int) $raw);
+                }
+
+                return $max;
+            }, 0);
 
         return (string) ($last + 1);
     }
