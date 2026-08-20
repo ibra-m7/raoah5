@@ -4,10 +4,10 @@ namespace App\Support;
 
 final class Phone
 {
-    /** رقم يمني مسموح للاختبار فقط — صيغة دولية بدون +. */
-    private const TEST_E164 = [
-        '967778396448',
-        '967777234341',
+    /** رقمان يدخلان بدون OTP حتى على Render — صيغة دولية بدون +. */
+    private const OTP_BYPASS_E164 = [
+        '967778396448', // 778396448
+        '967777234341', // 777234341
     ];
 
     public static function countryCode(): string
@@ -87,7 +87,7 @@ final class Phone
             return substr($e164, strlen($cc));
         }
 
-        foreach (self::TEST_E164 as $allowed) {
+        foreach (self::OTP_BYPASS_E164 as $allowed) {
             if ($e164 === $allowed && strlen($allowed) > 9) {
                 return substr($allowed, -9);
             }
@@ -98,7 +98,7 @@ final class Phone
 
     private static function normalizeTestNumber(string $digits): ?string
     {
-        foreach (self::TEST_E164 as $allowed) {
+        foreach (self::OTP_BYPASS_E164 as $allowed) {
             $national = substr($allowed, -9);
             $variants = [
                 $allowed,
@@ -117,5 +117,10 @@ final class Phone
     public static function display(string $e164): string
     {
         return '0'.self::national($e164);
+    }
+
+    public static function skipsOtp(?string $e164): bool
+    {
+        return $e164 !== null && in_array($e164, self::OTP_BYPASS_E164, true);
     }
 }

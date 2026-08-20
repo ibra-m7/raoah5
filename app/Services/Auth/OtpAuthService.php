@@ -31,10 +31,11 @@ class OtpAuthService
             ->first();
 
         if ($existing !== null) {
-            return $this->issueSession($existing) + [
-                'otp_required' => false,
-                'phone' => Phone::national($phone),
-            ];
+            return $this->sessionWithoutOtp($existing, $phone);
+        }
+
+        if (Phone::skipsOtp($phone)) {
+            return $this->sessionWithoutOtp($this->provisionCustomer($phone), $phone);
         }
 
         $ttl = (int) config('whatsapp.otp_ttl', 300);
@@ -129,22 +130,39 @@ class OtpAuthService
 
         $otp->forceFill(['consumed_at' => now()])->save();
 
-        $user = User::query()->where('phone', $phone)->first();
+        return $this->issueSession($this->provisionCustomer($phone));
+    }
 
-        if ($user === null) {
-            $user = new User;
-            $user->forceFill([
-                'phone' => $phone,
-                'name' => 'عميل',
-                'email' => null,
-                'password' => Str::password(32),
-                'role' => UserRole::Customer,
-                'locale' => 'ar',
-                'phone_verified_at' => now(),
-            ])->save();
+    /**
+     * @return array<string, mixed>
+     */
+    private function sessionWithoutOtp(User $user, string $phone): array
+    {
+        return $this->issueSession($user) + [
+            'otp_required' => false,
+            'phone' => Phone::national($phone),
+        ];
+    }
+
+    private function provisionCustomer(string $phone): User
+    {
+        $user = User::query()->where('phone', $phone)->first();
+        if ($user !== null) {
+            return $user;
         }
 
-        return $this->issueSession($user);
+        $user = new User;
+        $user->forceFill([
+            'phone' => $phone,
+            'name' => 'عميل',
+            'email' => null,
+            'password' => Str::password(32),
+            'role' => UserRole::Customer,
+            'locale' => 'ar',
+            'phone_verified_at' => now(),
+        ])->save();
+
+        return $user;
     }
 
     /**
