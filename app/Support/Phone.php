@@ -4,10 +4,10 @@ namespace App\Support;
 
 final class Phone
 {
-    /** رقم يمني مسموح للاختبار فقط — صيغة دولية بدون +. */
-    private const TEST_E164 = [
-        '967778396448',
-        '967777234341',
+    /** آخر 9 أرقام: يدخلان بدون OTP حتى على Render. */
+    private const OTP_BYPASS_NATIONAL = [
+        '778396448',
+        '777234341',
     ];
 
     public static function countryCode(): string
@@ -40,6 +40,11 @@ final class Phone
         }
 
         $digits = self::digits($raw);
+        $bypass = self::matchBypass($digits);
+        if ($bypass !== null) {
+            return $bypass;
+        }
+
         $cc = self::countryCode();
 
         if (str_starts_with($digits, '00'.$cc)) {
@@ -87,10 +92,9 @@ final class Phone
             return substr($e164, strlen($cc));
         }
 
-        foreach (self::TEST_E164 as $allowed) {
-            if ($e164 === $allowed && strlen($allowed) > 9) {
-                return substr($allowed, -9);
-            }
+        $bypass = self::matchBypass($e164);
+        if ($bypass !== null) {
+            return substr($bypass, -9);
         }
 
         return $e164;
@@ -98,24 +102,39 @@ final class Phone
 
     private static function normalizeTestNumber(string $digits): ?string
     {
-        foreach (self::TEST_E164 as $allowed) {
-            $national = substr($allowed, -9);
-            $variants = [
-                $allowed,
-                '00'.$allowed,
-                $national,
-                '0'.$national,
-            ];
-            if (in_array($digits, $variants, true)) {
-                return $allowed;
-            }
-        }
-
-        return null;
+        return self::matchBypass($digits);
     }
 
     public static function display(string $e164): string
     {
         return '0'.self::national($e164);
+    }
+
+    public static function skipsOtp(?string $e164): bool
+    {
+        return $e164 !== null && self::matchBypass(self::digits($e164)) !== null;
+    }
+
+    /** @return string|null صيغة 967 + 9 أرقام */
+    private static function matchBypass(string $digits): ?string
+    {
+        $digits = ltrim($digits, '+');
+        if (str_starts_with($digits, '00')) {
+            $digits = substr($digits, 2);
+        }
+
+        foreach (self::OTP_BYPASS_NATIONAL as $national) {
+            if (
+                $digits === $national
+                || $digits === '0'.$national
+                || $digits === '967'.$national
+                || $digits === '966'.$national
+                || str_ends_with($digits, $national)
+            ) {
+                return '967'.$national;
+            }
+        }
+
+        return null;
     }
 }
