@@ -2,7 +2,6 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -13,8 +12,6 @@ return new class extends Migration
             $table->timestamp('phone_verified_at')->nullable()->after('phone');
             $table->unique('phone');
         });
-
-        DB::statement('ALTER TABLE users MODIFY email VARCHAR(255) NULL');
 
         Schema::create('phone_otps', function (Blueprint $table) {
             $table->id();
@@ -36,7 +33,5 @@ return new class extends Migration
             $table->dropUnique(['phone']);
             $table->dropColumn('phone_verified_at');
         });
-
-        DB::statement('ALTER TABLE users MODIFY email VARCHAR(255) NOT NULL');
     }
 };
