@@ -13,7 +13,7 @@ use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
-use Illuminate\Support\Facades\URL; // أضف هذا السطر
+use Illuminate\Support\Facades\URL;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -26,12 +26,11 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        // إجبار استخدام HTTPS في بيئة الإنتاج
         if (env('APP_ENV') !== 'local') {
             URL::forceScheme('https');
         }
-    }
-    public function boot(): void
-    {
+
         RateLimiter::for('otp', function (Request $request) {
             return Limit::perMinutes(10, 5)->by(
                 $request->ip().'|'.$request->input('phone', '')
