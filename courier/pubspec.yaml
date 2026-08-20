@@ -1,0 +1,35 @@
+name: courier
+description: "تطبيق روعة الخمسة للموصلين"
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.11.4
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+  http: ^1.0.0
+  flutter_dotenv: ^5.2.1
+  google_fonts: ^8.1.0
+  shared_preferences: ^2.5.5
+  url_launcher: ^6.3.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - .env
+    - assets/images/
+  fonts:
+    - family: SaudiRiyal
+      fonts:
+        - asset: assets/fonts/saudi_riyal.ttf
+          weight: 400

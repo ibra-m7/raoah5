@@ -1,0 +1,28 @@
+:root {
+    --color-primary: #88d498;
+    --color-primary-dark: #5faf72;
+    --color-primary-light: #c8ecd3;
+    --color-primary-surface: #e8f8ec;
+    --color-background: #f0faf3;
+    --color-surface: #ffffff;
+    --color-sidebar: #1b3a2d;
+    --color-sidebar-hover: #244a3a;
+    --color-dark-text: #1b3a2d;
+    --color-body-text: #2d4a38;
+    --color-muted-text: #6b8a76;
+    --color-price: #e53935;
+    --color-danger: #e53935;
+    --radius-sm: 12px;
+    --radius-md: 16px;
+    --radius-lg: 20px;
+    --radius-xl: 24px;
+    --radius-pill: 50px;
+    --font-family: "SaudiRiyal", "Cairo", sans-serif;
+    --bs-primary: #88d498;
+    --bs-primary-rgb: 136, 212, 152;
+    --bs-success: #5faf72;
+    --bs-body-bg: #f0faf3;
+    --bs-body-color: #2d4a38;
+    --bs-border-radius: 1rem;
+    --bs-font-sans-serif: "SaudiRiyal", "Cairo", sans-serif;
+}

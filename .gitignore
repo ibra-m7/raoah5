@@ -1,0 +1,34 @@
+.DS_Store
+.env
+.env.*
+!.env.example
+!.env.production.example
+
+# PHP/Laravel
+backend/vendor/
+backend/node_modules/
+backend/public/build/
+backend/public/hot
+backend/public/storage
+backend/storage/*.key
+backend/storage/app/firebase-service-account.json
+backend/storage/framework/cache/data/*
+backend/storage/framework/sessions/*
+backend/storage/framework/testing/*
+backend/storage/framework/views/*
+backend/storage/logs/*
+
+# Flutter
+**/.dart_tool/
+**/build/
+**/.flutter-plugins
+**/.flutter-plugins-dependencies
+**/.packages
+**/android/.gradle/
+**/android/local.properties
+**/ios/Pods/
+
+# IDE and test output
+**/.idea/
+**/.vscode/
+backend/.phpunit.result.cache
