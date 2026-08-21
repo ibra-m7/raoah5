@@ -59,6 +59,31 @@ class CategoryService
         return $flat;
     }
 
+    /**
+     * @return array{roots: Collection, categories: Collection, subs: Collection}
+     */
+    public function groupedByLevel(): array
+    {
+        $flat = $this->indentedOptions();
+
+        return [
+            'roots' => $flat->where('depth', 0)->values(),
+            'categories' => $flat->where('depth', 1)->values(),
+            'subs' => $flat->filter(fn ($category) => (int) $category->depth >= 2)->values(),
+        ];
+    }
+
+    public function tabFor(?int $parentId): string
+    {
+        $depth = $this->depthFor($parentId);
+
+        return match (true) {
+            $depth <= 0 => 'roots',
+            $depth === 1 => 'categories',
+            default => 'subs',
+        };
+    }
+
     public function displaySectionOptions(): Collection
     {
         return DisplaySection::query()
@@ -245,7 +270,7 @@ class CategoryService
             ->unique()
             ->values()
             ->all();
-        unset($data['display_section_ids']);
+        unset($data['display_section_ids'], $data['level']);
 
         return $ids;
     }
