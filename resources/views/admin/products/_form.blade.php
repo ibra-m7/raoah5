@@ -20,9 +20,9 @@
 </div>
 
 <div class="mb-3">
-    <label class="form-label">القسم</label>
+    <label class="form-label">التصنيف</label>
     <select name="category_id" class="form-select @error('category_id') is-invalid @enderror" required>
-        <option value="">اختر القسم</option>
+        <option value="">اختر التصنيف</option>
         @foreach ($categories as $category)
             <option value="{{ $category->id }}" @selected(old('category_id', $product->category_id) == $category->id)>
                 {{ $category->path_label ?? $category->name }}

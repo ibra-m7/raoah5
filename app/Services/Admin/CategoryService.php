@@ -16,6 +16,12 @@ use Illuminate\Validation\ValidationException;
 
 class CategoryService
 {
+    public const TAB_MAINS = 'mains';
+
+    public const TAB_BRANCHES = 'branches';
+
+    public const TAB_CLASSES = 'classes';
+
     public function paginate(array $filters = []): LengthAwarePaginator
     {
         return Category::query()
@@ -60,17 +66,77 @@ class CategoryService
     }
 
     /**
-     * @return array{roots: Collection, categories: Collection, subs: Collection}
+     * @return array{mains: Collection, branches: Collection, classes: Collection}
      */
     public function groupedByLevel(): array
     {
         $flat = $this->indentedOptions();
 
         return [
-            'roots' => $flat->where('depth', 0)->values(),
-            'categories' => $flat->where('depth', 1)->values(),
-            'subs' => $flat->filter(fn ($category) => (int) $category->depth >= 2)->values(),
+            self::TAB_MAINS => $flat->where('depth', 0)->values(),
+            self::TAB_BRANCHES => $flat->where('depth', 1)->values(),
+            self::TAB_CLASSES => $flat->filter(fn ($category) => (int) $category->depth >= 2)->values(),
         ];
+    }
+
+    public function itemsForTab(string $tab, ?Category $scope): Collection
+    {
+        $groups = $this->groupedByLevel();
+
+        return match ($tab) {
+            self::TAB_BRANCHES => $this->filterByScope($groups[self::TAB_BRANCHES], $scope),
+            self::TAB_CLASSES => $this->filterByScope($groups[self::TAB_CLASSES], $scope),
+            default => $groups[self::TAB_MAINS],
+        };
+    }
+
+    public function scopedItems(Collection $items, ?Category $scope): Collection
+    {
+        return $this->filterByScope($items, $scope);
+    }
+
+    public function filterOptions(string $tab): Collection
+    {
+        $flat = $this->indentedOptions();
+
+        return match ($tab) {
+            self::TAB_BRANCHES => $flat->where('depth', 0)->values(),
+            self::TAB_CLASSES => $flat->where('depth', 1)->values(),
+            default => collect(),
+        };
+    }
+
+    public function ancestorChain(?Category $scope): Collection
+    {
+        $chain = collect();
+        $current = $scope;
+        $guard = 0;
+        while ($current && $guard++ < 12) {
+            $chain->prepend($current);
+            $current = $current->parent_id
+                ? Category::query()->find($current->parent_id)
+                : null;
+        }
+
+        return $chain;
+    }
+
+    public function productCategoryOptions(?int $currentId = null): Collection
+    {
+        return $this->indentedOptions()
+            ->filter(function ($category) use ($currentId) {
+                if ($currentId && (int) $category->id === $currentId) {
+                    return true;
+                }
+
+                $depth = (int) $category->depth;
+                if ($depth >= 2) {
+                    return true;
+                }
+
+                return $depth === 1 && (int) $category->children_count === 0;
+            })
+            ->values();
     }
 
     public function tabFor(?int $parentId): string
@@ -78,10 +144,15 @@ class CategoryService
         $depth = $this->depthFor($parentId);
 
         return match (true) {
-            $depth <= 0 => 'roots',
-            $depth === 1 => 'categories',
-            default => 'subs',
+            $depth <= 0 => self::TAB_MAINS,
+            $depth === 1 => self::TAB_BRANCHES,
+            default => self::TAB_CLASSES,
         };
+    }
+
+    public function depthOf(Category $category): int
+    {
+        return $this->depthFor($category->parent_id);
     }
 
     public function displaySectionOptions(): Collection
@@ -96,17 +167,8 @@ class CategoryService
     {
         return match (true) {
             $depth <= 0 => 'قسم رئيسي',
-            $depth === 1 => 'تصنيف',
-            default => 'تصنيف فرعي',
-        };
-    }
-
-    public static function levelHint(int $depth): string
-    {
-        return match (true) {
-            $depth <= 0 => 'يظهر كدائرة في الصفحة الرئيسية للتطبيق.',
-            $depth === 1 => 'يظهر كبطاقة داخل تبويب الأقسام.',
-            default => 'يظهر كشريحة عند فتح التصنيف، لتصفية المنتجات.',
+            $depth === 1 => 'قسم فرعي',
+            default => 'تصنيف',
         };
     }
 
@@ -125,7 +187,7 @@ class CategoryService
 
     public function create(array $data): Category
     {
-        $sectionIds = $this->pullSectionIds($data);
+        $this->pullSectionIds($data);
         $data['slug'] = Slug::unique($data['name'], 'categories');
         $data['sort_order'] = (int) ($data['sort_order'] ?? 0);
         $data['is_active'] = (bool) ($data['is_active'] ?? true);
@@ -135,7 +197,7 @@ class CategoryService
         unset($data['icon'], $data['image']);
 
         $category = Category::query()->create($data);
-        $this->syncDisplaySections($category, $sectionIds);
+        $this->syncRootDisplaySection($category);
 
         return $category;
     }
@@ -149,7 +211,7 @@ class CategoryService
             ]);
         }
 
-        $sectionIds = $this->pullSectionIds($data);
+        $this->pullSectionIds($data);
         $data['slug'] = Slug::unique($data['name'], 'categories', 'slug', $category->id);
         $data['sort_order'] = (int) ($data['sort_order'] ?? 0);
         $data['is_active'] = (bool) ($data['is_active'] ?? false);
@@ -159,7 +221,7 @@ class CategoryService
         unset($data['icon'], $data['image']);
 
         $category->update($data);
-        $this->syncDisplaySections($category->fresh(), $sectionIds);
+        $this->syncRootDisplaySection($category->fresh());
 
         return $category;
     }
@@ -185,6 +247,7 @@ class CategoryService
             $parentId = $category->parent_id;
             $childIds = $category->children()->pluck('id');
             $hasProducts = $category->products()->exists();
+            $root = $this->rootOf($category);
 
             $category->children()->update(['parent_id' => $parentId]);
 
@@ -218,6 +281,10 @@ class CategoryService
             Media::delete($category->image_url);
             $category->displaySections()->detach();
             $category->delete();
+
+            if ($root && (int) $root->id !== (int) $category->id) {
+                $this->syncRootDisplaySection($root->fresh());
+            }
 
             return $destinationName;
         });
@@ -275,26 +342,57 @@ class CategoryService
         return $ids;
     }
 
-    /**
-     * @param  list<int>  $sectionIds
-     */
-    private function syncDisplaySections(Category $category, array $sectionIds): void
+    private function filterByScope(Collection $items, ?Category $scope): Collection
     {
-        if ($category->parent_id === null) {
-            $category->displaySections()->sync([]);
+        if (! $scope) {
+            return $items;
+        }
 
+        return $items
+            ->filter(fn ($item) => $this->isDescendantOf((int) $item->id, (int) $scope->id))
+            ->values();
+    }
+
+    private function syncRootDisplaySection(?Category $category): void
+    {
+        $root = $this->rootOf($category);
+        if (! $root) {
             return;
         }
 
+        $section = DisplaySection::query()->updateOrCreate(
+            ['slug' => $root->slug],
+            [
+                'name' => $root->name,
+                'sort_order' => $root->sort_order,
+                'is_active' => $root->is_active,
+            ],
+        );
+
         $sync = [];
-        foreach (array_values($sectionIds) as $index => $id) {
+        foreach (Category::query()->where('parent_id', $root->id)->orderBy('sort_order')->orderBy('name')->pluck('id') as $index => $id) {
             $sync[$id] = ['sort_order' => $index];
         }
-        $category->displaySections()->sync($sync);
+        $section->categories()->sync($sync);
     }
 
-    private function isDescendantOf(int $maybeChildId, int $ancestorId): bool
+    private function rootOf(?Category $category): ?Category
     {
+        $current = $category;
+        $guard = 0;
+        while ($current && $current->parent_id && $guard++ < 12) {
+            $current = $current->parent ?: Category::query()->find($current->parent_id);
+        }
+
+        return $current;
+    }
+
+    public function isDescendantOf(int $maybeChildId, int $ancestorId): bool
+    {
+        if ($maybeChildId === $ancestorId) {
+            return true;
+        }
+
         $current = Category::query()->whereKey($maybeChildId)->value('parent_id');
         $guard = 0;
         while ($current && $guard++ < 20) {

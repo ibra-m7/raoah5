@@ -37,7 +37,7 @@ class ProductController extends Controller
     {
         return view('admin.products.create', [
             'title' => AppStrings::ADD_PRODUCT,
-            'categories' => $this->products->categoryOptions(),
+            'categories' => $this->products->productFormCategoryOptions(),
             'product' => new Product(['is_active' => true, 'stock' => 0, 'sort_order' => 0]),
         ]);
     }
@@ -102,7 +102,7 @@ class ProductController extends Controller
 
         return view('admin.products.edit', [
             'title' => AppStrings::EDIT_PRODUCT,
-            'categories' => $this->products->categoryOptions(),
+            'categories' => $this->products->productFormCategoryOptions($product->category_id),
             'product' => $product,
         ]);
     }

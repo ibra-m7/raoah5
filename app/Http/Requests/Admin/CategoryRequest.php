@@ -28,22 +28,31 @@ class CategoryRequest extends FormRequest
             'color' => ['nullable', 'regex:/^#[0-9A-Fa-f]{6}$/'],
             'sort_order' => ['nullable', 'integer', 'min:0', 'max:9999'],
             'is_active' => ['nullable', 'boolean'],
-            'display_section_ids' => ['nullable', 'array'],
-            'display_section_ids.*' => ['integer', 'exists:display_sections,id'],
         ];
     }
 
     public function attributes(): array
     {
+        $parent = match ($this->input('level')) {
+            'sub' => 'القسم الفرعي',
+            'category' => 'القسم الرئيسي',
+            default => 'القسم الأب',
+        };
+
+        $name = match ($this->input('level')) {
+            'sub' => 'اسم التصنيف',
+            'category' => 'اسم القسم الفرعي',
+            default => 'اسم القسم الرئيسي',
+        };
+
         return [
-            'name' => 'اسم القسم',
-            'parent_id' => 'القسم الأب',
+            'name' => $name,
+            'parent_id' => $parent,
             'icon' => 'الأيقونة',
             'image' => 'الصورة',
             'color' => 'اللون',
             'sort_order' => 'الترتيب',
             'is_active' => 'الحالة',
-            'display_section_ids' => 'مجموعة تبويب الأقسام',
         ];
     }
 
