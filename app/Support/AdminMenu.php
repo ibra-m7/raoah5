@@ -31,7 +31,6 @@ final class AdminMenu
                     ['label' => AppStrings::NAV_COUPONS, 'route' => 'admin.coupons.index', 'icon' => 'bi-ticket-perforated'],
                     ['label' => AppStrings::NAV_BANNERS, 'route' => 'admin.banners.index', 'icon' => 'bi-image'],
                     ['label' => AppStrings::NAV_HOME_SECTIONS, 'route' => 'admin.home-sections.index', 'icon' => 'bi-house'],
-                    ['label' => AppStrings::NAV_DISPLAY_SECTIONS, 'route' => 'admin.display-sections.index', 'icon' => 'bi-ui-checks-grid'],
                 ],
             ],
             [

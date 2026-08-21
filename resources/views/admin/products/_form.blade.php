@@ -25,7 +25,7 @@
         <option value="">اختر القسم</option>
         @foreach ($categories as $category)
             <option value="{{ $category->id }}" @selected(old('category_id', $product->category_id) == $category->id)>
-                {{ $category->name }}
+                {{ $category->path_label ?? $category->name }}
             </option>
         @endforeach
     </select>

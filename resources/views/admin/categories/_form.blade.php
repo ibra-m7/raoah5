@@ -1,7 +1,17 @@
 @php
     $category = $category ?? new \App\Models\Category(['is_active' => true, 'sort_order' => 0, 'color' => \App\Support\Theme::PRIMARY]);
     $color = old('color', $category->color ?: \App\Support\Theme::PRIMARY);
+    $depth = (int) ($depth ?? 0);
+    $selectedSections = old('display_section_ids', $selectedSectionIds ?? []);
+    $displaySections = $displaySections ?? collect();
+    $level = \App\Services\Admin\CategoryService::levelLabel($depth);
+    $hint = \App\Services\Admin\CategoryService::levelHint($depth);
 @endphp
+
+<div class="page-card p-3 mb-4">
+    <strong>{{ $level }}</strong>
+    <p class="text-muted mb-0 mt-1">{{ $hint }}</p>
+</div>
 
 <div class="mb-3">
     <label class="form-label">اسم القسم</label>
@@ -10,30 +20,51 @@
 </div>
 
 <div class="mb-3">
-    <label class="form-label">{{ $strings::PARENT_CATEGORY }}</label>
+    <label class="form-label">يقع تحت</label>
     <select name="parent_id" class="form-select @error('parent_id') is-invalid @enderror">
-        <option value="">{{ $strings::ROOT_CATEGORY }}</option>
+        <option value="">قسم رئيسي (بدون أب) — دائرة في الرئيسية</option>
         @foreach ($parents as $parent)
             <option value="{{ $parent->id }}" @selected(old('parent_id', $category->parent_id) == $parent->id)>
-                {{ $parent->name }}
+                {{ $parent->path_label ?? $parent->name }}
             </option>
         @endforeach
     </select>
     @error('parent_id') <div class="invalid-feedback">{{ $message }}</div> @enderror
-    <div class="form-hint">اتركه فارغاً ليظهر كقسم رئيسي في دوائر الرئيسية داخل التطبيق.</div>
+    <div class="form-hint">اتركه «قسم رئيسي» للدائرة في الرئيسية. اختر قسماً رئيسياً لعمل تصنيف (بطاقة). اختر تصنيفاً لعمل تصنيف فرعي (شريحة).</div>
 </div>
+
+@if ($displaySections->isNotEmpty())
+    <div class="mb-3">
+        <label class="form-label">مجموعة تبويب الأقسام</label>
+        <div class="picker-grid">
+            @foreach ($displaySections as $section)
+                <label class="picker-item">
+                    <input type="checkbox" name="display_section_ids[]" value="{{ $section->id }}" @checked(in_array($section->id, $selectedSections, false) || in_array((string) $section->id, $selectedSections, true))>
+                    <span>
+                        <strong>{{ $section->emoji }} {{ $section->name }}</strong>
+                        <small class="d-block text-muted">{{ $section->is_active ? 'ظاهرة في التطبيق' : 'مخفية' }}</small>
+                    </span>
+                </label>
+            @endforeach
+        </div>
+        @error('display_section_ids') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
+        <div class="form-hint">للتصنيف (البطاقة) فقط. حدّد أين تظهر في تبويب الأقسام مثل المقاضي أو المشروبات. الأقسام الرئيسية تُتجاهل هنا.</div>
+    </div>
+@endif
 
 <div class="row">
     <div class="col-md-6 mb-3">
         <label class="form-label">{{ $strings::ICON }}</label>
         <input type="file" name="icon" accept="image/*" class="form-control @error('icon') is-invalid @enderror" data-image-preview="#icon-preview">
         @error('icon') <div class="invalid-feedback">{{ $message }}</div> @enderror
+        <div class="form-hint">للدائرة في الرئيسية.</div>
         <img id="icon-preview" src="{{ $category->icon_src }}" alt="" class="upload-preview mt-2" @if(! $category->icon_src) hidden @endif>
     </div>
     <div class="col-md-6 mb-3">
         <label class="form-label">{{ $strings::IMAGE }}</label>
         <input type="file" name="image" accept="image/*" class="form-control @error('image') is-invalid @enderror" data-image-preview="#image-preview">
         @error('image') <div class="invalid-feedback">{{ $message }}</div> @enderror
+        <div class="form-hint">لبطاقة تبويب الأقسام.</div>
         <img id="image-preview" src="{{ $category->image_src }}" alt="" class="upload-preview mt-2" @if(! $category->image_src) hidden @endif>
     </div>
 </div>
@@ -51,6 +82,7 @@
         <label class="form-label">{{ $strings::SORT_ORDER }}</label>
         <input type="number" min="0" name="sort_order" value="{{ old('sort_order', $category->sort_order ?? 0) }}" class="form-control @error('sort_order') is-invalid @enderror">
         @error('sort_order') <div class="invalid-feedback">{{ $message }}</div> @enderror
+        <div class="form-hint">الأصغر يظهر أولاً بين الإخوة.</div>
     </div>
     <div class="col-md-4 mb-3 d-flex align-items-end">
         <div class="form-check mb-2">

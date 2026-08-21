@@ -2,7 +2,6 @@
 
 namespace App\Services\Admin;
 
-use App\Models\Category;
 use App\Models\Product;
 use App\Support\Constants;
 use App\Support\Media;
@@ -29,10 +28,7 @@ class ProductService
 
     public function categoryOptions(): Collection
     {
-        return Category::query()
-            ->orderBy('sort_order')
-            ->orderBy('name')
-            ->get(['id', 'name', 'parent_id']);
+        return app(CategoryService::class)->indentedOptions();
     }
 
     public function create(array $data): Product
