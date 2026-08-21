@@ -15,11 +15,33 @@ class CategoryController extends Controller
 {
     public function __construct(private readonly CategoryService $categories) {}
 
-    public function index(): View
+    public function index(Request $request): View|RedirectResponse
     {
+        $parent = $this->parentFromRequest($request);
+        if ($parent && $this->categories->depthOf($parent) >= 2) {
+            return redirect()->route('admin.categories.index', array_filter([
+                'parent' => $parent->parent_id,
+            ]));
+        }
+
+        $depth = $parent ? $this->categories->depthOf($parent) + 1 : 0;
+        $items = Category::query()
+            ->withCount(['products', 'children'])
+            ->when($parent, fn ($query) => $query->where('parent_id', $parent->id), fn ($query) => $query->whereNull('parent_id'))
+            ->orderBy('sort_order')
+            ->orderBy('name')
+            ->get();
+
         return view('admin.categories.index', [
-            'title' => AppStrings::NAV_CATEGORIES,
-            'tree' => $this->categories->tree(),
+            'title' => $parent?->name ?? 'التبويبات',
+            'parent' => $parent,
+            'ancestors' => $this->categories->ancestorChain($parent),
+            'depth' => $depth,
+            'items' => $items,
+            'createUrl' => route('admin.categories.create', array_filter([
+                'parent_id' => $parent?->id,
+            ])),
+            'createLabel' => $this->addLabel($depth),
         ]);
     }
 
@@ -35,7 +57,7 @@ class CategoryController extends Controller
         $depth = $parent ? $this->categories->depthOf($parent) + 1 : 0;
         if ($depth > 2) {
             return redirect()
-                ->route('admin.categories.index')
+                ->route('admin.categories.index', array_filter(['parent' => $parent?->id]))
                 ->with('error', 'لا يمكن إضافة مستوى تحت التصنيف.');
         }
 
@@ -45,11 +67,11 @@ class CategoryController extends Controller
         if ($level !== 'root' && $parents->isEmpty()) {
             return redirect()
                 ->route('admin.categories.index')
-                ->with('error', $level === 'sub' ? 'أضف قسماً فرعياً أولاً.' : 'أضف قسماً رئيسياً أولاً.');
+                ->with('error', $level === 'sub' ? 'أضف قسماً أولاً.' : 'أضف تبويباً أولاً.');
         }
 
         return view('admin.categories.create', [
-            'title' => $this->titleForLevel($level),
+            'title' => $this->addLabel($depth),
             'level' => $level,
             'parents' => $parents,
             'category' => new Category([
@@ -57,6 +79,7 @@ class CategoryController extends Controller
                 'sort_order' => 0,
                 'parent_id' => $parent?->id,
             ]),
+            'cancelUrl' => $this->listUrl($parent?->id),
         ]);
     }
 
@@ -65,40 +88,60 @@ class CategoryController extends Controller
         $this->categories->create($request->validated());
 
         return redirect()
-            ->route('admin.categories.index')
+            ->to($this->listUrl($request->validated('parent_id')))
             ->with('success', AppStrings::CATEGORY_CREATED);
     }
 
     public function edit(Category $category): View
     {
-        $level = $this->levelForDepth($this->categories->depthOf($category));
+        $depth = $this->categories->depthOf($category);
+        $level = $this->levelForDepth($depth);
 
         return view('admin.categories.edit', [
-            'title' => $this->editTitleForLevel($level),
+            'title' => $this->editLabel($depth),
             'level' => $level,
             'parents' => $this->parentsForLevel($level, $category->id),
             'category' => $category,
+            'cancelUrl' => $this->listUrl($category->parent_id),
         ]);
     }
 
     public function update(CategoryRequest $request, Category $category): RedirectResponse
     {
         $this->categories->update($category, $request->validated());
+        $parentId = $request->validated('parent_id');
 
         return redirect()
-            ->route('admin.categories.index')
+            ->to($this->listUrl($parentId))
             ->with('success', AppStrings::CATEGORY_UPDATED);
     }
 
     public function destroy(Category $category): RedirectResponse
     {
+        $parentId = $category->parent_id;
         $movedTo = $this->categories->delete($category);
 
         return redirect()
-            ->route('admin.categories.index')
+            ->to($this->listUrl($parentId))
             ->with('success', $movedTo
                 ? sprintf(AppStrings::CATEGORY_DELETED_MOVED, $movedTo)
                 : AppStrings::CATEGORY_DELETED);
+    }
+
+    private function parentFromRequest(Request $request): ?Category
+    {
+        if (! $request->filled('parent')) {
+            return null;
+        }
+
+        return Category::query()->with('parent')->find($request->integer('parent'));
+    }
+
+    private function listUrl(int|string|null $parentId): string
+    {
+        return route('admin.categories.index', array_filter([
+            'parent' => $parentId ?: null,
+        ]));
     }
 
     private function levelForDepth(int $depth): string
@@ -110,21 +153,21 @@ class CategoryController extends Controller
         };
     }
 
-    private function titleForLevel(string $level): string
+    private function addLabel(int $depth): string
     {
-        return match ($level) {
-            'category' => 'إضافة قسم فرعي',
-            'sub' => 'إضافة تصنيف',
-            default => 'إضافة قسم رئيسي',
+        return match ($depth) {
+            1 => 'إضافة قسم',
+            2 => 'إضافة تصنيف',
+            default => 'إضافة تبويب',
         };
     }
 
-    private function editTitleForLevel(string $level): string
+    private function editLabel(int $depth): string
     {
-        return match ($level) {
-            'category' => 'تعديل القسم الفرعي',
-            'sub' => 'تعديل التصنيف',
-            default => 'تعديل القسم الرئيسي',
+        return match ($depth) {
+            1 => 'تعديل القسم',
+            2 => 'تعديل التصنيف',
+            default => 'تعديل التبويب',
         };
     }
 

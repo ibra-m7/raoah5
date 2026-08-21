@@ -4,11 +4,11 @@
     $level = $level ?? 'root';
     $parents = $parents ?? collect();
     $nameLabel = match ($level) {
-        'category' => 'اسم القسم الفرعي',
+        'category' => 'اسم القسم',
         'sub' => 'اسم التصنيف',
-        default => 'اسم القسم الرئيسي',
+        default => 'اسم التبويب',
     };
-    $parentLabel = $level === 'sub' ? 'القسم الفرعي' : 'القسم الرئيسي';
+    $parentLabel = $level === 'sub' ? 'القسم' : 'التبويب';
 @endphp
 
 <input type="hidden" name="level" value="{{ $level }}">

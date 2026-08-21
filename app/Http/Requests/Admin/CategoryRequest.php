@@ -34,15 +34,15 @@ class CategoryRequest extends FormRequest
     public function attributes(): array
     {
         $parent = match ($this->input('level')) {
-            'sub' => 'القسم الفرعي',
-            'category' => 'القسم الرئيسي',
+            'sub' => 'القسم',
+            'category' => 'التبويب',
             default => 'القسم الأب',
         };
 
         $name = match ($this->input('level')) {
             'sub' => 'اسم التصنيف',
-            'category' => 'اسم القسم الفرعي',
-            default => 'اسم القسم الرئيسي',
+            'category' => 'اسم القسم',
+            default => 'اسم التبويب',
         };
 
         return [
