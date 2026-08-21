@@ -17,22 +17,27 @@ class CategoryController extends Controller
 
     public function index(Request $request): View
     {
-        $filters = $request->only(['q', 'parent_id', 'status']);
-
         return view('admin.categories.index', [
             'title' => AppStrings::NAV_CATEGORIES,
-            'categories' => $this->categories->paginate($filters),
-            'parents' => $this->categories->parentOptions(),
-            'filters' => $filters,
+            'tree' => $this->categories->tree(),
         ]);
     }
 
-    public function create(): View
+    public function create(Request $request): View
     {
+        $parentId = $request->filled('parent_id') ? $request->integer('parent_id') : null;
+
         return view('admin.categories.create', [
             'title' => AppStrings::ADD_CATEGORY,
             'parents' => $this->categories->parentOptions(),
-            'category' => new Category(['is_active' => true, 'sort_order' => 0]),
+            'displaySections' => $this->categories->displaySectionOptions(),
+            'selectedSectionIds' => [],
+            'depth' => $this->categories->depthFor($parentId),
+            'category' => new Category([
+                'is_active' => true,
+                'sort_order' => 0,
+                'parent_id' => $parentId,
+            ]),
         ]);
     }
 
@@ -47,9 +52,14 @@ class CategoryController extends Controller
 
     public function edit(Category $category): View
     {
+        $category->load('displaySections');
+
         return view('admin.categories.edit', [
             'title' => AppStrings::EDIT_CATEGORY,
             'parents' => $this->categories->parentOptions($category->id),
+            'displaySections' => $this->categories->displaySectionOptions(),
+            'selectedSectionIds' => $category->displaySections->pluck('id')->all(),
+            'depth' => $this->categories->depthFor($category->parent_id),
             'category' => $category,
         ]);
     }

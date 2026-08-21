@@ -5,6 +5,7 @@ namespace App\Services\Admin;
 use App\Enums\BannerLinkType;
 use App\Models\Banner;
 use App\Models\Category;
+use App\Models\DisplaySection;
 use App\Support\Constants;
 use App\Support\Media;
 use App\Support\Slug;
@@ -33,23 +34,73 @@ class CategoryService
             ->withQueryString();
     }
 
-    public function parentOptions(?int $exceptId = null): Collection
+    public function tree(): Collection
     {
-        return Category::query()
-            ->when($exceptId, function ($query) use ($exceptId) {
-                $query->where('id', '!=', $exceptId)
-                    ->where(function ($nested) use ($exceptId) {
-                        $nested->whereNull('parent_id')
-                            ->orWhere('parent_id', '!=', $exceptId);
-                    });
-            })
+        $all = Category::query()
+            ->with('displaySections')
+            ->withCount(['products', 'children'])
             ->orderBy('sort_order')
             ->orderBy('name')
-            ->get(['id', 'name', 'parent_id']);
+            ->get();
+
+        return $this->nest($all);
+    }
+
+    public function parentOptions(?int $exceptId = null): Collection
+    {
+        return $this->indentedOptions($exceptId);
+    }
+
+    public function indentedOptions(?int $exceptId = null): Collection
+    {
+        $flat = collect();
+        $this->flattenTree($this->tree(), $flat, '', $exceptId);
+
+        return $flat;
+    }
+
+    public function displaySectionOptions(): Collection
+    {
+        return DisplaySection::query()
+            ->orderBy('sort_order')
+            ->orderBy('name')
+            ->get(['id', 'name', 'emoji', 'is_active']);
+    }
+
+    public static function levelLabel(int $depth): string
+    {
+        return match (true) {
+            $depth <= 0 => 'قسم رئيسي',
+            $depth === 1 => 'تصنيف',
+            default => 'تصنيف فرعي',
+        };
+    }
+
+    public static function levelHint(int $depth): string
+    {
+        return match (true) {
+            $depth <= 0 => 'يظهر كدائرة في الصفحة الرئيسية للتطبيق.',
+            $depth === 1 => 'يظهر كبطاقة داخل تبويب الأقسام.',
+            default => 'يظهر كشريحة عند فتح التصنيف، لتصفية المنتجات.',
+        };
+    }
+
+    public function depthFor(?int $parentId): int
+    {
+        $depth = 0;
+        $current = $parentId;
+        $guard = 0;
+        while ($current && $guard++ < 12) {
+            $depth++;
+            $current = Category::query()->whereKey($current)->value('parent_id');
+        }
+
+        return $depth;
     }
 
     public function create(array $data): Category
     {
+        $sectionIds = $this->pullSectionIds($data);
         $data['slug'] = Slug::unique($data['name'], 'categories');
         $data['sort_order'] = (int) ($data['sort_order'] ?? 0);
         $data['is_active'] = (bool) ($data['is_active'] ?? true);
@@ -58,26 +109,32 @@ class CategoryService
         $data['image_url'] = Media::store($data['image'] ?? null, 'categories/images');
         unset($data['icon'], $data['image']);
 
-        return Category::query()->create($data);
+        $category = Category::query()->create($data);
+        $this->syncDisplaySections($category, $sectionIds);
+
+        return $category;
     }
 
     public function update(Category $category, array $data): Category
     {
-        if (! empty($data['parent_id']) && (int) $data['parent_id'] === $category->id) {
+        $parentId = ! empty($data['parent_id']) ? (int) $data['parent_id'] : null;
+        if ($parentId === $category->id || ($parentId && $this->isDescendantOf($parentId, $category->id))) {
             throw ValidationException::withMessages([
-                'parent_id' => 'لا يمكن جعل القسم أباً لنفسه.',
+                'parent_id' => 'لا يمكن جعل القسم أباً لنفسه أو لأحد فروعه.',
             ]);
         }
 
+        $sectionIds = $this->pullSectionIds($data);
         $data['slug'] = Slug::unique($data['name'], 'categories', 'slug', $category->id);
         $data['sort_order'] = (int) ($data['sort_order'] ?? 0);
         $data['is_active'] = (bool) ($data['is_active'] ?? false);
-        $data['parent_id'] = $data['parent_id'] ?: null;
+        $data['parent_id'] = $parentId;
         $data['icon_url'] = Media::store($data['icon'] ?? null, 'categories/icons', $category->icon_url);
         $data['image_url'] = Media::store($data['image'] ?? null, 'categories/images', $category->image_url);
         unset($data['icon'], $data['image']);
 
         $category->update($data);
+        $this->syncDisplaySections($category->fresh(), $sectionIds);
 
         return $category;
     }
@@ -134,9 +191,94 @@ class CategoryService
 
             Media::delete($category->icon_url);
             Media::delete($category->image_url);
+            $category->displaySections()->detach();
             $category->delete();
 
             return $destinationName;
         });
+    }
+
+    /**
+     * @param  Collection<int, Category>  $all
+     * @return Collection<int, Category>
+     */
+    private function nest(Collection $all, ?int $parentId = null): Collection
+    {
+        return $all
+            ->where('parent_id', $parentId)
+            ->values()
+            ->map(function (Category $category) use ($all) {
+                $category->setRelation('children', $this->nest($all, $category->id));
+
+                return $category;
+            });
+    }
+
+    /**
+     * @param  Collection<int, Category>  $nodes
+     * @param  Collection<int, Category>  $flat
+     */
+    private function flattenTree(Collection $nodes, Collection $flat, string $prefix, ?int $exceptId, int $depth = 0): void
+    {
+        foreach ($nodes as $node) {
+            if ($exceptId && (int) $node->id === $exceptId) {
+                continue;
+            }
+
+            $label = $prefix === '' ? $node->name : $prefix.' ← '.$node->name;
+            $node->setAttribute('path_label', $label);
+            $node->setAttribute('depth', $depth);
+            $flat->push($node);
+            $this->flattenTree($node->children, $flat, $label, $exceptId, $depth + 1);
+        }
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     * @return list<int>
+     */
+    private function pullSectionIds(array &$data): array
+    {
+        $ids = collect($data['display_section_ids'] ?? [])
+            ->filter()
+            ->map(fn ($id) => (int) $id)
+            ->unique()
+            ->values()
+            ->all();
+        unset($data['display_section_ids']);
+
+        return $ids;
+    }
+
+    /**
+     * @param  list<int>  $sectionIds
+     */
+    private function syncDisplaySections(Category $category, array $sectionIds): void
+    {
+        if ($category->parent_id === null) {
+            $category->displaySections()->sync([]);
+
+            return;
+        }
+
+        $sync = [];
+        foreach (array_values($sectionIds) as $index => $id) {
+            $sync[$id] = ['sort_order' => $index];
+        }
+        $category->displaySections()->sync($sync);
+    }
+
+    private function isDescendantOf(int $maybeChildId, int $ancestorId): bool
+    {
+        $current = Category::query()->whereKey($maybeChildId)->value('parent_id');
+        $guard = 0;
+        while ($current && $guard++ < 20) {
+            if ((int) $current === $ancestorId) {
+                return true;
+            }
+            $current = Category::query()->whereKey($current)->value('parent_id');
+        }
+
+        return false;
     }
 }

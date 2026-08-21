@@ -21,6 +21,8 @@ class CategoryRequest extends FormRequest
             'color' => ['nullable', 'regex:/^#[0-9A-Fa-f]{6}$/'],
             'sort_order' => ['nullable', 'integer', 'min:0', 'max:9999'],
             'is_active' => ['nullable', 'boolean'],
+            'display_section_ids' => ['nullable', 'array'],
+            'display_section_ids.*' => ['integer', 'exists:display_sections,id'],
         ];
     }
 
@@ -34,6 +36,7 @@ class CategoryRequest extends FormRequest
             'color' => 'اللون',
             'sort_order' => 'الترتيب',
             'is_active' => 'الحالة',
+            'display_section_ids' => 'مجموعة تبويب الأقسام',
         ];
     }
 
