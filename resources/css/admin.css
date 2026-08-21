@@ -1189,6 +1189,7 @@ video {
     align-items: center;
     gap: 8px;
     white-space: nowrap;
+    text-decoration: none;
 }
 
 .settings-tabs .nav-link i {

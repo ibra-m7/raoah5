@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Admin;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class CategoryRequest extends FormRequest
 {
@@ -15,7 +16,13 @@ class CategoryRequest extends FormRequest
     {
         return [
             'name' => ['required', 'string', 'max:255'],
-            'parent_id' => ['nullable', 'integer', 'exists:categories,id'],
+            'parent_id' => [
+                Rule::requiredIf(fn () => $this->input('level') !== 'root'),
+                'nullable',
+                'integer',
+                'exists:categories,id',
+            ],
+            'level' => ['nullable', 'in:root,category,sub'],
             'icon' => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp,svg,gif', 'max:2048'],
             'image' => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp,gif', 'max:4096'],
             'color' => ['nullable', 'regex:/^#[0-9A-Fa-f]{6}$/'],
@@ -44,7 +51,7 @@ class CategoryRequest extends FormRequest
     {
         $this->merge([
             'is_active' => $this->boolean('is_active'),
-            'parent_id' => $this->input('parent_id') ?: null,
+            'parent_id' => $this->input('level') === 'root' ? null : ($this->input('parent_id') ?: null),
             'color' => $this->input('color') ?: null,
         ]);
     }
