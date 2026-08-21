@@ -16,15 +16,16 @@ class CatalogSeeder extends Seeder
 {
     public function run(): void
     {
-        $cleaning = $this->category('منظفات ومنتجات التنظيف', 'cleaning', '#0288D1', 'https://cdn-icons-png.flaticon.com/512/2917/2917995.png', 1);
-        $electronics = $this->category('إلكترونيات وأجهزة', 'electronics', '#7B1FA2', 'https://cdn-icons-png.flaticon.com/512/3659/3659899.png', 2);
-        $food = $this->category('مواد غذائية', 'food', '#E64A19', 'https://cdn-icons-png.flaticon.com/512/3724/3724788.png', 3);
+        $groceries = $this->category('المقاضي', 'groceries', '#E64A19', 'https://cdn-icons-png.flaticon.com/512/3724/3724788.png', 1);
+        $beverages = $this->category('المشروبات والمفرحات', 'beverages', '#0288D1', 'https://cdn-icons-png.flaticon.com/512/2405/2405479.png', 2);
+        $homeCare = $this->category('العناية بالمنزل', 'home-care', '#5D4037', 'https://cdn-icons-png.flaticon.com/512/2917/2917995.png', 3);
+        $electronics = $this->category('إلكترونيات وأجهزة', 'electronics', '#7B1FA2', 'https://cdn-icons-png.flaticon.com/512/3659/3659899.png', 4);
 
-        $groceries = $this->display('المقاضي', 'groceries', '🍞', 1);
-        $beverages = $this->display('المشروبات والمفرحات', 'beverages', '🥤', 2);
-        $homeCare = $this->display('العناية بالمنزل', 'home-care', '🏠', 3);
+        $groceriesSection = $this->display('المقاضي', 'groceries', '🍞', 1);
+        $beveragesSection = $this->display('المشروبات والمفرحات', 'beverages', '🥤', 2);
+        $homeCareSection = $this->display('العناية بالمنزل', 'home-care', '🏠', 3);
 
-        $groceryCats = $this->attachChildren($groceries, $food, [
+        $groceryCats = $this->attachChildren($groceriesSection, $groceries, [
             ['الأطعمة المجمدة', 'https://images.unsplash.com/photo-1623065422902-30a2d299bbe4?w=400&q=80'],
             ['الأرز والحبوب', 'https://images.unsplash.com/photo-1516684732362-966a6d62b9d9?w=400&q=80'],
             ['المعكرونة والمعلبات', 'https://images.unsplash.com/photo-1551183053-bf91b1d5856d?w=400&q=80'],
@@ -35,7 +36,7 @@ class CatalogSeeder extends Seeder
             ['الخضروات والفواكه', 'https://images.unsplash.com/photo-1610348725531-843dff563e2c?w=400&q=80'],
         ]);
 
-        $beverageCats = $this->attachChildren($beverages, $food, [
+        $beverageCats = $this->attachChildren($beveragesSection, $beverages, [
             ['عصائر طبيعية', 'https://images.unsplash.com/photo-1600271886742-f049cd451bba?w=400&q=80'],
             ['مشروبات غازية', 'https://images.unsplash.com/photo-1629203851122-3726ecdf080e?w=400&q=80'],
             ['شاي وقهوة', 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=400&q=80'],
@@ -46,7 +47,7 @@ class CatalogSeeder extends Seeder
             ['مركزات وعصائر', 'https://images.unsplash.com/photo-1587049352846-4a222e784d38?w=400&q=80'],
         ]);
 
-        $homeCats = $this->attachChildren($homeCare, $cleaning, [
+        $homeCats = $this->attachChildren($homeCareSection, $homeCare, [
             ['منظفات المطبخ', 'https://images.unsplash.com/photo-1563453392212-326f5e854473?w=400&q=80'],
             ['منظفات الحمام', 'https://images.unsplash.com/photo-1584622650111-993a426fbf0c?w=400&q=80'],
             ['معطرات الجو', 'https://images.unsplash.com/photo-1615486511484-92e172cc4fe0?w=400&q=80'],
@@ -161,6 +162,8 @@ class CatalogSeeder extends Seeder
         $this->relate($bySku, 'prod_008', 'prod_009', ProductRelationType::Complementary);
         $this->relate($bySku, 'prod_003', 'prod_004', ProductRelationType::Upsell);
         $this->relate($bySku, 'prod_005', 'prod_006', ProductRelationType::Complementary);
+
+        Category::query()->whereIn('slug', ['food', 'cleaning'])->update(['is_active' => false]);
 
         $this->call(ProductDetailsSeeder::class);
     }

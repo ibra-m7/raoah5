@@ -4,7 +4,6 @@ namespace App\Services\Catalog;
 
 use App\Http\Resources\BannerResource;
 use App\Http\Resources\CategoryResource;
-use App\Http\Resources\DisplaySectionResource;
 use App\Http\Resources\HomeSectionResource;
 use App\Http\Resources\ProductResource;
 use App\Models\Banner;
@@ -27,11 +26,7 @@ class CatalogService
     {
         $relations = $this->productRelations();
 
-        $categories = Category::query()
-            ->active()
-            ->roots()
-            ->get();
-        $this->attachTreeProductCounts($categories);
+        $categories = $this->rootTree();
 
         $products = Product::query()
             ->active()
@@ -50,21 +45,6 @@ class CatalogService
             ->with(['products' => fn ($q) => $q->active()->with($relations)])
             ->get();
 
-        $displaySections = DisplaySection::query()
-            ->active()
-            ->with([
-                'categories' => fn ($q) => $q->active()->with([
-                    'children' => fn ($c) => $c->active()->orderBy('sort_order'),
-                ]),
-            ])
-            ->get();
-        foreach ($displaySections as $section) {
-            $this->attachTreeProductCounts($section->categories);
-            foreach ($section->categories as $category) {
-                $this->attachTreeProductCounts($category->children);
-            }
-        }
-
         $banners = Banner::query()->currentlyVisible()->get();
 
         return [
@@ -72,7 +52,7 @@ class CatalogService
             'categories' => CategoryResource::collection($categories)->resolve(),
             'offers' => ProductResource::collection($offers)->resolve(),
             'sections' => HomeSectionResource::collection($sections)->resolve(),
-            'display_sections' => DisplaySectionResource::collection($displaySections)->resolve(),
+            'display_sections' => $this->displaySectionsFromTree($categories),
             'products' => ProductResource::collection($products)->resolve(),
             'store' => StoreSettings::payload(),
         ];
@@ -117,19 +97,54 @@ class CatalogService
 
     public function categories(): array
     {
+        return CategoryResource::collection($this->rootTree())->resolve();
+    }
+
+    /**
+     * @return \Illuminate\Database\Eloquent\Collection<int, Category>
+     */
+    private function rootTree()
+    {
         $categories = Category::query()
             ->active()
             ->roots()
             ->with([
-                'children' => fn ($q) => $q->active(),
+                'children' => fn ($q) => $q->active()->orderBy('sort_order')->orderBy('name')->with([
+                    'children' => fn ($c) => $c->active()->orderBy('sort_order')->orderBy('name'),
+                ]),
             ])
             ->get();
+
         $this->attachTreeProductCounts($categories);
-        foreach ($categories as $category) {
-            $this->attachTreeProductCounts($category->children);
+        foreach ($categories as $root) {
+            $this->attachTreeProductCounts($root->children);
+            foreach ($root->children as $branch) {
+                $this->attachTreeProductCounts($branch->children);
+            }
         }
 
-        return CategoryResource::collection($categories)->resolve();
+        return $categories;
+    }
+
+    /**
+     * تبويب الأقسام في التطبيق = الأقسام الرئيسية، والبطاقات = الأقسام الفرعية، والشرائح = التصنيفات.
+     *
+     * @param  \Illuminate\Support\Collection<int, Category>|\Illuminate\Database\Eloquent\Collection<int, Category>  $roots
+     * @return list<array<string, mixed>>
+     */
+    private function displaySectionsFromTree($roots): array
+    {
+        $emojiBySlug = DisplaySection::query()->pluck('emoji', 'slug');
+
+        return $roots->map(function (Category $root) use ($emojiBySlug) {
+            return [
+                'id' => (string) $root->id,
+                'name' => $root->name,
+                'slug' => $root->slug,
+                'emoji' => $emojiBySlug[$root->slug] ?? '',
+                'categories' => CategoryResource::collection($root->children)->resolve(),
+            ];
+        })->values()->all();
     }
 
     /**

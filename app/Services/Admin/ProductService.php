@@ -31,6 +31,11 @@ class ProductService
         return app(CategoryService::class)->indentedOptions();
     }
 
+    public function productFormCategoryOptions(?int $currentId = null): Collection
+    {
+        return app(CategoryService::class)->productCategoryOptions($currentId);
+    }
+
     public function create(array $data): Product
     {
         $image = $data['image'] ?? null;

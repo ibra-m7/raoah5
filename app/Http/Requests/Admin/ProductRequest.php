@@ -40,7 +40,7 @@ class ProductRequest extends FormRequest
         return [
             'name' => 'اسم المنتج',
             'sku' => 'رمز المنتج',
-            'category_id' => 'القسم',
+            'category_id' => 'التصنيف',
             'description' => 'الوصف',
             'price' => 'السعر',
             'discount_price' => 'سعر العرض',
