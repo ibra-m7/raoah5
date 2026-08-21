@@ -6,7 +6,7 @@
             @include('admin.categories._form')
             <div class="d-flex gap-2">
                 <button class="btn btn-brand">{{ $strings::SAVE }}</button>
-                <a href="{{ $cancelUrl }}" class="btn btn-outline-secondary rounded-pill">{{ $strings::CANCEL }}</a>
+                <a href="{{ route('admin.categories.index') }}" class="btn btn-outline-secondary rounded-pill">{{ $strings::CANCEL }}</a>
             </div>
         </form>
     </div>

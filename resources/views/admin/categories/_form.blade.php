@@ -2,7 +2,6 @@
     $category = $category ?? new \App\Models\Category(['is_active' => true, 'sort_order' => 0, 'color' => \App\Support\Theme::PRIMARY]);
     $color = old('color', $category->color ?: \App\Support\Theme::PRIMARY);
     $level = $level ?? 'root';
-    $tab = $tab ?? 'mains';
     $parents = $parents ?? collect();
     $nameLabel = match ($level) {
         'category' => 'اسم القسم الفرعي',

@@ -1375,8 +1375,14 @@ video {
     line-height: 1.55;
 }
 
+.category-tree {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
 .category-tree-node {
-    margin-bottom: 8px;
+    margin-bottom: 0;
 }
 
 .category-tree-row {
@@ -1387,6 +1393,14 @@ video {
     background: #fff;
     border: 1px solid var(--color-primary-light);
     border-radius: 16px;
+}
+
+.category-tree-row.is-main {
+    background: var(--color-primary-surface);
+}
+
+.category-tree-row.is-leaf {
+    background: #fff;
 }
 
 .category-tree-copy {
