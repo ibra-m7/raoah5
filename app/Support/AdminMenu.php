@@ -30,6 +30,7 @@ final class AdminMenu
                     ['label' => AppStrings::NAV_OFFERS, 'route' => 'admin.offers.index', 'icon' => 'bi-percent'],
                     ['label' => AppStrings::NAV_COUPONS, 'route' => 'admin.coupons.index', 'icon' => 'bi-ticket-perforated'],
                     ['label' => AppStrings::NAV_BANNERS, 'route' => 'admin.banners.index', 'icon' => 'bi-image'],
+                    ['label' => AppStrings::NAV_DYNAMIC_PAGES, 'route' => 'admin.dynamic-pages.index', 'icon' => 'bi-layout-text-window-reverse'],
                     ['label' => AppStrings::NAV_HOME_SECTIONS, 'route' => 'admin.home-sections.index', 'icon' => 'bi-house'],
                 ],
             ],

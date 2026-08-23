@@ -34,6 +34,7 @@ class BannerController extends Controller
             'banner' => new Banner(['is_active' => true, 'sort_order' => 0, 'link_type' => BannerLinkType::None]),
             'products' => $this->banners->productOptions(),
             'categories' => $this->banners->categoryOptions(),
+            'pages' => $this->banners->pageOptions(),
         ]);
     }
 
@@ -53,6 +54,7 @@ class BannerController extends Controller
             'banner' => $banner,
             'products' => $this->banners->productOptions(),
             'categories' => $this->banners->categoryOptions(),
+            'pages' => $this->banners->pageOptions(),
         ]);
     }
 

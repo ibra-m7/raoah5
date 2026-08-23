@@ -125,6 +125,18 @@ final class AppStrings
 
     public const NAV_PAGES = 'الصفحات';
 
+    public const NAV_DYNAMIC_PAGES = 'صفحات ترويجية';
+
+    public const ADD_DYNAMIC_PAGE = 'إضافة صفحة ترويجية';
+
+    public const EDIT_DYNAMIC_PAGE = 'تعديل الصفحة الترويجية';
+
+    public const DYNAMIC_PAGE_CREATED = 'تم إضافة الصفحة الترويجية بنجاح.';
+
+    public const DYNAMIC_PAGE_UPDATED = 'تم تحديث الصفحة الترويجية بنجاح.';
+
+    public const DYNAMIC_PAGE_DELETED = 'تم حذف الصفحة الترويجية بنجاح.';
+
     public const NAV_ONBOARDING = 'شرائح الترحيب';
 
     public const NAV_SETTINGS = 'الإعدادات';

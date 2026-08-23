@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\CouponController;
 use App\Http\Controllers\Api\Courier\CourierAuthController;
 use App\Http\Controllers\Api\Courier\CourierOrderController;
 use App\Http\Controllers\Api\DeliveryController;
+use App\Http\Controllers\Api\DynamicPageController;
 use App\Http\Controllers\Api\HomeController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\OrderController;
@@ -19,6 +20,7 @@ Route::get('categories', [CategoryController::class, 'index']);
 Route::get('categories/{category}', [CategoryController::class, 'show']);
 Route::get('products', [ProductController::class, 'index']);
 Route::get('products/{product}', [ProductController::class, 'show']);
+Route::get('pages/{page}', [DynamicPageController::class, 'show']);
 
 Route::get('ai/config', [AiAssistantController::class, 'config']);
 Route::post('ai/chat', [AiAssistantController::class, 'chat'])

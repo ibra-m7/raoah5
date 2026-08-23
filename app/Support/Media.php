@@ -9,13 +9,20 @@ final class Media
 {
     public static function store(?UploadedFile $file, string $directory, ?string $oldPath = null): ?string
     {
-        if ($file === null) {
+        if ($file === null || ! $file->isValid()) {
             return $oldPath;
         }
 
         self::delete($oldPath);
 
-        return $file->store($directory, 'public');
+        Storage::disk('public')->makeDirectory($directory);
+
+        $path = $file->store($directory, 'public');
+        if (! is_string($path) || $path === '') {
+            throw new \RuntimeException('تعذّر حفظ الملف المرفوع.');
+        }
+
+        return $path;
     }
 
     public static function delete(?string $path): void
@@ -37,7 +44,12 @@ final class Media
             return $path;
         }
 
-        return asset('storage/'.$path);
+        $relative = 'storage/'.ltrim($path, '/');
+        if (app()->runningInConsole()) {
+            return asset($relative);
+        }
+
+        return rtrim(request()->getSchemeAndHttpHost(), '/').'/'.$relative;
     }
 
     private static function isStored(?string $path): bool

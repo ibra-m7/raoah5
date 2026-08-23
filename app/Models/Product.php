@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\ProductRelationType;
+use App\Enums\PromoType;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
@@ -24,6 +25,7 @@ class Product extends Model
         'description',
         'price',
         'discount_price',
+        'promo_type',
         'stock',
         'piece_count',
         'weight_label',
@@ -43,6 +45,7 @@ class Product extends Model
         return [
             'price' => 'decimal:2',
             'discount_price' => 'decimal:2',
+            'promo_type' => PromoType::class,
             'stock' => 'integer',
             'piece_count' => 'integer',
             'rating' => 'decimal:2',
@@ -219,5 +222,28 @@ class Product extends Model
     protected function isAvailable(): Attribute
     {
         return Attribute::get(fn () => $this->is_active && $this->stock > 0);
+    }
+
+    public function scopeOnPromo(Builder $query, ?PromoType $type = null): Builder
+    {
+        $query->whereNotNull('discount_price')->whereColumn('discount_price', '<', 'price');
+
+        if ($type) {
+            $query->where('promo_type', $type);
+        }
+
+        return $query;
+    }
+
+    public function scopeWithoutPromo(Builder $query, ?int $exceptId = null): Builder
+    {
+        return $query->where(function (Builder $inner) use ($exceptId) {
+            $inner->whereNull('discount_price')
+                ->orWhereColumn('discount_price', '>=', 'price');
+
+            if ($exceptId) {
+                $inner->orWhereKey($exceptId);
+            }
+        });
     }
 }

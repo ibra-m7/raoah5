@@ -12,7 +12,7 @@
     />
 
     <div class="page-card p-0 overflow-hidden" style="max-width: 920px">
-        <form method="POST" action="{{ route('admin.settings.update') }}" data-settings-form>
+        <form method="POST" action="{{ route('admin.settings.update') }}" data-settings-form enctype="multipart/form-data">
             @csrf
             @method('PUT')
             <input type="hidden" name="active_tab" value="{{ $tab }}" data-settings-active-tab>
@@ -53,6 +53,20 @@
                         <div class="form-control-plaintext fs-4">{{ $strings::CURRENCY }} ريال سعودي</div>
                         <div class="form-hint">يُعرض الرمز الرسمي للريال السعودي في التطبيق ولوحة التحكم.</div>
                         <input type="hidden" name="currency" value="SAR">
+                    </div>
+
+                    @php $fallbackSrc = \App\Support\Media::url($settings['fallback_product_image'] ?? ''); @endphp
+                    <div class="mb-3">
+                        <label class="form-label">صورة المنتج الافتراضية</label>
+                        <input type="file" name="fallback_product_image" accept="image/*" class="form-control @error('fallback_product_image') is-invalid @enderror" data-image-preview="#fallback-product-preview">
+                        @error('fallback_product_image') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                        <img id="fallback-product-preview" src="{{ $fallbackSrc }}" alt="" class="upload-preview mt-2" style="width: 120px; height: 120px; object-fit: cover" @if(! $fallbackSrc) hidden @endif>
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label">أو رابط الصورة الافتراضية</label>
+                        <input type="url" name="fallback_product_image_url" value="{{ old('fallback_product_image_url', str_starts_with((string) ($settings['fallback_product_image'] ?? ''), 'http') ? $settings['fallback_product_image'] : '') }}" class="form-control @error('fallback_product_image_url') is-invalid @enderror" placeholder="https://...">
+                        @error('fallback_product_image_url') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                        <div class="form-hint">تظهر هذه الصورة بدل أي منتج بلا صورة داخل التطبيق.</div>
                     </div>
 
                     <div class="settings-links">

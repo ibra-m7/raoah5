@@ -1523,3 +1523,140 @@ video {
 .catalog-parent-link:hover {
     color: var(--color-primary-dark);
 }
+
+.promo-tabs {
+    display: flex;
+    gap: 0.5rem;
+    margin: 0 0 1rem;
+    padding: 0.35rem;
+    background: #fff;
+    border-radius: 16px;
+    border: 1px solid rgba(15, 23, 42, 0.06);
+}
+
+.promo-tab {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+    padding: 0.7rem 0.9rem;
+    border-radius: 12px;
+    text-decoration: none;
+    color: var(--color-muted-text);
+    font-weight: 800;
+}
+
+.promo-tab.is-active {
+    background: var(--color-primary-surface, #e8f8ec);
+    color: var(--color-primary-dark, #1b3a2d);
+}
+
+.promo-tab-count {
+    min-width: 1.5rem;
+    padding: 0 0.4rem;
+    border-radius: 999px;
+    background: rgba(15, 23, 42, 0.06);
+    font-size: 0.75rem;
+}
+
+.promo-search-bar {
+    position: relative;
+    margin-bottom: 1rem;
+}
+
+.promo-search-bar i {
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--color-muted-text);
+}
+
+.promo-search-bar input {
+    padding-right: 2.4rem;
+}
+
+.promo-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 0.75rem;
+}
+
+.promo-pick {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.4rem;
+    padding: 0.7rem;
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    border-radius: 14px;
+    background: #fff;
+    text-align: start;
+    cursor: pointer;
+}
+
+.promo-pick.is-on {
+    border-color: var(--color-primary-dark, #2e9b57);
+    box-shadow: 0 0 0 2px rgba(46, 155, 87, 0.2);
+}
+
+.promo-pick-img {
+    height: 88px;
+    border-radius: 10px;
+    background: #f3f6f4 center/cover no-repeat;
+}
+
+.promo-pick-name {
+    font-size: 0.82rem;
+    font-weight: 800;
+    line-height: 1.3;
+}
+
+.promo-pick-price {
+    font-size: 0.78rem;
+    color: var(--color-muted-text);
+}
+
+.promo-selected {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+    margin-bottom: 1rem;
+}
+
+.promo-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.3rem 0.55rem;
+    border-radius: 999px;
+    background: var(--color-primary-surface, #e8f8ec);
+    font-size: 0.8rem;
+    font-weight: 700;
+}
+
+.promo-chip button {
+    border: 0;
+    background: transparent;
+    font-size: 1.1rem;
+    line-height: 1;
+    color: inherit;
+}
+
+.promo-mode {
+    display: flex;
+    gap: 0.6rem;
+    margin-bottom: 0.85rem;
+}
+
+.promo-mode-item {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.45rem 0.8rem;
+    border-radius: 999px;
+    background: #f4f7f5;
+    font-weight: 700;
+    margin: 0;
+}

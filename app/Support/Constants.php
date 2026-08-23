@@ -61,6 +61,8 @@ final class Constants
 
     public const SETTING_MARKETING_SOLD_PRODUCT_IDS = 'marketing_sold_product_ids';
 
+    public const SETTING_FALLBACK_PRODUCT_IMAGE = 'fallback_product_image';
+
     public const AI_DEFAULT_MAX_PRODUCTS = 6;
 
     public const AI_DEFAULT_MODEL = 'gemini-3.6-flash';

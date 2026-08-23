@@ -7,6 +7,8 @@
     $imageSrc = Media::url($banner->image_url);
     $productId = old('link_product_id', $banner->link_type === BannerLinkType::Product ? $banner->link_id : null);
     $categoryId = old('link_category_id', $banner->link_type === BannerLinkType::Category ? $banner->link_id : null);
+    $pageId = old('link_page_id', $banner->link_type === BannerLinkType::Page ? $banner->link_id : null);
+    $pages = $pages ?? collect();
 @endphp
 
 <div class="mb-3">
@@ -42,6 +44,7 @@
         <option value="{{ BannerLinkType::None->value }}" @selected($linkType === BannerLinkType::None->value)>بدون رابط</option>
         <option value="{{ BannerLinkType::Product->value }}" @selected($linkType === BannerLinkType::Product->value)>منتج</option>
         <option value="{{ BannerLinkType::Category->value }}" @selected($linkType === BannerLinkType::Category->value)>قسم</option>
+        <option value="{{ BannerLinkType::Page->value }}" @selected($linkType === BannerLinkType::Page->value)>صفحة ترويجية</option>
         <option value="{{ BannerLinkType::Url->value }}" @selected($linkType === BannerLinkType::Url->value)>رابط خارجي</option>
     </select>
     @error('link_type') <div class="invalid-feedback">{{ $message }}</div> @enderror
@@ -69,6 +72,19 @@
                 <option value="{{ $category->id }}" @selected((string) $categoryId === (string) $category->id)>{{ $category->name }}</option>
             @endforeach
         </select>
+    </div>
+</div>
+
+<div data-link-panel="page" @if($linkType !== BannerLinkType::Page->value) hidden @endif>
+    <div class="mb-3">
+        <label class="form-label">الصفحة الترويجية</label>
+        <select name="link_page_id" class="form-select @error('link_id') is-invalid @enderror">
+            <option value="">اختر صفحة</option>
+            @foreach ($pages as $page)
+                <option value="{{ $page->id }}" @selected((string) $pageId === (string) $page->id)>{{ $page->title }}</option>
+            @endforeach
+        </select>
+        @error('link_id') <div class="invalid-feedback">{{ $message }}</div> @enderror
     </div>
 </div>
 

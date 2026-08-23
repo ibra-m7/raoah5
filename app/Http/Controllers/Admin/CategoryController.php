@@ -85,7 +85,7 @@ class CategoryController extends Controller
 
     public function store(CategoryRequest $request): RedirectResponse
     {
-        $this->categories->create($request->validated());
+        $this->categories->create($this->payload($request));
 
         return redirect()
             ->to($this->listUrl($request->validated('parent_id')))
@@ -108,7 +108,7 @@ class CategoryController extends Controller
 
     public function update(CategoryRequest $request, Category $category): RedirectResponse
     {
-        $this->categories->update($category, $request->validated());
+        $this->categories->update($category, $this->payload($request));
         $parentId = $request->validated('parent_id');
 
         return redirect()
@@ -126,6 +126,18 @@ class CategoryController extends Controller
             ->with('success', $movedTo
                 ? sprintf(AppStrings::CATEGORY_DELETED_MOVED, $movedTo)
                 : AppStrings::CATEGORY_DELETED);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function payload(CategoryRequest $request): array
+    {
+        $data = $request->validated();
+        $data['icon'] = $request->file('icon');
+        $data['image'] = $request->file('image');
+
+        return $data;
     }
 
     private function parentFromRequest(Request $request): ?Category

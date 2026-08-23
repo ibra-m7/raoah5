@@ -1,21 +1,34 @@
 <x-layouts.admin :title="$title">
     <x-admin.page-head
         :title="$title"
-        subtitle="خصومات المنتجات التي تظهر في شريط العروض داخل التطبيق"
-        :create="route('admin.offers.create')"
-        :create-label="$strings::ADD_OFFER"
+        :subtitle="$type === \App\Enums\PromoType::Offer ? 'عروض سعرية تظهر في التطبيق' : 'خصومات المنتجات في التطبيق'"
+        :create="route('admin.offers.create', ['type' => $type->value])"
+        :create-label="$type->addLabel()"
     />
 
-    <x-admin.help-note>العرض = منتج سعره المخفّض أقل من سعره الأصلي. حذف العرض هنا يلغي الخصم فقط ولا يحذف المنتج.</x-admin.help-note>
+    <div class="promo-tabs">
+        @foreach (\App\Enums\PromoType::cases() as $tab)
+            <a href="{{ route('admin.offers.index', ['type' => $tab->value]) }}" class="promo-tab {{ $type === $tab ? 'is-active' : '' }}">
+                <i class="bi {{ $tab === \App\Enums\PromoType::Discount ? 'bi-percent' : 'bi-tag' }}"></i>
+                {{ $tab->plural() }}
+                <span class="promo-tab-count">{{ $counts[$tab->value] ?? 0 }}</span>
+            </a>
+        @endforeach
+    </div>
+
+    <x-admin.help-note>
+        المنتج يظهر في تبويب واحد فقط: خصم أو عرض. عند الإنشاء لا تظهر المنتجات التي عليها تخفيض حالياً.
+    </x-admin.help-note>
 
     <form method="GET" class="d-flex flex-wrap gap-2 mb-3">
-        <input type="text" name="q" value="{{ $filters['q'] ?? '' }}" class="form-control" style="max-width: 260px" placeholder="ابحث عن منتج عليه خصم...">
+        <input type="hidden" name="type" value="{{ $type->value }}">
+        <input type="text" name="q" value="{{ $filters['q'] ?? '' }}" class="form-control" style="max-width: 260px" placeholder="ابحث في {{ $type->plural() }}...">
         <button class="btn btn-outline-success rounded-pill">{{ $strings::FILTER }}</button>
     </form>
 
     <div class="page-card p-4">
         @if ($offers->isEmpty())
-            <x-admin.empty-state icon="bi-percent" :action="route('admin.offers.create')" :action-label="$strings::ADD_OFFER" />
+            <x-admin.empty-state icon="bi-percent" :action="route('admin.offers.create', ['type' => $type->value])" :action-label="$type->addLabel()" />
         @else
             <div class="table-responsive">
                 <table class="table">
@@ -24,8 +37,8 @@
                             <th></th>
                             <th>المنتج</th>
                             <th>السعر الأصلي</th>
-                            <th>سعر العرض</th>
-                            <th>الخصم</th>
+                            <th>بعد التخفيض</th>
+                            <th>النسبة</th>
                             <th>{{ $strings::ACTIONS }}</th>
                         </tr>
                     </thead>
@@ -47,10 +60,10 @@
                                 <td>
                                     <div class="d-flex gap-2">
                                         <a href="{{ route('admin.offers.edit', $product) }}" class="btn btn-sm btn-outline-success rounded-pill">{{ $strings::EDIT }}</a>
-                                        <form method="POST" action="{{ route('admin.offers.destroy', $product) }}" onsubmit="return confirm('سيتم إلغاء الخصم عن هذا المنتج فقط.')">
+                                        <form method="POST" action="{{ route('admin.offers.destroy', $product) }}" onsubmit="return confirm('سيتم إلغاء {{ $type->label() }} عن هذا المنتج فقط.')">
                                             @csrf
                                             @method('DELETE')
-                                            <button class="btn btn-sm btn-outline-danger rounded-pill">إلغاء الخصم</button>
+                                            <button class="btn btn-sm btn-outline-danger rounded-pill">إلغاء {{ $type->label() }}</button>
                                         </form>
                                     </div>
                                 </td>

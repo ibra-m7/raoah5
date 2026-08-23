@@ -2,6 +2,7 @@
 
 namespace App\Services\Admin;
 
+use App\Enums\PromoType;
 use App\Models\Product;
 use App\Support\Constants;
 use App\Support\Media;
@@ -40,7 +41,9 @@ class ProductService
     {
         $image = $data['image'] ?? null;
         $imageUrl = trim((string) ($data['image_url'] ?? ''));
-        unset($data['image'], $data['image_url']);
+        $gallery = $data['gallery'] ?? [];
+        $galleryUrls = $data['gallery_urls'] ?? '';
+        unset($data['image'], $data['image_url'], $data['gallery'], $data['gallery_urls'], $data['delete_image_ids']);
 
         $data['sku'] = $this->sku($data['sku'] ?? null);
         $data['slug'] = Slug::unique($data['name'], 'products');
@@ -48,6 +51,7 @@ class ProductService
 
         $product = Product::query()->create($data);
         $this->syncPrimaryImage($product, $image, $imageUrl);
+        $this->syncGallery($product, $gallery, $galleryUrls);
 
         return $product;
     }
@@ -56,14 +60,19 @@ class ProductService
     {
         $image = $data['image'] ?? null;
         $imageUrl = trim((string) ($data['image_url'] ?? ''));
-        unset($data['image'], $data['image_url']);
+        $gallery = $data['gallery'] ?? [];
+        $galleryUrls = $data['gallery_urls'] ?? '';
+        $deleteIds = $data['delete_image_ids'] ?? [];
+        unset($data['image'], $data['image_url'], $data['gallery'], $data['gallery_urls'], $data['delete_image_ids']);
 
         $data['sku'] = $this->sku($data['sku'] ?? $product->sku, $product->id);
         $data['slug'] = Slug::unique($data['name'], 'products', 'slug', $product->id);
         $data = $this->normalize($data);
 
         $product->update($data);
+        $this->deleteGalleryImages($product, $deleteIds);
         $this->syncPrimaryImage($product, $image, $imageUrl ?: $product->primaryImage?->url);
+        $this->syncGallery($product, $gallery, $galleryUrls);
 
         return $product;
     }
@@ -97,6 +106,11 @@ class ProductService
         $data['discount_price'] = $data['discount_price'] !== null && $data['discount_price'] !== ''
             ? $data['discount_price']
             : null;
+        if ($data['discount_price'] === null) {
+            $data['promo_type'] = null;
+        } elseif (empty($data['promo_type'])) {
+            $data['promo_type'] = PromoType::Discount;
+        }
         $data['benefits'] = $this->lines($data['benefits'] ?? []);
         $data['keywords'] = $this->csv($data['keywords'] ?? []);
 
@@ -144,6 +158,57 @@ class ProductService
             'is_primary' => true,
             'sort_order' => 0,
         ]);
+    }
+
+    private function syncGallery(Product $product, mixed $files, mixed $urlsText): void
+    {
+        $next = (int) $product->images()->max('sort_order') + 1;
+        foreach (is_array($files) ? $files : [] as $file) {
+            $path = Media::store($file, 'products');
+            if (! $path) {
+                continue;
+            }
+            $product->images()->create([
+                'url' => $path,
+                'alt' => $product->name,
+                'is_primary' => false,
+                'sort_order' => $next++,
+            ]);
+        }
+
+        foreach (preg_split('/\r\n|\r|\n/', (string) $urlsText) ?: [] as $line) {
+            $url = trim($line);
+            if ($url === '' || ! filter_var($url, FILTER_VALIDATE_URL)) {
+                continue;
+            }
+            $product->images()->create([
+                'url' => $url,
+                'alt' => $product->name,
+                'is_primary' => false,
+                'sort_order' => $next++,
+            ]);
+        }
+    }
+
+    /**
+     * @param  list<int|string>  $ids
+     */
+    private function deleteGalleryImages(Product $product, array $ids): void
+    {
+        $ids = array_values(array_filter(array_map('intval', $ids)));
+        if ($ids === []) {
+            return;
+        }
+
+        $images = $product->images()
+            ->whereIn('id', $ids)
+            ->where('is_primary', false)
+            ->get();
+
+        foreach ($images as $image) {
+            Media::delete($image->url);
+            $image->delete();
+        }
     }
 
     /**

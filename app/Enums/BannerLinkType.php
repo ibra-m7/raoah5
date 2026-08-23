@@ -6,6 +6,7 @@ enum BannerLinkType: string
 {
     case Product = 'product';
     case Category = 'category';
+    case Page = 'page';
     case Url = 'url';
     case None = 'none';
 
@@ -14,6 +15,7 @@ enum BannerLinkType: string
         return match ($this) {
             self::Product => 'منتج',
             self::Category => 'قسم',
+            self::Page => 'صفحة ترويجية',
             self::Url => 'رابط خارجي',
             self::None => 'بدون رابط',
         };

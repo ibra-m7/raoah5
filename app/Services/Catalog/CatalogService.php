@@ -4,11 +4,13 @@ namespace App\Services\Catalog;
 
 use App\Http\Resources\BannerResource;
 use App\Http\Resources\CategoryResource;
+use App\Http\Resources\DynamicPageResource;
 use App\Http\Resources\HomeSectionResource;
 use App\Http\Resources\ProductResource;
 use App\Models\Banner;
 use App\Models\Category;
 use App\Models\DisplaySection;
+use App\Models\DynamicPage;
 use App\Models\HomeSection;
 use App\Models\Product;
 use App\Support\Constants;
@@ -47,15 +49,30 @@ class CatalogService
 
         $banners = Banner::query()->currentlyVisible()->get();
 
+        $pages = DynamicPage::query()
+            ->active()
+            ->with(['products' => fn ($q) => $q->active()->with($relations)])
+            ->get();
+
         return [
             'banners' => BannerResource::collection($banners)->resolve(),
             'categories' => CategoryResource::collection($categories)->resolve(),
             'offers' => ProductResource::collection($offers)->resolve(),
             'sections' => HomeSectionResource::collection($sections)->resolve(),
             'display_sections' => $this->displaySectionsFromTree($categories),
+            'dynamic_pages' => DynamicPageResource::collection($pages)->resolve(),
             'products' => ProductResource::collection($products)->resolve(),
             'store' => StoreSettings::payload(),
         ];
+    }
+
+    public function findDynamicPage(string $id): ?DynamicPage
+    {
+        return DynamicPage::query()
+            ->active()
+            ->with(['products' => fn ($q) => $q->active()->with($this->productRelations())])
+            ->where('id', $id)
+            ->first();
     }
 
     public function paginateProducts(array $filters = []): LengthAwarePaginator

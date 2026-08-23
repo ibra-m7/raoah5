@@ -19,6 +19,9 @@ class ProductResource extends JsonResource
 
         $urls = $images->map(fn ($image) => Media::url($image->url))->filter()->values();
         $imageUrl = Media::url($primary?->url) ?? $urls->first();
+        if (! $imageUrl) {
+            $imageUrl = StoreSettings::fallbackProductImageUrl();
+        }
 
         return [
             'id' => (string) $this->id,
@@ -38,7 +41,7 @@ class ProductResource extends JsonResource
             'stock' => (int) $this->stock,
             'piece_count' => $this->piece_count !== null ? (int) $this->piece_count : null,
             'weight_label' => $this->weight_label ?: '',
-            'quantity_label' => $this->displayQuantity(),
+            'quantity_label' => trim((string) ($this->quantity_label ?? '')),
             'sold_count' => StoreSettings::marketingSoldCountFor($this->resource),
             'rating' => (float) $this->rating,
             'review_count' => (int) $this->review_count,

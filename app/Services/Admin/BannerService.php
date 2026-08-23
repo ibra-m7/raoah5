@@ -5,6 +5,7 @@ namespace App\Services\Admin;
 use App\Enums\BannerLinkType;
 use App\Models\Banner;
 use App\Models\Category;
+use App\Models\DynamicPage;
 use App\Models\Product;
 use App\Support\Constants;
 use App\Support\Media;
@@ -39,6 +40,11 @@ class BannerService
     public function categoryOptions(): Collection
     {
         return Category::query()->orderBy('sort_order')->orderBy('name')->get(['id', 'name', 'parent_id']);
+    }
+
+    public function pageOptions(): Collection
+    {
+        return DynamicPage::query()->orderBy('title')->get(['id', 'title']);
     }
 
     public function create(array $data): Banner
@@ -87,7 +93,7 @@ class BannerService
             'subtitle' => $data['subtitle'] ?? null,
             'image_url' => $stored,
             'link_type' => $type,
-            'link_id' => in_array($type, [BannerLinkType::Product, BannerLinkType::Category], true)
+            'link_id' => in_array($type, [BannerLinkType::Product, BannerLinkType::Category, BannerLinkType::Page], true)
                 ? ($data['link_id'] ?? null)
                 : null,
             'link_url' => $type === BannerLinkType::Url ? ($data['link_url'] ?? null) : null,

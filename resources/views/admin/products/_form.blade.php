@@ -59,10 +59,10 @@
 
 <div class="row">
     <div class="col-md-4 mb-3">
-        <label class="form-label">العدد (قطعة)</label>
-        <input type="number" min="1" name="piece_count" value="{{ old('piece_count', $product->piece_count) }}" class="form-control @error('piece_count') is-invalid @enderror" placeholder="مثال: 30">
+        <label class="form-label">عدد الحبات في العبوة الواحدة</label>
+        <input type="number" min="1" name="piece_count" value="{{ old('piece_count', $product->piece_count) }}" class="form-control @error('piece_count') is-invalid @enderror" placeholder="مثال: 4">
         @error('piece_count') <div class="invalid-feedback">{{ $message }}</div> @enderror
-        <div class="form-hint">يظهر في التطبيق مثل: 30 قطعة.</div>
+        <div class="form-hint">السعر والمخزون للعبوة كاملة. مثال: تونة تُباع كعبوة واحدة فيها 4 حبات — يظهر في التطبيق «4 حبات».</div>
     </div>
     <div class="col-md-4 mb-3">
         <label class="form-label">الوزن</label>
@@ -74,7 +74,7 @@
         <label class="form-label">وصف الكمية الظاهر</label>
         <input type="text" name="quantity_label" value="{{ old('quantity_label', $product->quantity_label) }}" class="form-control @error('quantity_label') is-invalid @enderror" placeholder="مثال: 5 × 80 جم">
         @error('quantity_label') <div class="invalid-feedback">{{ $message }}</div> @enderror
-        <div class="form-hint">اختياري. إن تركته فارغاً يُولَّد من العدد والوزن.</div>
+        <div class="form-hint">اختياري. نص مخصص للعرض مثل: 4 حبات × 80 جم. إن تركته فارغاً يُولَّد من عدد الحبات والوزن.</div>
     </div>
 </div>
 
@@ -90,6 +90,30 @@
         <input type="url" name="image_url" value="{{ $imageUrl }}" class="form-control @error('image_url') is-invalid @enderror" placeholder="https://...">
         @error('image_url') <div class="invalid-feedback">{{ $message }}</div> @enderror
     </div>
+</div>
+
+<div class="mb-3">
+    <label class="form-label">صور إضافية (اختياري)</label>
+    <input type="file" name="gallery[]" accept="image/*" multiple class="form-control @error('gallery') is-invalid @enderror">
+    @error('gallery') <div class="invalid-feedback">{{ $message }}</div> @enderror
+    @error('gallery.*') <div class="invalid-feedback d-block">{{ $message }}</div> @enderror
+    <textarea name="gallery_urls" rows="2" class="form-control mt-2 @error('gallery_urls') is-invalid @enderror" placeholder="أو روابط صور إضافية، سطر لكل رابط">{{ old('gallery_urls') }}</textarea>
+    @error('gallery_urls') <div class="invalid-feedback">{{ $message }}</div> @enderror
+    <div class="form-hint">يمكن إضافة أكثر من صورة للمنتج. تظهر في صفحة التفاصيل داخل التطبيق.</div>
+    @if ($product->relationLoaded('images') && $product->images->where('is_primary', false)->isNotEmpty())
+        <div class="d-flex flex-wrap gap-3 mt-3">
+            @foreach ($product->images->where('is_primary', false) as $extra)
+                @php $extraSrc = \App\Support\Media::url($extra->url); @endphp
+                <label class="text-center" style="width: 96px">
+                    <img src="{{ $extraSrc }}" alt="" class="upload-preview mb-1" style="width: 96px; height: 96px; object-fit: cover">
+                    <span class="form-check justify-content-center">
+                        <input class="form-check-input" type="checkbox" name="delete_image_ids[]" value="{{ $extra->id }}">
+                        <span class="form-check-label small">حذف</span>
+                    </span>
+                </label>
+            @endforeach
+        </div>
+    @endif
 </div>
 
 <div class="mb-3">

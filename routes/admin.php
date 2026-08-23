@@ -11,6 +11,7 @@ use App\Http\Controllers\Admin\CustomerController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\DeliveryController;
 use App\Http\Controllers\Admin\DisplaySectionController;
+use App\Http\Controllers\Admin\DynamicPageController;
 use App\Http\Controllers\Admin\HomeSectionController;
 use App\Http\Controllers\Admin\NotificationController;
 use App\Http\Controllers\Admin\OfferController;
@@ -41,8 +42,10 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::get('products/import/template', [ProductController::class, 'template'])->name('products.import.template');
     Route::resource('products', ProductController::class)->except(['show']);
     Route::resource('categories', CategoryController::class)->except(['show']);
+    Route::get('offers/available', [OfferController::class, 'available'])->name('offers.available');
     Route::resource('offers', OfferController::class)->except(['show'])->parameters(['offers' => 'product']);
     Route::resource('banners', BannerController::class)->except(['show']);
+    Route::resource('dynamic-pages', DynamicPageController::class)->except(['show']);
     Route::resource('home-sections', HomeSectionController::class)->except(['show']);
     Route::resource('display-sections', DisplaySectionController::class)->except(['show']);
     Route::get('orders', [OrderController::class, 'index'])->name('orders.index');

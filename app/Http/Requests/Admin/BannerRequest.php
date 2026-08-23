@@ -20,18 +20,24 @@ class BannerRequest extends FormRequest
         return [
             'title' => ['required', 'string', 'max:255'],
             'subtitle' => ['nullable', 'string', 'max:255'],
-            'image' => [$creating ? 'required_without:image_url' : 'nullable', 'file', 'mimes:jpg,jpeg,png,webp,gif', 'max:4096'],
-            'image_url' => [$creating ? 'required_without:image' : 'nullable', 'url', 'max:2048'],
+            'image' => [$creating ? 'required' : 'nullable', 'file', 'mimes:jpg,jpeg,png,webp,gif', 'max:4096'],
+            'image_url' => ['nullable', 'url', 'max:2048'],
             'link_type' => ['required', Rule::enum(BannerLinkType::class)],
             'link_id' => [
                 'nullable',
                 'integer',
-                Rule::requiredIf(in_array($this->input('link_type'), [BannerLinkType::Product->value, BannerLinkType::Category->value], true)),
+                Rule::requiredIf(in_array($this->input('link_type'), [
+                    BannerLinkType::Product->value,
+                    BannerLinkType::Category->value,
+                    BannerLinkType::Page->value,
+                ], true)),
                 Rule::when($this->input('link_type') === BannerLinkType::Product->value, ['exists:products,id']),
                 Rule::when($this->input('link_type') === BannerLinkType::Category->value, ['exists:categories,id']),
+                Rule::when($this->input('link_type') === BannerLinkType::Page->value, ['exists:dynamic_pages,id']),
             ],
             'link_product_id' => ['nullable', 'integer', 'exists:products,id'],
             'link_category_id' => ['nullable', 'integer', 'exists:categories,id'],
+            'link_page_id' => ['nullable', 'integer', 'exists:dynamic_pages,id'],
             'link_url' => [
                 'nullable',
                 'url',
@@ -66,6 +72,7 @@ class BannerRequest extends FormRequest
         $linkId = match ($type) {
             BannerLinkType::Product->value => $this->input('link_product_id'),
             BannerLinkType::Category->value => $this->input('link_category_id'),
+            BannerLinkType::Page->value => $this->input('link_page_id'),
             default => null,
         };
 

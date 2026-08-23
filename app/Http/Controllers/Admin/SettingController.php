@@ -7,6 +7,7 @@ use App\Models\Product;
 use App\Models\Setting;
 use App\Support\AppStrings;
 use App\Support\Constants;
+use App\Support\Media;
 use App\Support\StoreSettings;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -38,6 +39,7 @@ class SettingController extends Controller
                 'bank_name' => Setting::getValue(Constants::SETTING_BANK_NAME, 'البنك الأهلي السعودي'),
                 'marketing_sold_count' => Setting::getValue(Constants::SETTING_MARKETING_SOLD_COUNT, 0),
                 'marketing_sold_scope' => StoreSettings::marketingSoldScope(),
+                'fallback_product_image' => Setting::getValue(Constants::SETTING_FALLBACK_PRODUCT_IMAGE, ''),
             ],
             'products' => Product::query()
                 ->with('category:id,name')
@@ -63,6 +65,8 @@ class SettingController extends Controller
                 'marketing_sold_scope' => ['required', 'in:all,selected'],
                 'marketing_sold_product_ids' => ['nullable', 'array'],
                 'marketing_sold_product_ids.*' => ['integer', 'exists:products,id'],
+                'fallback_product_image' => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp,gif', 'max:4096'],
+                'fallback_product_image_url' => ['nullable', 'url', 'max:2048'],
             ]);
         } catch (ValidationException $e) {
             throw $e->redirectTo(route('admin.settings.index', ['tab' => $tab]));
@@ -80,6 +84,21 @@ class SettingController extends Controller
             Constants::SETTING_MARKETING_SOLD_PRODUCT_IDS,
             json_encode(array_values(array_unique(array_map('intval', $data['marketing_sold_product_ids'] ?? []))))
         );
+
+        $currentFallback = (string) Setting::getValue(Constants::SETTING_FALLBACK_PRODUCT_IMAGE, '');
+        $uploaded = $request->file('fallback_product_image');
+        $fallbackUrl = trim((string) ($data['fallback_product_image_url'] ?? ''));
+        if ($uploaded) {
+            Setting::setValue(
+                Constants::SETTING_FALLBACK_PRODUCT_IMAGE,
+                Media::store($uploaded, 'settings', $currentFallback)
+            );
+        } elseif ($fallbackUrl !== '') {
+            if ($currentFallback && $fallbackUrl !== $currentFallback) {
+                Media::delete($currentFallback);
+            }
+            Setting::setValue(Constants::SETTING_FALLBACK_PRODUCT_IMAGE, $fallbackUrl);
+        }
 
         return redirect()
             ->route('admin.settings.index', ['tab' => $tab])

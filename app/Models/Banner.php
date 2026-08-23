@@ -43,6 +43,11 @@ class Banner extends Model
         return $this->belongsTo(Category::class, 'link_id');
     }
 
+    public function dynamicPage(): BelongsTo
+    {
+        return $this->belongsTo(DynamicPage::class, 'link_id');
+    }
+
     public function scopeActive(Builder $query): Builder
     {
         return $query->where('is_active', true);

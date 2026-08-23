@@ -5,6 +5,7 @@ namespace App\Support;
 use App\Enums\PaymentMethod;
 use App\Models\Setting;
 use App\Models\StorePaymentMethod;
+use App\Support\Media;
 
 final class StoreSettings
 {
@@ -86,6 +87,11 @@ final class StoreSettings
     /**
      * @return array<string, mixed>
      */
+    public static function fallbackProductImageUrl(): string
+    {
+        return Media::url((string) Setting::getValue(Constants::SETTING_FALLBACK_PRODUCT_IMAGE, '')) ?? '';
+    }
+
     public static function payload(): array
     {
         return [
@@ -100,6 +106,7 @@ final class StoreSettings
             'bank_iban' => self::bankIban(),
             'bank_name' => self::bankName(),
             'marketing_sold_count' => self::marketingSoldCount(),
+            'fallback_product_image_url' => self::fallbackProductImageUrl(),
             'payment_methods' => self::checkoutPaymentMethods(),
         ];
     }
