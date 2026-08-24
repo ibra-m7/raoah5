@@ -67,7 +67,6 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::post('notifications/{campaign}/resend', [NotificationController::class, 'resend'])->name('notifications.resend');
 
     Route::resource('payment-methods', StorePaymentMethodController::class)
-        ->except(['show'])
         ->parameters(['payment-methods' => 'payment_method']);
 
     Route::get('delivery', [DeliveryController::class, 'index'])->name('delivery.index');
@@ -82,6 +81,9 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::get('delivery/perks/{delivery_perk}/edit', [DeliveryController::class, 'editPerk'])->name('delivery.perks.edit');
     Route::put('delivery/perks/{delivery_perk}', [DeliveryController::class, 'updatePerk'])->name('delivery.perks.update');
     Route::delete('delivery/perks/{delivery_perk}', [DeliveryController::class, 'destroyPerk'])->name('delivery.perks.destroy');
+    Route::post('delivery/slots', [DeliveryController::class, 'storeSlot'])->name('delivery.slots.store');
+    Route::put('delivery/slots/{delivery_slot_window}', [DeliveryController::class, 'updateSlot'])->name('delivery.slots.update');
+    Route::delete('delivery/slots/{delivery_slot_window}', [DeliveryController::class, 'destroySlot'])->name('delivery.slots.destroy');
 
     Route::resource('coupons', CouponController::class)->except(['show']);
 

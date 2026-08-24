@@ -20,24 +20,29 @@ class EnvConfig {
   }
 
   static String _trimBase(String url) {
-    final trimmed = url.trim();
-    return trimmed.endsWith('/')
-        ? trimmed.substring(0, trimmed.length - 1)
-        : trimmed;
+    // أزل المسافات الزائدة داخل الرابط (مثل http:// 192...)
+    final cleaned = url.trim().replaceAll(RegExp(r'\s+'), '');
+    return cleaned.endsWith('/')
+        ? cleaned.substring(0, cleaned.length - 1)
+        : cleaned;
   }
 
-  static const localApi = 'http://192.168.134.8:8088/api';
+  /// الشبكة المحلية (نفس الواي فاي).
+  static const localApi = 'http://172.20.2.63:8088/api';
+
+  /// الإنتاج على Render.
   static const remoteApi = 'https://raoah5.onrender.com/api';
 
-  /// عنوان الـ API بدون شرطة أخيرة.
+  /// العنوان المفضّل من `.env` — إن وُجد.
   static String get apiBaseUrl {
-    return _trimBase(dotenv.env['API_BASE_URL'] ?? remoteApi);
+    return _trimBase(dotenv.env['API_BASE_URL'] ?? localApi);
   }
 
-  /// Render أولاً — بدون عناوين الشبكة المحلية.
+  /// ترتيب المحاولة: `.env` ثم المحلي ثم Render.
   static List<String> get apiBaseUrls {
     return {
       apiBaseUrl,
+      localApi,
       remoteApi,
     }.toList();
   }

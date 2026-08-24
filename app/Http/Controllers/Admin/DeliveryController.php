@@ -6,8 +6,10 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\DeliveryPerkRequest;
 use App\Http\Requests\Admin\DeliveryRuleRequest;
 use App\Http\Requests\Admin\DeliverySettingsRequest;
+use App\Http\Requests\Admin\DeliverySlotWindowRequest;
 use App\Models\DeliveryPerk;
 use App\Models\DeliveryRule;
+use App\Models\DeliverySlotWindow;
 use App\Models\Setting;
 use App\Support\AppStrings;
 use App\Support\Constants;
@@ -28,11 +30,13 @@ class DeliveryController extends Controller
             ->orderBy('sort_order')
             ->orderBy('id')
             ->get();
+        $slots = DeliverySlotWindow::query()->ordered()->get();
 
         return view('admin.delivery.index', [
             'title' => AppStrings::NAV_DELIVERY,
             'rules' => $rules,
             'perks' => $perks,
+            'slots' => $slots,
             'settings' => [
                 'delivery_enabled' => DeliverySettings::enabled(),
                 'delivery_first_order_free' => DeliverySettings::firstOrderFree(),
@@ -136,5 +140,32 @@ class DeliveryController extends Controller
         return redirect()
             ->route('admin.delivery.index')
             ->with('success', AppStrings::DELIVERY_PERK_DELETED);
+    }
+
+    public function storeSlot(DeliverySlotWindowRequest $request): RedirectResponse
+    {
+        DeliverySlotWindow::query()->create($request->validated());
+
+        return redirect()
+            ->route('admin.delivery.index')
+            ->with('success', AppStrings::DELIVERY_SLOT_CREATED);
+    }
+
+    public function updateSlot(DeliverySlotWindowRequest $request, DeliverySlotWindow $delivery_slot_window): RedirectResponse
+    {
+        $delivery_slot_window->update($request->validated());
+
+        return redirect()
+            ->route('admin.delivery.index')
+            ->with('success', AppStrings::DELIVERY_SLOT_UPDATED);
+    }
+
+    public function destroySlot(DeliverySlotWindow $delivery_slot_window): RedirectResponse
+    {
+        $delivery_slot_window->delete();
+
+        return redirect()
+            ->route('admin.delivery.index')
+            ->with('success', AppStrings::DELIVERY_SLOT_DELETED);
     }
 }

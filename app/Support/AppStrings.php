@@ -308,6 +308,11 @@ final class AppStrings
     public const PAYMENT_METHOD_UPDATED = 'تم تحديث طريقة الدفع بنجاح.';
 
     public const PAYMENT_METHOD_DELETED = 'تم حذف طريقة الدفع بنجاح.';
+    public const PAYMENT_METHOD_ICON = 'شعار طريقة الدفع';
+    public const ADD_DELIVERY_SLOT = 'إضافة فترة توصيل';
+    public const DELIVERY_SLOT_CREATED = 'تم إضافة فترة التوصيل.';
+    public const DELIVERY_SLOT_UPDATED = 'تم تحديث فترة التوصيل.';
+    public const DELIVERY_SLOT_DELETED = 'تم حذف فترة التوصيل.';
 
     public const ADD_COUPON = 'إضافة كوبون';
 

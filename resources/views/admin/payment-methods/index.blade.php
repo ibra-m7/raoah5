@@ -34,7 +34,13 @@
                     <tbody>
                         @foreach ($methods as $method)
                             <tr>
-                                <td><i class="{{ $method->icon }} fs-4 text-success"></i></td>
+                                <td>
+                                    @if ($method->icon_url)
+                                        <img src="{{ \App\Support\Media::url($method->icon_url) }}" alt="" height="32" style="object-fit: contain">
+                                    @else
+                                        <i class="{{ $method->icon }} fs-4 text-success"></i>
+                                    @endif
+                                </td>
                                 <td>
                                     <div class="fw-bold">{{ $method->label }}</div>
                                     <div class="text-muted small">{{ $method->hint }}</div>

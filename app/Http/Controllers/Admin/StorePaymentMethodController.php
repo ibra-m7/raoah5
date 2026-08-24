@@ -41,11 +41,16 @@ class StorePaymentMethodController extends Controller
 
     public function store(StorePaymentMethodRequest $request): RedirectResponse
     {
-        $this->methods->create($request->validated());
+        $this->methods->create($request->validated(), $request->file('icon_file'));
 
         return redirect()
             ->route('admin.payment-methods.index')
             ->with('success', AppStrings::PAYMENT_METHOD_CREATED);
+    }
+
+    public function show(StorePaymentMethod $payment_method): RedirectResponse
+    {
+        return redirect()->route('admin.payment-methods.edit', $payment_method);
     }
 
     public function edit(StorePaymentMethod $payment_method): View
@@ -59,7 +64,7 @@ class StorePaymentMethodController extends Controller
 
     public function update(StorePaymentMethodRequest $request, StorePaymentMethod $payment_method): RedirectResponse
     {
-        $this->methods->update($payment_method, $request->validated());
+        $this->methods->update($payment_method, $request->validated(), $request->file('icon_file'));
 
         return redirect()
             ->route('admin.payment-methods.index')

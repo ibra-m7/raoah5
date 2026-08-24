@@ -23,6 +23,15 @@
     <div class="form-hint">يظهر تحت الاسم عند الدفع.</div>
 </div>
 
+<div class="mb-3">
+    <label class="form-label">{{ $strings::PAYMENT_METHOD_ICON }}</label>
+    <input type="file" name="icon_file" accept="image/*" class="form-control @error('icon_file') is-invalid @enderror" data-image-preview="#payment-icon-preview">
+    @error('icon_file') <div class="invalid-feedback">{{ $message }}</div> @enderror
+    <div class="form-hint">ارفع شعار مدى أو STC Pay أو البطاقة ليظهر في التطبيق. PNG بخلفية شفافة أفضل.</div>
+    @php $iconSrc = \App\Support\Media::url($method->icon_url); @endphp
+    <img id="payment-icon-preview" src="{{ $iconSrc }}" alt="" class="upload-preview mt-2" @if(! $iconSrc) hidden @endif>
+</div>
+
 <div class="row">
     <div class="col-md-6 mb-3">
         <label class="form-label">الأيقونة</label>

@@ -5,12 +5,16 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\QuoteDeliveryRequest;
 use App\Services\Delivery\DeliveryService;
+use App\Services\Delivery\DeliverySlotService;
 use App\Support\ApiResponse;
 use Illuminate\Http\JsonResponse;
 
 class DeliveryController extends Controller
 {
-    public function __construct(private readonly DeliveryService $delivery) {}
+    public function __construct(
+        private readonly DeliveryService $delivery,
+        private readonly DeliverySlotService $slots,
+    ) {}
 
     public function quote(QuoteDeliveryRequest $request): JsonResponse
     {
@@ -30,5 +34,10 @@ class DeliveryController extends Controller
         );
 
         return ApiResponse::success('رسوم التوصيل', $quote->toArray());
+    }
+
+    public function slots(): JsonResponse
+    {
+        return ApiResponse::success('فترات التوصيل', $this->slots->calendar());
     }
 }

@@ -5,7 +5,9 @@ namespace App\Services\Admin;
 use App\Models\Order;
 use App\Models\StorePaymentMethod;
 use App\Support\Constants;
+use App\Support\Media;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Validation\ValidationException;
 
 class StorePaymentMethodService
@@ -26,14 +28,21 @@ class StorePaymentMethodService
             ->withQueryString();
     }
 
-    public function create(array $data): StorePaymentMethod
+    public function create(array $data, ?UploadedFile $iconFile = null): StorePaymentMethod
     {
-        return StorePaymentMethod::query()->create($this->payload($data));
+        $payload = $this->payload($data);
+        $payload['icon_url'] = Media::store($iconFile, 'payments');
+
+        return StorePaymentMethod::query()->create($payload);
     }
 
-    public function update(StorePaymentMethod $method, array $data): StorePaymentMethod
+    public function update(StorePaymentMethod $method, array $data, ?UploadedFile $iconFile = null): StorePaymentMethod
     {
-        $method->update($this->payload($data, $method));
+        $payload = $this->payload($data, $method);
+        if ($iconFile !== null) {
+            $payload['icon_url'] = Media::store($iconFile, 'payments', $method->icon_url);
+        }
+        $method->update($payload);
 
         return $method;
     }
@@ -46,6 +55,7 @@ class StorePaymentMethodService
             ]);
         }
 
+        Media::delete($method->icon_url);
         $method->delete();
     }
 

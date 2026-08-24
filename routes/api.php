@@ -69,6 +69,7 @@ Route::middleware(['auth:sanctum', 'customer'])->group(function () {
 
     Route::post('coupons/preview', [CouponController::class, 'preview']);
     Route::post('delivery/quote', [DeliveryController::class, 'quote'])->name('delivery.quote');
+    Route::get('delivery/slots', [DeliveryController::class, 'slots']);
 
     Route::get('orders', [OrderController::class, 'index']);
     Route::post('orders', [OrderController::class, 'store']);

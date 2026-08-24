@@ -122,7 +122,7 @@ final class StoreSettings
     }
 
     /**
-     * @return list<array{id: string, label: string, hint: string, icon: string}>
+     * @return list<array{id: string, label: string, hint: string, icon: string, icon_url: string}>
      */
     public static function checkoutPaymentMethods(): array
     {
@@ -144,6 +144,7 @@ final class StoreSettings
                 'label' => $method->label(),
                 'hint' => $method->hint(),
                 'icon' => 'bi-credit-card',
+                'icon_url' => '',
             ])
             ->values()
             ->all();

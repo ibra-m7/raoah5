@@ -30,6 +30,7 @@ class StorePaymentMethodRequest extends FormRequest
             'label' => ['required', 'string', 'max:80'],
             'hint' => ['nullable', 'string', 'max:180'],
             'icon' => ['nullable', 'string', 'max:60'],
+            'icon_file' => ['nullable', 'image', 'max:2048'],
             'sort_order' => ['nullable', 'integer', 'min:0', 'max:9999'],
             'is_active' => ['nullable', 'boolean'],
         ];
@@ -42,6 +43,7 @@ class StorePaymentMethodRequest extends FormRequest
             'label' => 'الاسم',
             'hint' => 'الوصف',
             'icon' => 'الأيقونة',
+            'icon_file' => 'شعار طريقة الدفع',
         ];
     }
 

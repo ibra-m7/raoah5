@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\Media;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 
@@ -12,6 +13,7 @@ class StorePaymentMethod extends Model
         'label',
         'hint',
         'icon',
+        'icon_url',
         'sort_order',
         'is_active',
     ];
@@ -35,7 +37,7 @@ class StorePaymentMethod extends Model
     }
 
     /**
-     * @return array{id: string, label: string, hint: string, icon: string}
+     * @return array{id: string, label: string, hint: string, icon: string, icon_url: string}
      */
     public function toCheckoutOption(): array
     {
@@ -44,6 +46,7 @@ class StorePaymentMethod extends Model
             'label' => $this->label,
             'hint' => (string) ($this->hint ?? ''),
             'icon' => (string) ($this->icon ?: 'bi-credit-card'),
+            'icon_url' => (string) (Media::url($this->icon_url) ?? ''),
         ];
     }
 }

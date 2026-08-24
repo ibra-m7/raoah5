@@ -1,6 +1,6 @@
 <x-layouts.admin :title="$title">
     <div class="page-card p-4 p-md-5" style="max-width: 720px">
-        <form method="POST" action="{{ route('admin.payment-methods.store') }}">
+        <form method="POST" action="{{ route('admin.payment-methods.store') }}" enctype="multipart/form-data">
             @csrf
             @include('admin.payment-methods._form')
             <div class="d-flex gap-2">

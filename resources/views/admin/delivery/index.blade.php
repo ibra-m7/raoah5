@@ -78,6 +78,87 @@
     </div>
 
     <div class="page-card p-4 mb-4">
+        <h2 class="h5 mb-1">فترات التوصيل</h2>
+        <p class="text-muted small">تظهر في تطبيق العميل عند اختيار وقت التوصيل. عطّل الفترة دون حذفها متى شئت.</p>
+        @if ($slots->isEmpty())
+            <p class="text-muted mb-3">لا توجد فترات بعد. أضف فترة لتظهر في التطبيق.</p>
+        @else
+            <div class="table-responsive mb-3">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>اليوم</th>
+                            <th>من</th>
+                            <th>إلى</th>
+                            <th>{{ $strings::SORT_ORDER }}</th>
+                            <th>{{ $strings::STATUS }}</th>
+                            <th>{{ $strings::ACTIONS }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach ($slots as $slot)
+                            <tr>
+                                <td class="fw-bold">{{ $slot->weekdayLabel() }}</td>
+                                <td dir="ltr">{{ \Illuminate\Support\Str::of($slot->start_time)->substr(0, 5) }}</td>
+                                <td dir="ltr">{{ \Illuminate\Support\Str::of($slot->end_time)->substr(0, 5) }}</td>
+                                <td>{{ $slot->sort_order }}</td>
+                                <td>
+                                    @if ($slot->is_active)
+                                        <span class="badge badge-soft">{{ $strings::LIVE_IN_APP }}</span>
+                                    @else
+                                        <span class="badge badge-soft">{{ $strings::INACTIVE }}</span>
+                                    @endif
+                                </td>
+                                <td>
+                                    <form method="POST" action="{{ route('admin.delivery.slots.destroy', $slot) }}" onsubmit="return confirm('{{ $strings::CONFIRM_DELETE }}')">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button class="btn btn-sm btn-outline-danger rounded-pill">{{ $strings::DELETE }}</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        @endif
+        <form method="POST" action="{{ route('admin.delivery.slots.store') }}" class="row g-2 align-items-end">
+            @csrf
+            <div class="col-md-3">
+                <label class="form-label">اليوم</label>
+                <select name="weekday" class="form-select @error('weekday') is-invalid @enderror" required>
+                    @foreach (\App\Models\DeliverySlotWindow::weekdayNames() as $value => $label)
+                        <option value="{{ $value }}" @selected((string) old('weekday') === (string) $value)>{{ $label }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">من</label>
+                <input type="time" name="start_time" value="{{ old('start_time', '10:00') }}" class="form-control @error('start_time') is-invalid @enderror" required>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">إلى</label>
+                <input type="time" name="end_time" value="{{ old('end_time', '12:00') }}" class="form-control @error('end_time') is-invalid @enderror" required>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">{{ $strings::SORT_ORDER }}</label>
+                <input type="number" min="0" name="sort_order" value="{{ old('sort_order', 0) }}" class="form-control">
+            </div>
+            <div class="col-md-1">
+                <div class="form-check mb-2">
+                    <input class="form-check-input" type="checkbox" name="is_active" value="1" id="slot_is_active" @checked(old('is_active', true))>
+                    <label class="form-check-label" for="slot_is_active">ظاهر</label>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <button class="btn btn-brand w-100">{{ $strings::ADD_DELIVERY_SLOT }}</button>
+            </div>
+        </form>
+        @error('start_time') <div class="text-danger small mt-2">{{ $message }}</div> @enderror
+        @error('end_time') <div class="text-danger small mt-2">{{ $message }}</div> @enderror
+    </div>
+
+    <div class="page-card p-4 mb-4">
         <div class="d-flex justify-content-between align-items-center mb-3">
             <h2 class="h5 mb-0">شرائح المسافة</h2>
             <button type="button" class="btn btn-outline-success rounded-pill btn-sm" data-bs-toggle="modal" data-bs-target="#deliveryRuleModal" data-delivery-rule-create>
