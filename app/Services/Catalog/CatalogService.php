@@ -17,6 +17,8 @@ use App\Models\User;
 use App\Support\Constants;
 use App\Support\StoreSettings;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\QueryException;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 use Throwable;
 
@@ -45,17 +47,23 @@ class CatalogService
             ->take(8)
             ->values();
 
-        $sections = HomeSection::query()
-            ->active()
-            ->with(['products' => fn ($q) => $q->active()->with($relations)])
-            ->get();
+        $sections = $this->optionalCollect(
+            fn () => HomeSection::query()
+                ->active()
+                ->with(['products' => fn ($q) => $q->active()->with($relations)])
+                ->get()
+        );
 
-        $banners = Banner::query()->currentlyVisible()->get();
+        $banners = $this->optionalCollect(
+            fn () => Banner::query()->currentlyVisible()->get()
+        );
 
-        $pages = DynamicPage::query()
-            ->active()
-            ->with(['products' => fn ($q) => $q->active()->with($relations)])
-            ->get();
+        $pages = $this->optionalCollect(
+            fn () => DynamicPage::query()
+                ->active()
+                ->with(['products' => fn ($q) => $q->active()->with($relations)])
+                ->get()
+        );
 
         return [
             'banners' => BannerResource::collection($banners)->resolve(),
@@ -209,6 +217,37 @@ class CatalogService
                 }
             }
         }
+    }
+
+    /**
+     * @template TValue
+     * @param  callable(): Collection<int, TValue>  $load
+     * @return Collection<int, TValue>
+     */
+    private function optionalCollect(callable $load): Collection
+    {
+        try {
+            return $load();
+        } catch (QueryException $e) {
+            if (! $this->isMissingTable($e)) {
+                throw $e;
+            }
+
+            Log::warning('catalog.missing_table', [
+                'error' => mb_substr($e->getMessage(), 0, 180),
+            ]);
+
+            return collect();
+        }
+    }
+
+    private function isMissingTable(QueryException $e): bool
+    {
+        $sqlState = (string) ($e->errorInfo[0] ?? '');
+
+        return $sqlState === '42P01'
+            || str_contains($e->getMessage(), 'does not exist')
+            || str_contains($e->getMessage(), "doesn't exist");
     }
 
     /**
