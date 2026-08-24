@@ -289,6 +289,9 @@ class ProductImportService
         $priceNum = (float) str_replace(',', '.', $price);
         $discount = $get('discount_price');
         $discountNum = $discount === '' ? null : (float) str_replace(',', '.', $discount);
+        if ($discountNum !== null && $discountNum <= 0) {
+            $discountNum = null;
+        }
         if ($discountNum !== null && $discountNum >= $priceNum) {
             throw new RuntimeException('سعر العرض يجب أن يكون أقل من السعر الأصلي.');
         }

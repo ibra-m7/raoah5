@@ -1,7 +1,6 @@
 <x-layouts.admin :title="$title">
     <div class="page-card p-4 p-md-5" style="max-width: 920px">
-        <x-admin.help-note>يظهر المنتج في التطبيق فوراً بعد الحفظ. سعر العرض الاختياري يفعل الخصم تلقائياً.</x-admin.help-note>
-        <form method="POST" action="{{ route('admin.products.store') }}" enctype="multipart/form-data" class="mt-3">
+        <form method="POST" action="{{ route('admin.products.store') }}" enctype="multipart/form-data">
             @csrf
             @include('admin.products._form')
             <div class="d-flex gap-2">

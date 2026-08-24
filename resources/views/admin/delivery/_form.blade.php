@@ -7,7 +7,7 @@
 
 <div class="mb-3">
     <label class="form-label">اسم الشريحة</label>
-    <input type="text" name="name" value="{{ $useOld ? old('name', $rule->name ?? '') : ($rule->name ?? '') }}" class="form-control {{ $useOld && $errors->has('name') ? 'is-invalid' : '' }}" required placeholder="مثال: أقل من 10 كم">
+    <input type="text" name="name" value="{{ $useOld ? old('name', $rule->name ?? '') : ($rule->name ?? '') }}" class="form-control {{ $useOld && $errors->has('name') ? 'is-invalid' : '' }}" required>
     @if ($useOld)
         @error('name') <div class="invalid-feedback">{{ $message }}</div> @enderror
     @endif
@@ -23,11 +23,11 @@
     </div>
     <div class="col-md-6 mb-3">
         <label class="form-label">إلى (كم)</label>
-        <input type="number" step="0.1" min="0" name="max_km" value="{{ $useOld ? old('max_km', $rule->max_km ?? '') : ($rule->max_km ?? '') }}" class="form-control {{ $useOld && $errors->has('max_km') ? 'is-invalid' : '' }}" placeholder="اتركه فارغاً لـ «فأكثر»">
+        <input type="number" step="0.1" min="0" name="max_km" value="{{ $useOld ? old('max_km', $rule->max_km ?? '') : ($rule->max_km ?? '') }}" class="form-control {{ $useOld && $errors->has('max_km') ? 'is-invalid' : '' }}">
         @if ($useOld)
             @error('max_km') <div class="invalid-feedback">{{ $message }}</div> @enderror
         @endif
-        <div class="form-hint">الحد الأعلى غير مشمول. مثال: إلى 10 يعني أقل من 10 كم.</div>
+        <div class="form-hint">اتركه فارغاً لـ «فأكثر».</div>
     </div>
 </div>
 
@@ -49,7 +49,7 @@
     @if ($useOld)
         @error('amount') <div class="invalid-feedback">{{ $message }}</div> @enderror
     @endif
-    <div class="form-hint">للسعر الثابت: المبلغ بالريال. لكل كيلومتر: ريال لكل كم.</div>
+    <div class="form-hint">للثابت: مبلغ التوصيل. لكل كم: ريال لكل كيلومتر.</div>
 </div>
 
 <div class="mb-3" data-mode-wrap @if ($pricingType !== 'per_km') hidden @endif>

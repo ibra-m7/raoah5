@@ -1,12 +1,10 @@
 <x-layouts.admin :title="$title">
     <x-admin.page-head
         :title="$title"
-        subtitle="مجموعات الأقسام في تبويب الأقسام داخل التطبيق"
+        subtitle="تجميع أقسام فرعية في تبويب الأقسام"
         :create="route('admin.display-sections.create')"
         :create-label="$strings::ADD_DISPLAY_SECTION"
     />
-
-    <x-admin.help-note>هذه ليست الأقسام الرئيسية. الأقسام الرئيسية تُدار من قائمة الأقسام. هنا تجمع أقساماً فرعية في شبكات تبويب الأقسام.</x-admin.help-note>
 
     <form method="GET" class="d-flex flex-wrap gap-2 mb-3">
         <input type="text" name="q" value="{{ $filters['q'] ?? '' }}" class="form-control" style="max-width: 240px" placeholder="{{ $strings::SEARCH }}">

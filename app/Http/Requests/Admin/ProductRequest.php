@@ -68,12 +68,22 @@ class ProductRequest extends FormRequest
         $this->merge([
             'is_active' => $this->boolean('is_active'),
             'is_featured' => $this->boolean('is_featured'),
-            'discount_price' => $this->filled('discount_price') ? $this->input('discount_price') : null,
+            'discount_price' => $this->normalizedDiscountPrice(),
             'sku' => $this->input('sku') ?: null,
             'image_url' => $this->input('image_url') ?: null,
             'piece_count' => $this->filled('piece_count') ? $this->input('piece_count') : null,
             'weight_label' => $this->input('weight_label') ?: null,
             'quantity_label' => $this->input('quantity_label') ?: null,
         ]);
+    }
+
+    private function normalizedDiscountPrice(): mixed
+    {
+        $value = $this->input('discount_price');
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        return is_numeric($value) && (float) $value <= 0 ? null : $value;
     }
 }

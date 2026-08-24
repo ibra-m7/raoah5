@@ -6,10 +6,7 @@
 @endphp
 
 <x-layouts.admin :title="$title">
-    <x-admin.page-head
-        :title="$title"
-        subtitle="إدارة إعدادات التطبيق والمتجر والعروض التسويقية من مكان واحد"
-    />
+    <x-admin.page-head :title="$title" />
 
     <div class="page-card p-0 overflow-hidden" style="max-width: 920px">
         <form method="POST" action="{{ route('admin.settings.update') }}" data-settings-form enctype="multipart/form-data">
@@ -51,11 +48,13 @@
                     <div class="mb-4">
                         <label class="form-label">العملة</label>
                         <div class="form-control-plaintext fs-4">{{ $strings::CURRENCY }} ريال سعودي</div>
-                        <div class="form-hint">يُعرض الرمز الرسمي للريال السعودي في التطبيق ولوحة التحكم.</div>
                         <input type="hidden" name="currency" value="SAR">
                     </div>
 
-                    @php $fallbackSrc = \App\Support\Media::url($settings['fallback_product_image'] ?? ''); @endphp
+                    @php
+                        $fallbackRaw = $settings['fallback_product_image'] ?? '';
+                        $fallbackSrc = \App\Support\StoreSettings::fallbackProductImageUrl();
+                    @endphp
                     <div class="mb-3">
                         <label class="form-label">صورة المنتج الافتراضية</label>
                         <input type="file" name="fallback_product_image" accept="image/*" class="form-control @error('fallback_product_image') is-invalid @enderror" data-image-preview="#fallback-product-preview">
@@ -64,9 +63,9 @@
                     </div>
                     <div class="mb-4">
                         <label class="form-label">أو رابط الصورة الافتراضية</label>
-                        <input type="url" name="fallback_product_image_url" value="{{ old('fallback_product_image_url', str_starts_with((string) ($settings['fallback_product_image'] ?? ''), 'http') ? $settings['fallback_product_image'] : '') }}" class="form-control @error('fallback_product_image_url') is-invalid @enderror" placeholder="https://...">
+                        <input type="url" name="fallback_product_image_url" value="{{ old('fallback_product_image_url', str_starts_with((string) $fallbackRaw, 'http') ? $fallbackRaw : '') }}" class="form-control @error('fallback_product_image_url') is-invalid @enderror" placeholder="https://...">
                         @error('fallback_product_image_url') <div class="invalid-feedback">{{ $message }}</div> @enderror
-                        <div class="form-hint">تظهر هذه الصورة بدل أي منتج بلا صورة داخل التطبيق.</div>
+                        <div class="form-hint">تُعرض لأي منتج بلا صورة.</div>
                     </div>
 
                     <div class="settings-links">
@@ -89,13 +88,13 @@
                         <label class="form-label">{{ $strings::SETTINGS_SHIPPING_FEE }}</label>
                         <input type="number" step="0.01" name="shipping_fee" value="{{ old('shipping_fee', $settings['shipping_fee']) }}" class="form-control @error('shipping_fee') is-invalid @enderror" required>
                         @error('shipping_fee') <div class="invalid-feedback">{{ $message }}</div> @enderror
-                        <div class="form-hint">تُستخدم كرسوم احتياطية فقط. سياسة المسافة تُدار من <a href="{{ route('admin.delivery.index') }}">التوصيل</a>.</div>
+                        <div class="form-hint">رسوم احتياطية. سياسة المسافة من صفحة التوصيل.</div>
                     </div>
                     <div class="mb-3">
                         <label class="form-label">{{ $strings::SETTINGS_FREE_SHIPPING }}</label>
                         <input type="number" step="0.01" name="free_shipping_threshold" value="{{ old('free_shipping_threshold', $settings['free_shipping_threshold']) }}" class="form-control @error('free_shipping_threshold') is-invalid @enderror" required>
                         @error('free_shipping_threshold') <div class="invalid-feedback">{{ $message }}</div> @enderror
-                        <div class="form-hint">يمكن تعديل هذا الحد أيضاً من صفحة التوصيل. ضع 0 لتعطيله.</div>
+                        <div class="form-hint">0 لتعطيله.</div>
                     </div>
                     <div class="mb-3">
                         <label class="form-label">اسم البنك (للتحويل داخل السعودية)</label>
@@ -122,13 +121,13 @@
 
                 <div class="tab-pane fade {{ $tab === 'marketing' ? 'show active' : '' }}" id="pane-marketing" role="tabpanel" aria-labelledby="tab-marketing" tabindex="0">
                     <h2 class="settings-pane-title">العروض والتسويق</h2>
-                    <p class="settings-pane-lead">رقم تسويقي يظهر على المنتجات التي تختارها، مثل: اشتراه +1K عميل.</p>
+                    <p class="settings-pane-lead">عدد تسويقي يظهر على المنتجات.</p>
 
                     <div class="mb-3">
                         <label class="form-label">عدد العملاء التسويقي</label>
-                        <input type="number" min="0" name="marketing_sold_count" value="{{ old('marketing_sold_count', $settings['marketing_sold_count']) }}" class="form-control @error('marketing_sold_count') is-invalid @enderror" placeholder="مثال: 1000">
+                        <input type="number" min="0" name="marketing_sold_count" value="{{ old('marketing_sold_count', $settings['marketing_sold_count']) }}" class="form-control @error('marketing_sold_count') is-invalid @enderror">
                         @error('marketing_sold_count') <div class="invalid-feedback">{{ $message }}</div> @enderror
-                        <div class="form-hint">ضع 0 لإخفاء العدد من كل المنتجات.</div>
+                        <div class="form-hint">0 لإخفاء العدد.</div>
                     </div>
 
                     <div class="mb-3">

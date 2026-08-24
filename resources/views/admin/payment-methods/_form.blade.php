@@ -5,21 +5,22 @@
 
 <div class="mb-3">
     <label class="form-label">الاسم الظاهر للعميل</label>
-    <input type="text" name="label" value="{{ old('label', $method->label) }}" class="form-control @error('label') is-invalid @enderror" required placeholder="مثال: مدى">
+    <input type="text" name="label" value="{{ old('label', $method->label) }}" class="form-control @error('label') is-invalid @enderror" required>
     @error('label') <div class="invalid-feedback">{{ $message }}</div> @enderror
 </div>
 
 <div class="mb-3">
-    <label class="form-label">المعرّف (slug)</label>
-    <input type="text" name="slug" value="{{ old('slug', $method->slug) }}" class="form-control @error('slug') is-invalid @enderror" required placeholder="mada" dir="ltr">
+    <label class="form-label">المعرّف</label>
+    <input type="text" name="slug" value="{{ old('slug', $method->slug) }}" class="form-control @error('slug') is-invalid @enderror" required dir="ltr">
     @error('slug') <div class="invalid-feedback">{{ $message }}</div> @enderror
-    <div class="form-hint">أحرف إنجليزية صغيرة وأرقام وشرطة سفلية فقط. يظهر في التطبيق كمعرّف طريقة الدفع.</div>
+    <div class="form-hint">أحرف إنجليزية صغيرة وأرقام وشرطة سفلية.</div>
 </div>
 
 <div class="mb-3">
     <label class="form-label">وصف قصير</label>
-    <input type="text" name="hint" value="{{ old('hint', $method->hint) }}" class="form-control @error('hint') is-invalid @enderror" placeholder="يظهر تحت الاسم في الفاتورة">
+    <input type="text" name="hint" value="{{ old('hint', $method->hint) }}" class="form-control @error('hint') is-invalid @enderror">
     @error('hint') <div class="invalid-feedback">{{ $message }}</div> @enderror
+    <div class="form-hint">يظهر تحت الاسم عند الدفع.</div>
 </div>
 
 <div class="row">

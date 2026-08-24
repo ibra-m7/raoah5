@@ -41,4 +41,31 @@ class HomeSection extends Model
     {
         return $query->where('is_active', true)->orderBy('sort_order');
     }
+
+    /**
+     * @return array<string, array{label: string}>
+     */
+    public static function displayStyles(): array
+    {
+        return [
+            'best_prices' => ['label' => 'أسعار مميزة'],
+            'most_requested' => ['label' => 'الأكثر طلباً'],
+            'fresh_groceries' => ['label' => 'منتجات طازجة'],
+            'general' => ['label' => 'قسم عادي'],
+        ];
+    }
+
+    public function displayStyle(): string
+    {
+        $known = ['best_prices', 'most_requested', 'fresh_groceries'];
+
+        return in_array((string) $this->key, $known, true) ? (string) $this->key : 'general';
+    }
+
+    public function styleLabel(): string
+    {
+        $style = $this->displayStyle();
+
+        return self::displayStyles()[$style]['label'] ?? 'قسم عادي';
+    }
 }

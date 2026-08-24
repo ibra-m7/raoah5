@@ -8,14 +8,14 @@
 
 <div class="mb-3">
     <label class="form-label">كود الكوبون</label>
-    <input type="text" name="code" value="{{ old('code', $coupon->code) }}" class="form-control @error('code') is-invalid @enderror" required placeholder="WELCOME10" dir="ltr" style="text-transform: uppercase">
+    <input type="text" name="code" value="{{ old('code', $coupon->code) }}" class="form-control @error('code') is-invalid @enderror" required dir="ltr" style="text-transform: uppercase">
     @error('code') <div class="invalid-feedback">{{ $message }}</div> @enderror
-    <div class="form-hint">أحرف إنجليزية كبيرة وأرقام وشرطة. يظهر للعميل كما هو.</div>
+    <div class="form-hint">أحرف إنجليزية وأرقام. يظهر للعميل كما هو.</div>
 </div>
 
 <div class="mb-3">
     <label class="form-label">عنوان داخلي</label>
-    <input type="text" name="title" value="{{ old('title', $coupon->title) }}" class="form-control @error('title') is-invalid @enderror" placeholder="خصم الترحيب 10٪">
+    <input type="text" name="title" value="{{ old('title', $coupon->title) }}" class="form-control @error('title') is-invalid @enderror">
     @error('title') <div class="invalid-feedback">{{ $message }}</div> @enderror
 </div>
 
@@ -39,12 +39,13 @@
         <label class="form-label">القيمة</label>
         <input type="number" step="0.01" min="0" name="value" value="{{ old('value', $coupon->value) }}" class="form-control @error('value') is-invalid @enderror">
         @error('value') <div class="invalid-feedback">{{ $message }}</div> @enderror
-        <div class="form-hint">٪ للنسبة أو {{ $strings::CURRENCY }} للمبلغ الثابت.</div>
+        <div class="form-hint">٪ للنسبة أو مبلغ بالريال.</div>
     </div>
     <div class="col-md-4 mb-3">
         <label class="form-label">سقف الخصم ({{ $strings::CURRENCY }})</label>
-        <input type="number" step="0.01" min="0" name="max_discount" value="{{ old('max_discount', $coupon->max_discount) }}" class="form-control @error('max_discount') is-invalid @enderror" placeholder="اختياري">
+        <input type="number" step="0.01" min="0" name="max_discount" value="{{ old('max_discount', $coupon->max_discount) }}" class="form-control @error('max_discount') is-invalid @enderror">
         @error('max_discount') <div class="invalid-feedback">{{ $message }}</div> @enderror
+        <div class="form-hint">اختياري. حد أعلى لخصم النسبة.</div>
     </div>
 </div>
 
@@ -55,7 +56,8 @@
     </div>
     <div class="col-md-4 mb-3">
         <label class="form-label">حد الاستخدام الكلي</label>
-        <input type="number" min="1" name="usage_limit" value="{{ old('usage_limit', $coupon->usage_limit) }}" class="form-control" placeholder="مفتوح">
+        <input type="number" min="1" name="usage_limit" value="{{ old('usage_limit', $coupon->usage_limit) }}" class="form-control">
+        <div class="form-hint">فارغ = بلا حد.</div>
     </div>
     <div class="col-md-4 mb-3">
         <label class="form-label">لكل عميل</label>
@@ -93,7 +95,7 @@
         @endforeach
     </select>
     @error('product_ids') <div class="invalid-feedback">{{ $message }}</div> @enderror
-    <div class="form-hint">اضغط Ctrl لاختيار أكثر من منتج.</div>
+    <div class="form-hint">Ctrl أو Cmd لاختيار أكثر من منتج.</div>
 </div>
 
 <div class="mb-3" id="categories_wrap">
@@ -104,7 +106,7 @@
         @endforeach
     </select>
     @error('category_ids') <div class="invalid-feedback">{{ $message }}</div> @enderror
-    <div class="form-hint">يشمل القسم والأقسام الفرعية التابعة له.</div>
+    <div class="form-hint">يشمل القسم وفروعه.</div>
 </div>
 
 <div class="row">

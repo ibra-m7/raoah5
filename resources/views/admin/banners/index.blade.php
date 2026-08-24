@@ -1,12 +1,9 @@
 <x-layouts.admin :title="$title">
     <x-admin.page-head
         :title="$title"
-        subtitle="شريط الإعلانات أعلى الصفحة الرئيسية في التطبيق"
         :create="route('admin.banners.create')"
         :create-label="$strings::ADD_BANNER"
     />
-
-    <x-admin.help-note>أضف صورة عريضة وعنواناً، ويمكن ربط الإعلان بمنتج أو قسم. يظهر في التطبيق فوراً بعد الحفظ.</x-admin.help-note>
 
     <form method="GET" class="d-flex flex-wrap gap-2 mb-3">
         <input type="text" name="q" value="{{ $filters['q'] ?? '' }}" class="form-control" style="max-width: 240px" placeholder="{{ $strings::SEARCH }}">

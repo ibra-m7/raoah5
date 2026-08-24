@@ -1,15 +1,10 @@
 <x-layouts.admin :title="$title">
     <x-admin.page-head
         :title="$title"
-        subtitle="موقع المتجر، أول طلب مجاني، وشرائح المسافة بالكيلومتر"
         create-modal="#deliveryRuleModal"
         :create-label="$strings::ADD_DELIVERY_RULE"
         data-delivery-rule-create
     />
-
-    <x-admin.help-note icon="bi-geo-alt">
-        حدّد موقع المتجر أولاً حتى يُحسب التوصيل من عنوان العميل. الشرائح النشطة تُطبَّق بالترتيب: أول مطابقة تفوز.
-    </x-admin.help-note>
 
     @if (! $settings['delivery_store_lat'] || ! $settings['delivery_store_lng'])
         <div class="alert alert-warning rounded-4">لم يُحدد موقع المتجر بعد. بدون الإحداثيات تُستخدم الرسوم الاحتياطية.</div>
@@ -36,7 +31,7 @@
             </div>
             <div class="mb-3">
                 <label class="form-label">عنوان المتجر</label>
-                <input type="text" name="delivery_store_address" value="{{ old('delivery_store_address', $settings['delivery_store_address']) }}" class="form-control @error('delivery_store_address') is-invalid @enderror" placeholder="مثال: حي النسيم، الرياض">
+                <input type="text" name="delivery_store_address" value="{{ old('delivery_store_address', $settings['delivery_store_address']) }}" class="form-control @error('delivery_store_address') is-invalid @enderror">
                 @error('delivery_store_address') <div class="invalid-feedback">{{ $message }}</div> @enderror
             </div>
             <div class="row">
@@ -57,25 +52,25 @@
                     <input type="text" id="delivery_coords_paste" class="form-control" dir="ltr" placeholder="24.7136, 46.6753">
                     <button type="button" class="btn btn-outline-success" id="delivery_coords_apply">تعبئة</button>
                 </div>
-                <div class="form-hint">انسخ الإحداثيات من خرائط جوجل والصقها هنا لتعبئة الموقع تلقائياً.</div>
             </div>
             <div class="row">
                 <div class="col-md-4 mb-3">
                     <label class="form-label">الحد الأقصى للتوصيل (كم)</label>
-                    <input type="number" step="0.1" min="0" name="delivery_max_km" value="{{ old('delivery_max_km', $settings['delivery_max_km']) }}" class="form-control @error('delivery_max_km') is-invalid @enderror" placeholder="اختياري">
+                    <input type="number" step="0.1" min="0" name="delivery_max_km" value="{{ old('delivery_max_km', $settings['delivery_max_km']) }}" class="form-control @error('delivery_max_km') is-invalid @enderror">
                     @error('delivery_max_km') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                    <div class="form-hint">فارغ أو 0 = بدون حد.</div>
                 </div>
                 <div class="col-md-4 mb-3">
                     <label class="form-label">رسوم احتياطية ({{ $strings::CURRENCY }})</label>
                     <input type="number" step="0.01" min="0" name="delivery_fallback_fee" value="{{ old('delivery_fallback_fee', $settings['delivery_fallback_fee']) }}" class="form-control @error('delivery_fallback_fee') is-invalid @enderror" required>
                     @error('delivery_fallback_fee') <div class="invalid-feedback">{{ $message }}</div> @enderror
-                    <div class="form-hint">تُستخدم إن تعذّر حساب المسافة.</div>
+                    <div class="form-hint">تُستخدم إذا تعذّر حساب المسافة.</div>
                 </div>
                 <div class="col-md-4 mb-3">
                     <label class="form-label">توصيل مجاني إذا بلغ الطلب ({{ $strings::CURRENCY }})</label>
                     <input type="number" step="0.01" min="0" name="free_shipping_threshold" value="{{ old('free_shipping_threshold', $settings['free_shipping_threshold']) }}" class="form-control @error('free_shipping_threshold') is-invalid @enderror">
                     @error('free_shipping_threshold') <div class="invalid-feedback">{{ $message }}</div> @enderror
-                    <div class="form-hint">ضع 0 لتعطيل هذا الشرط.</div>
+                    <div class="form-hint">0 لتعطيل الشرط.</div>
                 </div>
             </div>
             <button class="btn btn-brand">{{ $strings::SAVE }}</button>
@@ -264,7 +259,6 @@
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ $strings::CLOSE }}"></button>
                     </div>
                     <div class="modal-body">
-                        <x-admin.help-note>الشريحة النشطة تُحسب من موقع المتجر إلى عنوان العميل.</x-admin.help-note>
                         @include('admin.delivery._form', ['rule' => $modalRule])
                     </div>
                     <div class="modal-footer">
@@ -297,7 +291,6 @@
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ $strings::CLOSE }}"></button>
                     </div>
                     <div class="modal-body">
-                        <x-admin.help-note>العرض النشط الأعلى ترتيباً يُطبَّق أولاً بعد حساب المسافة.</x-admin.help-note>
                         @include('admin.delivery._perk-form', ['perk' => $modalPerk])
                     </div>
                     <div class="modal-footer">

@@ -1,7 +1,6 @@
 <x-layouts.admin :title="$title">
     <x-admin.page-head
         :title="$title"
-        subtitle="كل منتج تضيفه هنا يظهر في التطبيق حسب القسم والحالة"
         :create="route('admin.products.create')"
         :create-label="$strings::ADD_PRODUCT"
     />
@@ -15,7 +14,6 @@
             {{ $strings::IMPORT_PRODUCTS }}
         </a>
     </div>
-    <x-admin.help-note>ضع «سعر العرض» أقل من السعر الأصلي ليظهر المنتج تلقائياً في العروض والخصومات. للاستيراد الجماعي استخدم قالب Excel.</x-admin.help-note>
     @if (session('import_errors'))
         <div class="page-card p-3 mb-3 border border-danger-subtle">
             <div class="fw-bold text-danger mb-2">صفوف لم تُستورد</div>

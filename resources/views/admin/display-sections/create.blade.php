@@ -1,7 +1,6 @@
 <x-layouts.admin :title="$title">
     <div class="page-card p-4 p-md-5" style="max-width: 980px">
-        <x-admin.help-note>أقسام العرض تظهر في تبويب الأقسام داخل التطبيق (مثل المقاضي والمشروبات). اختر الأقسام الفرعية التي تريد تجميعها.</x-admin.help-note>
-        <form method="POST" action="{{ route('admin.display-sections.store') }}" class="mt-3">
+        <form method="POST" action="{{ route('admin.display-sections.store') }}">
             @csrf
             @include('admin.display-sections._form')
             <div class="d-flex gap-2">

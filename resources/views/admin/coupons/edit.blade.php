@@ -1,7 +1,6 @@
 <x-layouts.admin :title="$title">
     <div class="page-card p-4 p-md-5" style="max-width: 860px">
-        <x-admin.help-note>التعديل يظهر فوراً في التحقق التالي من الكوبون داخل التطبيق.</x-admin.help-note>
-        <form method="POST" action="{{ route('admin.coupons.update', $coupon) }}" class="mt-3">
+        <form method="POST" action="{{ route('admin.coupons.update', $coupon) }}">
             @csrf
             @method('PUT')
             @include('admin.coupons._form')

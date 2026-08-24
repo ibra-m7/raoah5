@@ -40,16 +40,40 @@ final class Media
             return null;
         }
 
-        if (str_starts_with($path, 'http://') || str_starts_with($path, 'https://')) {
+        if (str_starts_with($path, 'http://') || str_starts_with($path, 'https://') || str_starts_with($path, 'data:')) {
             return $path;
         }
 
-        $relative = 'storage/'.ltrim($path, '/');
-        if (app()->runningInConsole()) {
-            return asset($relative);
+        return self::absoluteUrl('storage/'.ltrim($path, '/'));
+    }
+
+    public static function absoluteUrl(string $path): string
+    {
+        $path = ltrim($path, '/');
+
+        if (! app()->runningInConsole()) {
+            $host = rtrim((string) request()->getSchemeAndHttpHost(), '/');
+            if ($host !== '') {
+                return $host.'/'.$path;
+            }
         }
 
-        return rtrim(request()->getSchemeAndHttpHost(), '/').'/'.$relative;
+        $appUrl = rtrim((string) config('app.url'), '/');
+
+        return ($appUrl !== '' ? $appUrl : '').'/'.$path;
+    }
+
+    public static function isMissingLocal(?string $path): bool
+    {
+        if ($path === null || $path === '') {
+            return true;
+        }
+
+        if (str_starts_with($path, 'http://') || str_starts_with($path, 'https://') || str_starts_with($path, 'data:')) {
+            return false;
+        }
+
+        return ! Storage::disk('public')->exists($path);
     }
 
     private static function isStored(?string $path): bool
@@ -58,6 +82,7 @@ final class Media
             && $path !== ''
             && ! str_starts_with($path, 'http://')
             && ! str_starts_with($path, 'https://')
+            && ! str_starts_with($path, 'data:')
             && Storage::disk('public')->exists($path);
     }
 }

@@ -37,6 +37,7 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::post('live/read', [AdminLiveController::class, 'markRead'])->name('live.read');
     Route::get('search', SearchController::class)->name('search');
 
+    Route::post('products/generate-copy', [ProductController::class, 'generateCopy'])->name('products.generate-copy');
     Route::get('products/import', [ProductController::class, 'importForm'])->name('products.import');
     Route::post('products/import', [ProductController::class, 'import'])->name('products.import.store');
     Route::get('products/import/template', [ProductController::class, 'template'])->name('products.import.template');

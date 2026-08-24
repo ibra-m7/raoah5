@@ -1,16 +1,12 @@
 <x-layouts.admin :title="$title">
     <div class="page-card p-4 p-md-5">
-        <x-admin.help-note>
-            ابحث واختر منتجات بلا خصم أو عرض، ثم حدّد السعر أو النسبة. يمكن تطبيقها على عدة منتجات دفعة واحدة.
-        </x-admin.help-note>
-
-        <form method="POST" action="{{ route('admin.offers.store') }}" class="mt-3" id="promo-form">
+        <form method="POST" action="{{ route('admin.offers.store') }}" id="promo-form">
             @csrf
             <input type="hidden" name="promo_type" value="{{ $type->value }}">
 
             <div class="promo-search-bar">
                 <i class="bi bi-search"></i>
-                <input type="search" id="promo-search" class="form-control" placeholder="ابحث بالاسم أو الرمز... المنتجات المخفّضة حالياً لن تظهر" autocomplete="off">
+                <input type="search" id="promo-search" class="form-control" placeholder="ابحث بالاسم أو الرمز..." autocomplete="off">
             </div>
             @error('product_ids') <div class="text-danger small mb-2">{{ $message }}</div> @enderror
 

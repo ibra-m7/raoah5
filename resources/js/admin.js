@@ -1410,3 +1410,111 @@ window.addEventListener("admin:content-ready", () => {
 syncSettingsScope();
 settingsPickerCount();
 
+const bindProductAiCopy = (root = document) => {
+    root.querySelectorAll("[data-product-ai-copy]").forEach((box) => {
+        if (!(box instanceof HTMLElement) || box.dataset.bound === "1") {
+            return;
+        }
+        box.dataset.bound = "1";
+
+        const form = box.closest("form");
+        const endpoint = box.dataset.endpoint;
+        const status = box.querySelector("[data-ai-status]");
+        const button = box.querySelector("[data-ai-generate]");
+        if (!form || !endpoint) {
+            return;
+        }
+
+        let timer = null;
+        let lastName = "";
+        let busy = false;
+
+        const field = (name) => form.querySelector(`[name="${name}"]`);
+        const aiField = (key) => box.querySelector(`[data-ai-field="${key}"]`);
+
+        const empty = (el) => !el || el.value.trim() === "";
+
+        const payload = () => ({
+            name: field("name")?.value.trim() || "",
+            category_id: field("category_id")?.value || "",
+            description: field("description")?.value || "",
+            weight_label: field("weight_label")?.value || "",
+            quantity_label: field("quantity_label")?.value || "",
+            piece_count: field("piece_count")?.value || "",
+        });
+
+        const setStatus = (text, show = true) => {
+            if (!(status instanceof HTMLElement)) {
+                return;
+            }
+            status.hidden = !show || !text;
+            status.textContent = text || "";
+        };
+
+        const generate = async (force = false) => {
+            const data = payload();
+            if (data.name.length < 3 || busy) {
+                return;
+            }
+
+            const benefits = aiField("benefits");
+            const keywords = aiField("keywords");
+            const usage = aiField("usage_instructions");
+            const targets = [];
+            if (force || empty(benefits)) targets.push(["benefits", benefits]);
+            if (force || empty(keywords)) targets.push(["keywords", keywords]);
+            if (force || empty(usage)) targets.push(["usage_instructions", usage]);
+            if (targets.length === 0) {
+                return;
+            }
+
+            busy = true;
+            box.classList.add("is-busy");
+            if (button instanceof HTMLButtonElement) {
+                button.disabled = true;
+            }
+            setStatus("جاري التوليد...");
+
+            try {
+                const { data: copy } = await window.axios.post(endpoint, data);
+                targets.forEach(([key, el]) => {
+                    if (el && typeof copy[key] === "string") {
+                        el.value = copy[key];
+                    }
+                });
+                setStatus("", false);
+            } catch (error) {
+                const message =
+                    error?.response?.data?.message || "تعذّر التوليد الآن.";
+                setStatus(message);
+            } finally {
+                busy = false;
+                box.classList.remove("is-busy");
+                if (button instanceof HTMLButtonElement) {
+                    button.disabled = false;
+                }
+            }
+        };
+
+        const schedule = () => {
+            const name = payload().name;
+            if (name.length < 3 || name === lastName) {
+                return;
+            }
+            lastName = name;
+            clearTimeout(timer);
+            timer = setTimeout(() => generate(false), 700);
+        };
+
+        field("name")?.addEventListener("blur", schedule);
+        field("category_id")?.addEventListener("change", () => {
+            lastName = "";
+            schedule();
+        });
+        button?.addEventListener("click", () => generate(true));
+    });
+};
+
+bindProductAiCopy();
+window.addEventListener("admin:content-ready", () => bindProductAiCopy());
+

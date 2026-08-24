@@ -1,12 +1,9 @@
 <x-layouts.admin :title="$title">
     <x-admin.page-head
         :title="$title"
-        subtitle="كوبونات احترافية: نسبة، مبلغ ثابت، أو توصيل مجاني — مع حد استخدام وتاريخ صلاحية"
         :create="route('admin.coupons.create')"
         :create-label="$strings::ADD_COUPON"
     />
-
-    <x-admin.help-note>الكوبون يُتحقق من السيرفر عند تفعيله في التطبيق وعند إنشاء الطلب، ولا يُحتسب إن لم تنطبق شروطه.</x-admin.help-note>
 
     <form method="GET" class="d-flex flex-wrap gap-2 mb-3">
         <input type="text" name="q" value="{{ $filters['q'] ?? '' }}" class="form-control" style="max-width: 240px" placeholder="ابحث بالكود أو العنوان">

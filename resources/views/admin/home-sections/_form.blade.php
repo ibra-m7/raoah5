@@ -1,25 +1,33 @@
 @php
     $section = $section ?? new \App\Models\HomeSection(['is_active' => true, 'sort_order' => 0]);
     $selected = old('product_ids', $selectedIds ?? []);
+    $style = old('display_style', $section->exists ? $section->displayStyle() : 'general');
+    $styles = \App\Models\HomeSection::displayStyles();
 @endphp
 
 <div class="row">
     <div class="col-md-8 mb-3">
-        <label class="form-label">العنوان</label>
+        <label class="form-label">اسم القسم</label>
         <input type="text" name="title" value="{{ old('title', $section->title) }}" class="form-control @error('title') is-invalid @enderror" required>
         @error('title') <div class="invalid-feedback">{{ $message }}</div> @enderror
     </div>
     <div class="col-md-4 mb-3">
-        <label class="form-label">المفتاح</label>
-        <input type="text" name="key" value="{{ old('key', $section->key) }}" class="form-control @error('key') is-invalid @enderror" placeholder="most_requested" dir="ltr">
-        @error('key') <div class="invalid-feedback">{{ $message }}</div> @enderror
-        <div class="form-hint">اختياري. أمثلة: most_requested ، fresh_groceries ، best_prices</div>
+        <label class="form-label">شكل العرض</label>
+        <select name="display_style" class="form-select @error('display_style') is-invalid @enderror @error('key') is-invalid @enderror">
+            @foreach ($styles as $value => $meta)
+                <option value="{{ $value }}" @selected($style === $value)>{{ $meta['label'] }}</option>
+            @endforeach
+        </select>
+        @error('display_style') <div class="invalid-feedback">{{ $message }}</div> @enderror
+        @error('key') <div class="invalid-feedback">هذا الشكل مستخدم في قسم آخر. اختر شكلاً مختلفاً أو قسماً عادياً.</div> @enderror
+        <div class="form-hint">يغيّر مظهر الشريط فقط.</div>
     </div>
 </div>
 
 <div class="mb-3">
     <label class="form-label">العنوان الفرعي</label>
     <input type="text" name="subtitle" value="{{ old('subtitle', $section->subtitle) }}" class="form-control">
+    <div class="form-hint">يظهر تحت الاسم في التطبيق.</div>
 </div>
 
 <div class="row">
@@ -36,7 +44,7 @@
 </div>
 
 <div class="mb-3">
-    <label class="form-label">منتجات هذا القسم</label>
+    <label class="form-label">المنتجات</label>
     <input type="search" class="form-control mb-2" placeholder="ابحث داخل المنتجات..." data-picker-search="#home-products">
     <div class="picker-grid" id="home-products">
         @foreach ($products as $product)

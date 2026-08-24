@@ -1,7 +1,7 @@
 <x-layouts.admin :title="$title">
     <x-admin.page-head
         :title="$title"
-        subtitle="تحكم باسم المساعد ورسالته وأسلوبه وعدد المنتجات التي يظهرها في التطبيق"
+        subtitle="اسم المساعد وأسلوب الرد"
     />
 
     <div class="d-flex flex-wrap gap-2 mb-3">
@@ -49,15 +49,14 @@
             <div class="mb-3">
                 <label class="form-label">تعليمات الأسلوب (System Prompt)</label>
                 <textarea name="system_prompt" rows="8" class="form-control @error('system_prompt') is-invalid @enderror" required maxlength="4000">{{ old('system_prompt', $settings['system_prompt']) }}</textarea>
-                <div class="form-text">يظهر للذكاء الاصطناعي فقط. التطبيق يعرض المنتجات الحقيقية من الكتالوج.</div>
                 @error('system_prompt') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                <div class="form-hint">للذكاء الاصطناعي فقط. لا يظهر للعميل.</div>
             </div>
 
             <div class="row">
                 <div class="col-md-6 mb-3">
                     <label class="form-label">أقصى عدد منتجات في الرد</label>
                     <input type="number" name="max_products" min="2" max="8" value="{{ old('max_products', $settings['max_products']) }}" class="form-control @error('max_products') is-invalid @enderror" required>
-                    <div class="form-text">تظهر في التطبيق كشبكة عمودين.</div>
                     @error('max_products') <div class="invalid-feedback">{{ $message }}</div> @enderror
                 </div>
                 <div class="col-md-6 mb-4">

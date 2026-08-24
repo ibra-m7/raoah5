@@ -1,12 +1,10 @@
 <x-layouts.admin :title="$title">
     <x-admin.page-head
         :title="$title"
-        subtitle="حدّد مكان ظهور الصفحة في التطبيق، واربط البنر بها من شاشة الإعلانات"
+        subtitle="صفحات داخلية يمكن ربطها من الإعلانات"
         :create="route('admin.dynamic-pages.create')"
         :create-label="$strings::ADD_DYNAMIC_PAGE"
     />
-
-    <x-admin.help-note>اربط البنر بهذه الصفحة من شاشة الإعلانات باختيار «صفحة ترويجية».</x-admin.help-note>
 
     <form method="GET" class="d-flex flex-wrap gap-2 mb-3">
         <input type="text" name="q" value="{{ $filters['q'] ?? '' }}" class="form-control" style="max-width: 240px" placeholder="{{ $strings::SEARCH }}">

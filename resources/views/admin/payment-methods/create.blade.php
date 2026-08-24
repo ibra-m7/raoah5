@@ -1,7 +1,6 @@
 <x-layouts.admin :title="$title">
     <div class="page-card p-4 p-md-5" style="max-width: 720px">
-        <x-admin.help-note>بعد الحفظ تظهر طريقة الدفع فوراً في تطبيق العميل إن كانت نشطة.</x-admin.help-note>
-        <form method="POST" action="{{ route('admin.payment-methods.store') }}" class="mt-3">
+        <form method="POST" action="{{ route('admin.payment-methods.store') }}">
             @csrf
             @include('admin.payment-methods._form')
             <div class="d-flex gap-2">

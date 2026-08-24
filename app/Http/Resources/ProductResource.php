@@ -17,11 +17,13 @@ class ProductResource extends JsonResource
             ? $this->primaryImage
             : $images->firstWhere('is_primary', true) ?? $images->first();
 
-        $urls = $images->map(fn ($image) => Media::url($image->url))->filter()->values();
-        $imageUrl = Media::url($primary?->url) ?? $urls->first();
-        if (! $imageUrl) {
-            $imageUrl = StoreSettings::fallbackProductImageUrl();
-        }
+        $urls = $images
+            ->reject(fn ($image) => Media::isMissingLocal($image->url))
+            ->map(fn ($image) => Media::url($image->url))
+            ->filter()
+            ->values();
+        $imageUrl = Media::isMissingLocal($primary?->url) ? null : Media::url($primary?->url);
+        $imageUrl = $imageUrl ?: $urls->first() ?: StoreSettings::fallbackProductImageUrl();
 
         return [
             'id' => (string) $this->id,

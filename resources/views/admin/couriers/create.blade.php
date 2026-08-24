@@ -1,7 +1,6 @@
 <x-layouts.admin :title="$title">
     <div class="page-card p-4 p-md-5" style="max-width: 640px">
-        <x-admin.help-note>بعد الحفظ يستطيع الموصل الدخول إلى تطبيق التوصيل برقم الجوال وكلمة المرور.</x-admin.help-note>
-        <form method="POST" action="{{ route('admin.couriers.store') }}" class="mt-3">
+        <form method="POST" action="{{ route('admin.couriers.store') }}">
             @csrf
             @include('admin.couriers._form')
             <div class="d-flex gap-2">

@@ -1,7 +1,6 @@
 <x-layouts.admin :title="$title">
     <x-admin.page-head
         :title="$title"
-        subtitle="أرسل عروضاً فورية لكل العملاء، وتابع تنبيهات الطلبات التي تصل للتطبيق"
     />
 
     <div class="d-flex flex-wrap gap-2 mb-3">
@@ -15,17 +14,16 @@
 
     <div class="page-card p-4 p-md-5 mb-4" style="max-width: 820px">
         <h2 class="h5 mb-3">إشعار فوري لكل العملاء</h2>
-        <p class="text-muted mb-4">يصل للعملاء الذين فعّلوا الإشعارات في التطبيق، ويُحفظ في صندوق إشعاراتهم.</p>
         <form method="POST" action="{{ route('admin.notifications.store') }}">
             @csrf
             <div class="mb-3">
                 <label class="form-label">العنوان</label>
-                <input type="text" name="title" value="{{ old('title') }}" class="form-control @error('title') is-invalid @enderror" maxlength="80" required placeholder="اليوم تخفيضات وعروض">
+                <input type="text" name="title" value="{{ old('title') }}" class="form-control @error('title') is-invalid @enderror" maxlength="80" required>
                 @error('title') <div class="invalid-feedback">{{ $message }}</div> @enderror
             </div>
             <div class="mb-3">
                 <label class="form-label">نص الرسالة</label>
-                <textarea name="body" rows="4" class="form-control @error('body') is-invalid @enderror" maxlength="500" required placeholder="خصومات على المنظفات اليوم فقط داخل التطبيق">{{ old('body') }}</textarea>
+                <textarea name="body" rows="4" class="form-control @error('body') is-invalid @enderror" maxlength="500" required>{{ old('body') }}</textarea>
                 @error('body') <div class="invalid-feedback">{{ $message }}</div> @enderror
             </div>
             <div class="mb-4">

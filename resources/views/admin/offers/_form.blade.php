@@ -29,7 +29,7 @@
         <label class="form-label">سعر العرض</label>
         <input type="number" step="0.01" min="0.01" name="discount_price" value="{{ old('discount_price', $product->discount_price) }}" class="form-control @error('discount_price') is-invalid @enderror" required>
         @error('discount_price') <div class="invalid-feedback">{{ $message }}</div> @enderror
-        <div class="form-hint">يجب أن يكون أقل من السعر الأصلي حتى يظهر في العروض.</div>
+        <div class="form-hint">يجب أن يكون أقل من السعر الأصلي.</div>
     </div>
     <div class="col-md-6 mb-3 d-flex align-items-end">
         <div class="form-check mb-2">

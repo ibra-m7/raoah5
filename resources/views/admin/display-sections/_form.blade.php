@@ -13,6 +13,7 @@
         <label class="form-label">المعرف</label>
         <input type="text" name="slug" value="{{ old('slug', $section->slug) }}" class="form-control @error('slug') is-invalid @enderror" placeholder="groceries" dir="ltr">
         @error('slug') <div class="invalid-feedback">{{ $message }}</div> @enderror
+        <div class="form-hint">إنجليزي صغير بدون مسافات.</div>
     </div>
     <div class="col-md-3 mb-3">
         <label class="form-label">إيموجي</label>

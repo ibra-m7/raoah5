@@ -58,8 +58,13 @@ class HomeSectionService
 
     private function payload(array $data, ?HomeSection $section = null): array
     {
-        $key = trim((string) ($data['key'] ?? ''));
-        if ($key === '') {
+        $style = (string) ($data['display_style'] ?? 'general');
+        $known = ['best_prices', 'most_requested', 'fresh_groceries'];
+        if (in_array($style, $known, true)) {
+            $key = $style;
+        } elseif ($section && $section->displayStyle() === 'general') {
+            $key = $section->key ?: Slug::unique($data['title'], 'home_sections', 'key', $section->id);
+        } else {
             $key = Slug::unique($data['title'], 'home_sections', 'key', $section?->id);
         }
 

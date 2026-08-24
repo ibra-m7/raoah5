@@ -1,7 +1,6 @@
 <x-layouts.admin :title="$title">
     <div class="page-card p-4 p-md-5" style="max-width: 860px">
-        <x-admin.help-note>بعد الحفظ يمكن للعميل إدخال الكود في صفحة الطلب. التحقق يتم على السيرفر وليس في التطبيق فقط.</x-admin.help-note>
-        <form method="POST" action="{{ route('admin.coupons.store') }}" class="mt-3">
+        <form method="POST" action="{{ route('admin.coupons.store') }}">
             @csrf
             @include('admin.coupons._form')
             <div class="d-flex gap-2">

@@ -25,7 +25,7 @@
         <input type="file" name="banner_image" accept="image/*" class="form-control @error('banner_image') is-invalid @enderror" data-image-preview="#page-banner-preview">
         @error('banner_image') <div class="invalid-feedback">{{ $message }}</div> @enderror
         <img id="page-banner-preview" src="{{ $bannerSrc }}" alt="" class="upload-preview mt-2" style="width: 100%; max-width: 360px; height: 140px" @if(! $bannerSrc) hidden @endif>
-        <input type="url" name="banner_image_url" value="{{ old('banner_image_url', str_starts_with((string) $page->banner_image_url, 'http') ? $page->banner_image_url : '') }}" class="form-control mt-2 @error('banner_image_url') is-invalid @enderror" placeholder="أو رابط صورة https://...">
+        <input type="url" name="banner_image_url" value="{{ old('banner_image_url', str_starts_with((string) $page->banner_image_url, 'http') ? $page->banner_image_url : '') }}" class="form-control mt-2 @error('banner_image_url') is-invalid @enderror">
         @error('banner_image_url') <div class="invalid-feedback">{{ $message }}</div> @enderror
     </div>
     <div class="col-md-6 mb-3">
@@ -33,7 +33,7 @@
         <input type="file" name="appbar_image" accept="image/*" class="form-control @error('appbar_image') is-invalid @enderror" data-image-preview="#page-appbar-preview">
         @error('appbar_image') <div class="invalid-feedback">{{ $message }}</div> @enderror
         <img id="page-appbar-preview" src="{{ $appbarSrc }}" alt="" class="upload-preview mt-2" style="width: 100%; max-width: 360px; height: 140px" @if(! $appbarSrc) hidden @endif>
-        <input type="url" name="appbar_image_url" value="{{ old('appbar_image_url', str_starts_with((string) $page->appbar_image_url, 'http') ? $page->appbar_image_url : '') }}" class="form-control mt-2 @error('appbar_image_url') is-invalid @enderror" placeholder="أو رابط صورة https://...">
+        <input type="url" name="appbar_image_url" value="{{ old('appbar_image_url', str_starts_with((string) $page->appbar_image_url, 'http') ? $page->appbar_image_url : '') }}" class="form-control mt-2 @error('appbar_image_url') is-invalid @enderror">
         @error('appbar_image_url') <div class="invalid-feedback">{{ $message }}</div> @enderror
     </div>
 </div>
@@ -46,7 +46,7 @@
         @endforeach
     </select>
     @error('placement') <div class="invalid-feedback">{{ $message }}</div> @enderror
-    <div class="form-hint">العنوان أعلاه يظهر في القسم داخل التطبيق، والسهم يفتح هذه الصفحة بالكامل.</div>
+    <div class="form-hint">يحدد أين يظهر عنوان الصفحة في التطبيق.</div>
 </div>
 
 <div class="row">

@@ -4,6 +4,8 @@ namespace App\Services\Admin;
 
 use App\Enums\PromoType;
 use App\Models\Product;
+use App\Jobs\RefreshProductRecommendations;
+use App\Services\Ai\ProductCopyGenerator;
 use App\Support\Constants;
 use App\Support\Media;
 use App\Support\Slug;
@@ -11,6 +13,7 @@ use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
+use Throwable;
 
 class ProductService
 {
@@ -47,11 +50,13 @@ class ProductService
 
         $data['sku'] = $this->sku($data['sku'] ?? null);
         $data['slug'] = Slug::unique($data['name'], 'products');
+        $data = $this->fillGeneratedCopy($data);
         $data = $this->normalize($data);
 
         $product = Product::query()->create($data);
         $this->syncPrimaryImage($product, $image, $imageUrl);
         $this->syncGallery($product, $gallery, $galleryUrls);
+        RefreshProductRecommendations::dispatch($product->id)->afterResponse();
 
         return $product;
     }
@@ -67,12 +72,14 @@ class ProductService
 
         $data['sku'] = $this->sku($data['sku'] ?? $product->sku, $product->id);
         $data['slug'] = Slug::unique($data['name'], 'products', 'slug', $product->id);
+        $data = $this->fillGeneratedCopy($data);
         $data = $this->normalize($data);
 
         $product->update($data);
         $this->deleteGalleryImages($product, $deleteIds);
         $this->syncPrimaryImage($product, $image, $imageUrl ?: $product->primaryImage?->url);
         $this->syncGallery($product, $gallery, $galleryUrls);
+        RefreshProductRecommendations::dispatch($product->id)->afterResponse();
 
         return $product;
     }
@@ -92,6 +99,46 @@ class ProductService
         $product->delete();
     }
 
+    /**
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    private function fillGeneratedCopy(array $data): array
+    {
+        $needsBenefits = $this->lines($data['benefits'] ?? []) === [];
+        $needsKeywords = $this->csv($data['keywords'] ?? []) === [];
+        $needsUsage = trim((string) ($data['usage_instructions'] ?? '')) === '';
+
+        if (! $needsBenefits && ! $needsKeywords && ! $needsUsage) {
+            return $data;
+        }
+
+        try {
+            $copy = app(ProductCopyGenerator::class)->generate([
+                'name' => $data['name'] ?? '',
+                'category_id' => $data['category_id'] ?? null,
+                'description' => $data['description'] ?? null,
+                'weight_label' => $data['weight_label'] ?? null,
+                'quantity_label' => $data['quantity_label'] ?? null,
+                'piece_count' => $data['piece_count'] ?? null,
+            ]);
+        } catch (Throwable) {
+            return $data;
+        }
+
+        if ($needsBenefits) {
+            $data['benefits'] = implode("\n", $copy['benefits']);
+        }
+        if ($needsKeywords) {
+            $data['keywords'] = implode(', ', $copy['keywords']);
+        }
+        if ($needsUsage) {
+            $data['usage_instructions'] = $copy['usage_instructions'];
+        }
+
+        return $data;
+    }
+
     private function normalize(array $data): array
     {
         $data['sort_order'] = (int) ($data['sort_order'] ?? 0);
@@ -103,8 +150,9 @@ class ProductService
         $data['quantity_label'] = trim((string) ($data['quantity_label'] ?? '')) ?: null;
         $data['is_active'] = (bool) ($data['is_active'] ?? false);
         $data['is_featured'] = (bool) ($data['is_featured'] ?? false);
-        $data['discount_price'] = $data['discount_price'] !== null && $data['discount_price'] !== ''
-            ? $data['discount_price']
+        $discount = $data['discount_price'] ?? null;
+        $data['discount_price'] = $discount !== null && $discount !== '' && (float) $discount > 0
+            ? $discount
             : null;
         if ($data['discount_price'] === null) {
             $data['promo_type'] = null;

@@ -84,12 +84,22 @@ final class StoreSettings
         return in_array($productId, $ids, true) ? $count : 0;
     }
 
-    /**
-     * @return array<string, mixed>
-     */
     public static function fallbackProductImageUrl(): string
     {
-        return Media::url((string) Setting::getValue(Constants::SETTING_FALLBACK_PRODUCT_IMAGE, '')) ?? '';
+        $value = trim((string) Setting::getValue(Constants::SETTING_FALLBACK_PRODUCT_IMAGE, ''));
+        if ($value === '') {
+            return '';
+        }
+
+        if (str_starts_with($value, 'http://') || str_starts_with($value, 'https://')) {
+            return $value;
+        }
+
+        if (! str_starts_with($value, 'data:') && Media::isMissingLocal($value)) {
+            return '';
+        }
+
+        return Media::absoluteUrl('media/fallback-product').'?v='.substr(sha1($value), 0, 10);
     }
 
     public static function payload(): array

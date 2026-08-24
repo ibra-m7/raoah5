@@ -1,12 +1,9 @@
 <x-layouts.admin :title="$title">
     <x-admin.page-head
         :title="$title"
-        subtitle="التحكم بطرق الدفع الظاهرة في تطبيق السلة والفاتورة"
         :create="route('admin.payment-methods.create')"
         :create-label="$strings::ADD_PAYMENT_METHOD"
     />
-
-    <x-admin.help-note>الطرق النشطة فقط تظهر للعميل في التطبيق. يمكنك إخفاء طريقة دون حذفها.</x-admin.help-note>
 
     <form method="GET" class="d-flex flex-wrap gap-2 mb-3">
         <input type="text" name="q" value="{{ $filters['q'] ?? '' }}" class="form-control" style="max-width: 240px" placeholder="{{ $strings::SEARCH }}">

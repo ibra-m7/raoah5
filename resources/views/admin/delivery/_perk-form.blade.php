@@ -7,7 +7,7 @@
 
 <div class="mb-3">
     <label class="form-label">اسم العرض</label>
-    <input type="text" name="name" value="{{ $useOld ? old('name', $perk->name ?? '') : ($perk->name ?? '') }}" class="form-control {{ $useOld && $errors->has('name') ? 'is-invalid' : '' }}" required placeholder="مثال: بعد 4 طلبات — توصيل مجاني">
+    <input type="text" name="name" value="{{ $useOld ? old('name', $perk->name ?? '') : ($perk->name ?? '') }}" class="form-control {{ $useOld && $errors->has('name') ? 'is-invalid' : '' }}" required>
     @if ($useOld)
         @error('name') <div class="invalid-feedback">{{ $message }}</div> @enderror
     @endif
@@ -31,7 +31,7 @@
         @if ($useOld)
             @error('min_orders') <div class="invalid-feedback">{{ $message }}</div> @enderror
         @endif
-        <div class="form-hint">بعد إكمال هذا العدد يُطبَّق الخصم. أو كل هذا العدد إذا اخترت «كل عدد معيّن».</div>
+        <div class="form-hint">حسب شرط التفعيل المختار أعلاه.</div>
     </div>
 </div>
 
@@ -51,9 +51,9 @@
     <label class="form-label">قيمة الخصم</label>
     <input type="number" step="0.01" min="0" name="reward_value" value="{{ $useOld ? old('reward_value', $perk->reward_value ?? 0) : ($perk->reward_value ?? 0) }}" class="form-control {{ $useOld && $errors->has('reward_value') ? 'is-invalid' : '' }}">
     @if ($useOld)
-        @error('reward_value') <div class="invalid-feedback">{{ $message }}</div> @enderror
+            @error('reward_value') <div class="invalid-feedback">{{ $message }}</div> @enderror
     @endif
-    <div class="form-hint">للنسبة: رقم من 0 إلى 100. للمبلغ: القيمة بالريال تُخصم من رسوم التوصيل.</div>
+    <div class="form-hint">للنسبة: 0–100. للمبلغ: قيمة بالريال تُخصم من التوصيل.</div>
 </div>
 
 <div class="row">

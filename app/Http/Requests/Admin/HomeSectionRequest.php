@@ -19,11 +19,11 @@ class HomeSectionRequest extends FormRequest
         return [
             'title' => ['required', 'string', 'max:255'],
             'subtitle' => ['nullable', 'string', 'max:255'],
+            'display_style' => ['required', 'in:best_prices,most_requested,fresh_groceries,general'],
             'key' => [
                 'nullable',
                 'string',
                 'max:64',
-                'regex:/^[a-z0-9_\-]+$/',
                 Rule::unique('home_sections', 'key')->ignore($section),
             ],
             'product_ids' => ['nullable', 'array'],
@@ -36,9 +36,10 @@ class HomeSectionRequest extends FormRequest
     public function attributes(): array
     {
         return [
-            'title' => 'العنوان',
+            'title' => 'الاسم التجاري',
             'subtitle' => 'العنوان الفرعي',
-            'key' => 'المفتاح',
+            'display_style' => 'شكل العرض',
+            'key' => 'شكل العرض',
             'product_ids' => 'المنتجات',
         ];
     }
@@ -47,7 +48,10 @@ class HomeSectionRequest extends FormRequest
     {
         $this->merge([
             'is_active' => $this->boolean('is_active'),
-            'key' => $this->input('key') ?: null,
+            'display_style' => $this->input('display_style') ?: 'general',
+            'key' => $this->input('display_style') === 'general'
+                ? null
+                : $this->input('display_style'),
             'subtitle' => $this->input('subtitle') ?: null,
             'product_ids' => array_values(array_filter((array) $this->input('product_ids', []))),
         ]);

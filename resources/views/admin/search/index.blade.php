@@ -61,7 +61,7 @@
                     @forelse ($homeSections as $section)
                         <a href="{{ route('admin.home-sections.edit', $section) }}" class="d-flex justify-content-between text-decoration-none text-reset py-2 border-bottom">
                             <span class="fw-bold">{{ $section->title }}</span>
-                            <span class="text-muted">{{ $section->key }}</span>
+                            <span class="text-muted">{{ $section->styleLabel() }}</span>
                         </a>
                     @empty
                         <div class="text-muted">لا نتائج</div>

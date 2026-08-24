@@ -3,16 +3,21 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\ProductCopyRequest;
 use App\Http\Requests\Admin\ProductImportRequest;
 use App\Http\Requests\Admin\ProductRequest;
 use App\Models\Product;
 use App\Services\Admin\ProductImportService;
 use App\Services\Admin\ProductService;
+use App\Services\Ai\ProductCopyGenerator;
 use App\Support\AppStrings;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\View\View;
+use RuntimeException;
 
 class ProductController extends Controller
 {
@@ -39,6 +44,32 @@ class ProductController extends Controller
             'title' => AppStrings::ADD_PRODUCT,
             'categories' => $this->products->productFormCategoryOptions(),
             'product' => new Product(['is_active' => true, 'stock' => 0, 'sort_order' => 0]),
+        ]);
+    }
+
+    public function generateCopy(ProductCopyRequest $request, ProductCopyGenerator $generator): JsonResponse
+    {
+        try {
+            $copy = $generator->generate($request->validated());
+        } catch (RuntimeException $e) {
+            $reason = $e->getMessage();
+            Log::warning('product.copy.failed', ['reason' => mb_substr($reason, 0, 180)]);
+
+            $status = $reason === 'missing_name' ? 422 : 502;
+            $message = match ($reason) {
+                'missing_key' => 'مفتاح الذكاء الاصطناعي غير جاهز.',
+                'missing_name' => 'أدخل اسم المنتج أولاً.',
+                'connection' => 'تعذّر الاتصال بخدمة الذكاء الاصطناعي.',
+                default => 'تعذّر التوليد الآن. حاول مرة أخرى.',
+            };
+
+            return response()->json(['message' => $message], $status);
+        }
+
+        return response()->json([
+            'benefits' => implode("\n", $copy['benefits']),
+            'keywords' => implode(', ', $copy['keywords']),
+            'usage_instructions' => $copy['usage_instructions'],
         ]);
     }
 

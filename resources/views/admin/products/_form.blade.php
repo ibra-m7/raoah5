@@ -14,8 +14,9 @@
     </div>
     <div class="col-md-4 mb-3">
         <label class="form-label">رمز المنتج</label>
-        <input type="text" name="sku" value="{{ old('sku', $product->sku) }}" class="form-control @error('sku') is-invalid @enderror" placeholder="يُولَّد تلقائياً">
+        <input type="text" name="sku" value="{{ old('sku', $product->sku) }}" class="form-control @error('sku') is-invalid @enderror">
         @error('sku') <div class="invalid-feedback">{{ $message }}</div> @enderror
+        <div class="form-hint">يُولَّد تلقائياً إذا تُرك فارغاً.</div>
     </div>
 </div>
 
@@ -48,7 +49,7 @@
         <label class="form-label">سعر العرض</label>
         <input type="number" step="0.01" min="0" name="discount_price" value="{{ old('discount_price', $product->discount_price) }}" class="form-control @error('discount_price') is-invalid @enderror">
         @error('discount_price') <div class="invalid-feedback">{{ $message }}</div> @enderror
-        <div class="form-hint">إذا كان أقل من السعر الأصلي يظهر المنتج في العروض داخل التطبيق.</div>
+        <div class="form-hint">فارغ أو 0 = السعر الأصلي بدون خصم.</div>
     </div>
     <div class="col-md-4 mb-3">
         <label class="form-label">المخزون</label>
@@ -60,21 +61,20 @@
 <div class="row">
     <div class="col-md-4 mb-3">
         <label class="form-label">عدد الحبات في العبوة الواحدة</label>
-        <input type="number" min="1" name="piece_count" value="{{ old('piece_count', $product->piece_count) }}" class="form-control @error('piece_count') is-invalid @enderror" placeholder="مثال: 4">
+        <input type="number" min="1" name="piece_count" value="{{ old('piece_count', $product->piece_count) }}" class="form-control @error('piece_count') is-invalid @enderror">
         @error('piece_count') <div class="invalid-feedback">{{ $message }}</div> @enderror
-        <div class="form-hint">السعر والمخزون للعبوة كاملة. مثال: تونة تُباع كعبوة واحدة فيها 4 حبات — يظهر في التطبيق «4 حبات».</div>
+        <div class="form-hint">يظهر للعميل إذا كان أكبر من 1.</div>
     </div>
     <div class="col-md-4 mb-3">
         <label class="form-label">الوزن</label>
-        <input type="text" name="weight_label" value="{{ old('weight_label', $product->weight_label) }}" class="form-control @error('weight_label') is-invalid @enderror" placeholder="مثال: 10 كجم">
+        <input type="text" name="weight_label" value="{{ old('weight_label', $product->weight_label) }}" class="form-control @error('weight_label') is-invalid @enderror">
         @error('weight_label') <div class="invalid-feedback">{{ $message }}</div> @enderror
-        <div class="form-hint">اكتب الوزن مع الوحدة كما سيراه العميل.</div>
     </div>
     <div class="col-md-4 mb-3">
         <label class="form-label">وصف الكمية الظاهر</label>
-        <input type="text" name="quantity_label" value="{{ old('quantity_label', $product->quantity_label) }}" class="form-control @error('quantity_label') is-invalid @enderror" placeholder="مثال: 5 × 80 جم">
+        <input type="text" name="quantity_label" value="{{ old('quantity_label', $product->quantity_label) }}" class="form-control @error('quantity_label') is-invalid @enderror">
         @error('quantity_label') <div class="invalid-feedback">{{ $message }}</div> @enderror
-        <div class="form-hint">اختياري. نص مخصص للعرض مثل: 4 حبات × 80 جم. إن تركته فارغاً يُولَّد من عدد الحبات والوزن.</div>
+        <div class="form-hint">اختياري. يُولَّد من الحبات والوزن إن تُرك فارغاً.</div>
     </div>
 </div>
 
@@ -97,9 +97,9 @@
     <input type="file" name="gallery[]" accept="image/*" multiple class="form-control @error('gallery') is-invalid @enderror">
     @error('gallery') <div class="invalid-feedback">{{ $message }}</div> @enderror
     @error('gallery.*') <div class="invalid-feedback d-block">{{ $message }}</div> @enderror
-    <textarea name="gallery_urls" rows="2" class="form-control mt-2 @error('gallery_urls') is-invalid @enderror" placeholder="أو روابط صور إضافية، سطر لكل رابط">{{ old('gallery_urls') }}</textarea>
+    <textarea name="gallery_urls" rows="2" class="form-control mt-2 @error('gallery_urls') is-invalid @enderror">{{ old('gallery_urls') }}</textarea>
     @error('gallery_urls') <div class="invalid-feedback">{{ $message }}</div> @enderror
-    <div class="form-hint">يمكن إضافة أكثر من صورة للمنتج. تظهر في صفحة التفاصيل داخل التطبيق.</div>
+    <div class="form-hint">رابط واحد في كل سطر.</div>
     @if ($product->relationLoaded('images') && $product->images->where('is_primary', false)->isNotEmpty())
         <div class="d-flex flex-wrap gap-3 mt-3">
             @foreach ($product->images->where('is_primary', false) as $extra)
@@ -116,22 +116,33 @@
     @endif
 </div>
 
-<div class="mb-3">
-    <label class="form-label">الفوائد (سطر لكل فائدة)</label>
-    <textarea name="benefits" rows="4" class="form-control @error('benefits') is-invalid @enderror">{{ $benefits }}</textarea>
-    @error('benefits') <div class="invalid-feedback">{{ $message }}</div> @enderror
-</div>
+<div class="product-ai-copy" data-product-ai-copy data-endpoint="{{ route('admin.products.generate-copy') }}">
+    <div class="d-flex align-items-center justify-content-between gap-2 mb-2">
+        <span class="product-ai-copy-status text-muted small" data-ai-status hidden></span>
+        <button type="button" class="btn btn-sm btn-outline-success rounded-pill" data-ai-generate>
+            <i class="bi bi-stars ms-1"></i>
+            توليد
+        </button>
+    </div>
+    <div class="mb-3">
+        <label class="form-label">الفوائد</label>
+        <textarea name="benefits" rows="4" class="form-control @error('benefits') is-invalid @enderror" data-ai-field="benefits">{{ $benefits }}</textarea>
+        @error('benefits') <div class="invalid-feedback">{{ $message }}</div> @enderror
+        <div class="form-hint">سطر لكل فائدة. يمكن توليدها تلقائياً.</div>
+    </div>
 
-<div class="mb-3">
-    <label class="form-label">كلمات البحث (مفصولة بفاصلة)</label>
-    <input type="text" name="keywords" value="{{ $keywords }}" class="form-control @error('keywords') is-invalid @enderror">
-    @error('keywords') <div class="invalid-feedback">{{ $message }}</div> @enderror
-</div>
+    <div class="mb-3">
+        <label class="form-label">كلمات البحث</label>
+        <input type="text" name="keywords" value="{{ $keywords }}" class="form-control @error('keywords') is-invalid @enderror" data-ai-field="keywords">
+        @error('keywords') <div class="invalid-feedback">{{ $message }}</div> @enderror
+        <div class="form-hint">افصل الكلمات بفاصلة.</div>
+    </div>
 
-<div class="mb-3">
-    <label class="form-label">طريقة الاستخدام</label>
-    <textarea name="usage_instructions" rows="3" class="form-control @error('usage_instructions') is-invalid @enderror">{{ old('usage_instructions', $product->usage_instructions) }}</textarea>
-    @error('usage_instructions') <div class="invalid-feedback">{{ $message }}</div> @enderror
+    <div class="mb-3">
+        <label class="form-label">طريقة الاستخدام</label>
+        <textarea name="usage_instructions" rows="3" class="form-control @error('usage_instructions') is-invalid @enderror" data-ai-field="usage_instructions">{{ old('usage_instructions', $product->usage_instructions) }}</textarea>
+        @error('usage_instructions') <div class="invalid-feedback">{{ $message }}</div> @enderror
+    </div>
 </div>
 
 <div class="row">

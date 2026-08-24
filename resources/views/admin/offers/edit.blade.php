@@ -1,7 +1,6 @@
 <x-layouts.admin :title="$title">
     <div class="page-card p-4 p-md-5" style="max-width: 720px">
-        <x-admin.help-note>تغيير السعر يظهر في التطبيق فوراً. الإلغاء يعيد السعر الأصلي دون حذف المنتج.</x-admin.help-note>
-        <form method="POST" action="{{ route('admin.offers.update', $product) }}" class="mt-3" id="promo-edit-form">
+        <form method="POST" action="{{ route('admin.offers.update', $product) }}" id="promo-edit-form">
             @csrf
             @method('PUT')
             <input type="hidden" name="product_id" value="{{ $product->id }}">

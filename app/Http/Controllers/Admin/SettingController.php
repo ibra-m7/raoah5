@@ -65,7 +65,7 @@ class SettingController extends Controller
                 'marketing_sold_scope' => ['required', 'in:all,selected'],
                 'marketing_sold_product_ids' => ['nullable', 'array'],
                 'marketing_sold_product_ids.*' => ['integer', 'exists:products,id'],
-                'fallback_product_image' => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp,gif', 'max:4096'],
+                'fallback_product_image' => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp,gif', 'max:8192'],
                 'fallback_product_image_url' => ['nullable', 'url', 'max:2048'],
             ]);
         } catch (ValidationException $e) {
@@ -88,11 +88,18 @@ class SettingController extends Controller
         $currentFallback = (string) Setting::getValue(Constants::SETTING_FALLBACK_PRODUCT_IMAGE, '');
         $uploaded = $request->file('fallback_product_image');
         $fallbackUrl = trim((string) ($data['fallback_product_image_url'] ?? ''));
-        if ($uploaded) {
-            Setting::setValue(
-                Constants::SETTING_FALLBACK_PRODUCT_IMAGE,
-                Media::store($uploaded, 'settings', $currentFallback)
-            );
+        if ($uploaded && $uploaded->isValid()) {
+            $oldPath = ! str_starts_with($currentFallback, 'http') && ! str_starts_with($currentFallback, 'data:')
+                ? $currentFallback
+                : null;
+            $path = Media::store($uploaded, 'settings', $oldPath);
+            if (! $path) {
+                throw ValidationException::withMessages([
+                    'fallback_product_image' => 'تعذّر حفظ الصورة المرفوعة.',
+                ])->redirectTo(route('admin.settings.index', ['tab' => $tab]));
+            }
+
+            Setting::setValue(Constants::SETTING_FALLBACK_PRODUCT_IMAGE, $path);
         } elseif ($fallbackUrl !== '') {
             if ($currentFallback && $fallbackUrl !== $currentFallback) {
                 Media::delete($currentFallback);

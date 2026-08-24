@@ -34,7 +34,7 @@
         <label class="form-label">أو رابط صورة</label>
         <input type="url" name="image_url" value="{{ old('image_url', str_starts_with((string) $banner->image_url, 'http') ? $banner->image_url : '') }}" class="form-control @error('image_url') is-invalid @enderror" placeholder="https://...">
         @error('image_url') <div class="invalid-feedback">{{ $message }}</div> @enderror
-        <div class="form-hint">يفضّل صورة عريضة تظهر في شريط الرئيسية.</div>
+        <div class="form-hint">يُفضَّل صورة عريضة لشريط الرئيسية.</div>
     </div>
 </div>
 

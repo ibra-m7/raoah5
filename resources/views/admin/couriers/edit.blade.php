@@ -36,7 +36,7 @@
                 </div>
                 <div class="col-md-5">
                     <label class="form-label">ملاحظة</label>
-                    <input type="text" name="note" value="{{ old('note') }}" class="form-control" placeholder="مثال: تسديد كاش في المتجر">
+                    <input type="text" name="note" value="{{ old('note') }}" class="form-control">
                 </div>
                 <div class="col-md-3">
                     <button class="btn btn-brand w-100">تسديد</button>
@@ -46,8 +46,7 @@
             <p class="text-muted">لا توجد مديونية حالية على هذا الموصل.</p>
         @endif
 
-        <x-admin.help-note>التسديد يظهر فوراً في تطبيق الموصل ويخفض خانة «عليه».</x-admin.help-note>
-        <form method="POST" action="{{ route('admin.couriers.update', $courier) }}" class="mt-3">
+        <form method="POST" action="{{ route('admin.couriers.update', $courier) }}">
             @csrf
             @method('PUT')
             @include('admin.couriers._form')

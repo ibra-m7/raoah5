@@ -1,12 +1,9 @@
 <x-layouts.admin :title="$title">
     <x-admin.page-head
         :title="$title"
-        subtitle="حسابات الموصلين: التحصيل، المديونية، وكشف الحساب"
         :create="route('admin.couriers.create')"
         :create-label="$strings::ADD_COURIER"
     />
-
-    <x-admin.help-note>الطلب يظهر للموصل المتاح فور إنشائه. قبول الطلب = جاري التحضير، استلام الطلب = في الطريق إليك، تم التوصيل = تم التسليم ويُضاف التحصيل النقدي لحسابه.</x-admin.help-note>
 
     <form method="GET" class="d-flex flex-wrap gap-2 mb-3">
         <input type="text" name="q" value="{{ $filters['q'] ?? '' }}" class="form-control" style="max-width: 240px" placeholder="ابحث بالاسم أو الجوال">

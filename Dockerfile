@@ -261,7 +261,8 @@ EXPOSE 80
 # =========================================================
 # 14. Start Laravel + Apache
 # =========================================================
-CMD php artisan config:clear && \
+CMD php artisan storage:link --force && \
+    php artisan config:clear && \
     php artisan config:cache && \
     php artisan route:cache && \
     php artisan view:cache && \

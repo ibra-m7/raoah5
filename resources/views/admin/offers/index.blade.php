@@ -1,7 +1,6 @@
 <x-layouts.admin :title="$title">
     <x-admin.page-head
         :title="$title"
-        :subtitle="$type === \App\Enums\PromoType::Offer ? 'عروض سعرية تظهر في التطبيق' : 'خصومات المنتجات في التطبيق'"
         :create="route('admin.offers.create', ['type' => $type->value])"
         :create-label="$type->addLabel()"
     />
@@ -15,10 +14,6 @@
             </a>
         @endforeach
     </div>
-
-    <x-admin.help-note>
-        المنتج يظهر في تبويب واحد فقط: خصم أو عرض. عند الإنشاء لا تظهر المنتجات التي عليها تخفيض حالياً.
-    </x-admin.help-note>
 
     <form method="GET" class="d-flex flex-wrap gap-2 mb-3">
         <input type="hidden" name="type" value="{{ $type->value }}">

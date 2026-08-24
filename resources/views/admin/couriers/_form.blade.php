@@ -4,7 +4,7 @@
 
 <div class="mb-3">
     <label class="form-label">الاسم</label>
-    <input type="text" name="name" value="{{ old('name', $courier->name) }}" class="form-control @error('name') is-invalid @enderror" required placeholder="اسم الموصل">
+    <input type="text" name="name" value="{{ old('name', $courier->name) }}" class="form-control @error('name') is-invalid @enderror" required>
     @error('name') <div class="invalid-feedback">{{ $message }}</div> @enderror
 </div>
 

@@ -1,7 +1,6 @@
 <x-layouts.admin :title="$title">
     <div class="page-card p-4 p-md-5" style="max-width: 980px">
-        <x-admin.help-note>التعديل يظهر في التطبيق فوراً بعد الحفظ.</x-admin.help-note>
-        <form method="POST" action="{{ route('admin.home-sections.update', $section) }}" class="mt-3">
+        <form method="POST" action="{{ route('admin.home-sections.update', $section) }}">
             @csrf
             @method('PUT')
             @include('admin.home-sections._form')

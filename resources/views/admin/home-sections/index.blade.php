@@ -1,12 +1,10 @@
 <x-layouts.admin :title="$title">
     <x-admin.page-head
         :title="$title"
-        subtitle="صفوف المنتجات في الصفحة الرئيسية مثل الأكثر طلباً وأفضل الأسعار"
+        subtitle="شرائط المنتجات في الصفحة الرئيسية"
         :create="route('admin.home-sections.create')"
         :create-label="$strings::ADD_HOME_SECTION"
     />
-
-    <x-admin.help-note>كل قسم هنا يظهر كشريط منتجات في الرئيسية. أضف العنوان ثم اختر المنتجات.</x-admin.help-note>
 
     <form method="GET" class="d-flex flex-wrap gap-2 mb-3">
         <input type="text" name="q" value="{{ $filters['q'] ?? '' }}" class="form-control" style="max-width: 240px" placeholder="{{ $strings::SEARCH }}">
@@ -21,8 +19,8 @@
                 <table class="table">
                     <thead>
                         <tr>
-                            <th>العنوان</th>
-                            <th>المفتاح</th>
+                            <th>الاسم</th>
+                            <th>شكل العرض</th>
                             <th>المنتجات</th>
                             <th>{{ $strings::STATUS }}</th>
                             <th>{{ $strings::ACTIONS }}</th>
@@ -35,7 +33,7 @@
                                     <div class="fw-bold">{{ $section->title }}</div>
                                     <div class="text-muted small">{{ $section->subtitle }}</div>
                                 </td>
-                                <td dir="ltr">{{ $section->key }}</td>
+                                <td>{{ $section->styleLabel() }}</td>
                                 <td>{{ $section->products_count }}</td>
                                 <td>
                                     <span class="badge badge-soft">{{ $section->is_active ? $strings::LIVE_IN_APP : $strings::INACTIVE }}</span>
