@@ -12,6 +12,7 @@ class ProductRelation extends Model
         'product_id',
         'related_product_id',
         'type',
+        'source',
         'sort_order',
     ];
 

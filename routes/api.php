@@ -13,12 +13,15 @@ use App\Http\Controllers\Api\HomeController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\ProductController;
+use App\Http\Controllers\Api\RecommendationController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('home', HomeController::class);
 Route::get('categories', [CategoryController::class, 'index']);
 Route::get('categories/{category}', [CategoryController::class, 'show']);
 Route::get('products', [ProductController::class, 'index']);
+Route::get('products/{product}/recommendations', [RecommendationController::class, 'forProduct']);
+Route::post('recommendations/cart', [RecommendationController::class, 'forCart']);
 Route::get('products/{product}', [ProductController::class, 'show']);
 Route::get('pages/{page}', [DynamicPageController::class, 'show']);
 

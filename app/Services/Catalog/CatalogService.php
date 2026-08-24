@@ -13,9 +13,12 @@ use App\Models\DisplaySection;
 use App\Models\DynamicPage;
 use App\Models\HomeSection;
 use App\Models\Product;
+use App\Models\User;
 use App\Support\Constants;
 use App\Support\StoreSettings;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\Log;
+use Throwable;
 
 class CatalogService
 {
@@ -24,7 +27,7 @@ class CatalogService
         return ['images', 'primaryImage', 'category'];
     }
 
-    public function storefront(): array
+    public function storefront(?User $user = null): array
     {
         $relations = $this->productRelations();
 
@@ -62,6 +65,7 @@ class CatalogService
             'display_sections' => $this->displaySectionsFromTree($categories),
             'dynamic_pages' => DynamicPageResource::collection($pages)->resolve(),
             'products' => ProductResource::collection($products)->resolve(),
+            'suggested' => $this->suggestedPayload($user),
             'store' => StoreSettings::payload(),
         ];
     }
@@ -104,6 +108,7 @@ class CatalogService
             ->active()
             ->with([
                 ...$relations,
+                'productRelations',
                 'complementaryProducts' => fn ($q) => $q->active()->with($relations),
             ])
             ->where(function ($query) use ($id) {
@@ -203,6 +208,24 @@ class CatalogService
                     $child->setAttribute('products_count', $sumOf($child->id));
                 }
             }
+        }
+    }
+
+    /**
+     * @return array<int, mixed>
+     */
+    private function suggestedPayload(?User $user): array
+    {
+        try {
+            return ProductResource::collection(
+                app(ProductRecommendationService::class)->forYou($user)
+            )->resolve();
+        } catch (Throwable $e) {
+            Log::warning('reco.storefront.failed', [
+                'error' => mb_substr($e->getMessage(), 0, 180),
+            ]);
+
+            return [];
         }
     }
 
