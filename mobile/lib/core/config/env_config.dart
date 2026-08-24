@@ -33,17 +33,17 @@ class EnvConfig {
   /// الإنتاج على Render.
   static const remoteApi = 'https://raoah5.onrender.com/api';
 
-  /// العنوان المفضّل من `.env` — إن وُجد.
+  /// العنوان المفضّل من `.env` — إن وُجد، وإلا Render.
   static String get apiBaseUrl {
-    return _trimBase(dotenv.env['API_BASE_URL'] ?? localApi);
+    return _trimBase(dotenv.env['API_BASE_URL'] ?? remoteApi);
   }
 
-  /// ترتيب المحاولة: `.env` ثم المحلي ثم Render.
+  /// ترتيب المحاولة: `.env` ثم Render ثم المحلي.
   static List<String> get apiBaseUrls {
     return {
       apiBaseUrl,
-      localApi,
       remoteApi,
+      localApi,
     }.toList();
   }
 }
