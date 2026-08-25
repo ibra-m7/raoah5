@@ -5,12 +5,14 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Product;
 use App\Models\Setting;
+use App\Services\Admin\ProductService;
 use App\Support\AppStrings;
 use App\Support\Constants;
 use App\Support\Media;
 use App\Support\StoreSettings;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
@@ -46,6 +48,7 @@ class SettingController extends Controller
                 ->orderBy('name')
                 ->get(['id', 'name', 'sku', 'category_id', 'is_active']),
             'selectedProductIds' => $selectedIds,
+            'productCount' => Product::withTrashed()->count(),
         ]);
     }
 
@@ -110,6 +113,35 @@ class SettingController extends Controller
         return redirect()
             ->route('admin.settings.index', ['tab' => $tab])
             ->with('success', 'تم حفظ الإعدادات بنجاح.');
+    }
+
+    public function destroyAllProducts(Request $request, ProductService $products): RedirectResponse
+    {
+        $phrase = AppStrings::WIPE_PRODUCTS_CONFIRMATION_PHRASE;
+
+        try {
+            $request->validate([
+                'confirmation' => ['required', 'string', Rule::in([$phrase])],
+            ], [
+                'confirmation.in' => 'اكتب «'.$phrase.'» للتأكيد.',
+                'confirmation.required' => 'اكتب «'.$phrase.'» للتأكيد.',
+            ]);
+        } catch (ValidationException $e) {
+            throw $e->redirectTo(route('admin.settings.index', ['tab' => 'app']));
+        }
+
+        if (! hash_equals($phrase, trim((string) $request->input('confirmation')))) {
+            return redirect()
+                ->route('admin.settings.index', ['tab' => 'app'])
+                ->withErrors(['confirmation' => 'اكتب «'.$phrase.'» للتأكيد.']);
+        }
+
+        set_time_limit(120);
+        $count = $products->deleteAll();
+
+        return redirect()
+            ->route('admin.settings.index', ['tab' => 'app'])
+            ->with('success', $count > 0 ? AppStrings::PRODUCTS_WIPED : 'لا توجد منتجات للحذف.');
     }
 
     private function tab(mixed $value): string

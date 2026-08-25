@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Admin;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class ProductRequest extends FormRequest
 {
@@ -16,6 +17,12 @@ class ProductRequest extends FormRequest
         return [
             'name' => ['required', 'string', 'max:255'],
             'sku' => ['nullable', 'string', 'max:64'],
+            'barcode' => [
+                'nullable',
+                'string',
+                'max:64',
+                Rule::unique('products', 'barcode')->ignore($this->route('product')),
+            ],
             'category_id' => ['required', 'integer', 'exists:categories,id'],
             'description' => ['nullable', 'string', 'max:5000'],
             'price' => ['required', 'numeric', 'min:0'],
@@ -45,6 +52,7 @@ class ProductRequest extends FormRequest
         return [
             'name' => 'اسم المنتج',
             'sku' => 'رمز المنتج',
+            'barcode' => 'الباركود',
             'category_id' => 'التصنيف',
             'description' => 'الوصف',
             'price' => 'السعر',
@@ -70,6 +78,7 @@ class ProductRequest extends FormRequest
             'is_featured' => $this->boolean('is_featured'),
             'discount_price' => $this->normalizedDiscountPrice(),
             'sku' => $this->input('sku') ?: null,
+            'barcode' => $this->normalizedBarcode($this->input('barcode')),
             'image_url' => $this->input('image_url') ?: null,
             'piece_count' => $this->filled('piece_count') ? $this->input('piece_count') : null,
             'weight_label' => $this->input('weight_label') ?: null,
@@ -85,5 +94,18 @@ class ProductRequest extends FormRequest
         }
 
         return is_numeric($value) && (float) $value <= 0 ? null : $value;
+    }
+
+    private function normalizedBarcode(mixed $value): ?string
+    {
+        $value = trim((string) $value);
+        if ($value === '') {
+            return null;
+        }
+        if (preg_match('/^\d+$/', $value) === 1) {
+            return (string) (int) $value;
+        }
+
+        return $value;
     }
 }

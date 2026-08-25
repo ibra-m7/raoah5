@@ -1362,6 +1362,23 @@ document.addEventListener("shown.bs.tab", (event) => {
     }
 });
 
+document.addEventListener("submit", (event) => {
+    const form = event.target.closest("[data-wipe-products-form]");
+    if (!form) {
+        return;
+    }
+    const phrase = (form.getAttribute("data-wipe-phrase") || "").trim();
+    const typed = (form.querySelector("[data-wipe-products-input]")?.value || "").trim();
+    if (typed !== phrase) {
+        event.preventDefault();
+        window.alert("اكتب «" + phrase + "» للتأكيد.");
+        return;
+    }
+    if (!window.confirm(form.getAttribute("data-wipe-confirm") || "")) {
+        event.preventDefault();
+    }
+});
+
 document.addEventListener("input", (event) => {
     const search = event.target.closest("[data-product-picker-search]");
     if (!search) {
@@ -1431,8 +1448,8 @@ const bindProductAiCopy = (root = document) => {
 
         const field = (name) => form.querySelector(`[name="${name}"]`);
         const aiField = (key) => box.querySelector(`[data-ai-field="${key}"]`);
-
-        const empty = (el) => !el || el.value.trim() === "";
+        const empty = (el) => !el || String(el.value).trim() === "";
+        const emptyOrZero = (el) => empty(el) || String(el.value).trim() === "0";
 
         const payload = () => ({
             name: field("name")?.value.trim() || "",
@@ -1451,20 +1468,54 @@ const bindProductAiCopy = (root = document) => {
             status.textContent = text || "";
         };
 
-        const generate = async (force = false) => {
-            const data = payload();
-            if (data.name.length < 3 || busy) {
+        const fillText = (el, value, overwrite) => {
+            if (!el || value == null) {
                 return;
             }
+            const text = String(value).trim();
+            if (text === "" || (!overwrite && !empty(el))) {
+                return;
+            }
+            el.value = text;
+        };
 
-            const benefits = aiField("benefits");
-            const keywords = aiField("keywords");
-            const usage = aiField("usage_instructions");
-            const targets = [];
-            if (force || empty(benefits)) targets.push(["benefits", benefits]);
-            if (force || empty(keywords)) targets.push(["keywords", keywords]);
-            if (force || empty(usage)) targets.push(["usage_instructions", usage]);
-            if (targets.length === 0) {
+        const fillNumber = (el, value, overwrite) => {
+            if (!el || value == null || value === "") {
+                return;
+            }
+            if (!overwrite && !emptyOrZero(el)) {
+                return;
+            }
+            el.value = String(value);
+        };
+
+        const applyCopy = (copy, force) => {
+            fillText(field("description"), copy.description, false);
+            if (copy.category_id && empty(field("category_id"))) {
+                const select = field("category_id");
+                if (select) {
+                    select.value = String(copy.category_id);
+                }
+            }
+            fillNumber(field("price"), copy.price, false);
+            fillNumber(field("stock"), copy.stock, false);
+            fillNumber(field("piece_count"), copy.piece_count, false);
+            fillText(field("weight_label"), copy.weight_label, false);
+            fillText(field("quantity_label"), copy.quantity_label, false);
+            fillText(aiField("benefits"), copy.benefits, force);
+            fillText(aiField("keywords"), copy.keywords, force);
+            fillText(aiField("usage_instructions"), copy.usage_instructions, force);
+        };
+
+        const generate = async (force = false) => {
+            const data = payload();
+            if (busy) {
+                return;
+            }
+            if (data.name.length < 3) {
+                if (force) {
+                    setStatus("أدخل اسم المنتج أولاً.");
+                }
                 return;
             }
 
@@ -1477,11 +1528,7 @@ const bindProductAiCopy = (root = document) => {
 
             try {
                 const { data: copy } = await window.axios.post(endpoint, data);
-                targets.forEach(([key, el]) => {
-                    if (el && typeof copy[key] === "string") {
-                        el.value = copy[key];
-                    }
-                });
+                applyCopy(copy, force);
                 setStatus("", false);
             } catch (error) {
                 const message =

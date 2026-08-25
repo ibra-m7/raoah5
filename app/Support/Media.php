@@ -4,6 +4,7 @@ namespace App\Support;
 
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 final class Media
 {
@@ -20,6 +21,37 @@ final class Media
         $path = $file->store($directory, 'public');
         if (! is_string($path) || $path === '') {
             throw new \RuntimeException('تعذّر حفظ الملف المرفوع.');
+        }
+
+        return $path;
+    }
+
+    public static function storePath(string $absolutePath, string $directory, ?string $oldPath = null): ?string
+    {
+        if ($absolutePath === '' || ! is_file($absolutePath)) {
+            return $oldPath;
+        }
+
+        self::delete($oldPath);
+        Storage::disk('public')->makeDirectory($directory);
+
+        $extension = strtolower(pathinfo($absolutePath, PATHINFO_EXTENSION) ?: 'jpg');
+        $filename = Str::random(40).'.'.$extension;
+        $path = trim($directory, '/').'/'.$filename;
+
+        $stream = fopen($absolutePath, 'rb');
+        if ($stream === false) {
+            throw new \RuntimeException('تعذّر قراءة ملف الصورة.');
+        }
+
+        try {
+            $stored = Storage::disk('public')->put($path, $stream);
+        } finally {
+            fclose($stream);
+        }
+
+        if (! $stored) {
+            throw new \RuntimeException('تعذّر حفظ ملف الصورة.');
         }
 
         return $path;

@@ -89,6 +89,7 @@ Route::middleware(['auth', 'admin'])->group(function () {
 
     Route::get('settings', [SettingController::class, 'index'])->name('settings.index');
     Route::put('settings', [SettingController::class, 'update'])->name('settings.update');
+    Route::delete('settings/products', [SettingController::class, 'destroyAllProducts'])->name('settings.products.destroy-all');
 
     Route::get('ai', [AiAssistantController::class, 'index'])->name('ai.index');
     Route::put('ai', [AiAssistantController::class, 'update'])->name('ai.update');

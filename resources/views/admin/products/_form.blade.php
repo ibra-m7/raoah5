@@ -6,11 +6,20 @@
     $keywords = old('keywords', implode(', ', $product->keywords ?? []));
 @endphp
 
+<div data-product-ai-copy data-endpoint="{{ route('admin.products.generate-copy') }}">
 <div class="row">
     <div class="col-md-8 mb-3">
         <label class="form-label">اسم المنتج</label>
-        <input type="text" name="name" value="{{ old('name', $product->name) }}" class="form-control @error('name') is-invalid @enderror" required>
-        @error('name') <div class="invalid-feedback">{{ $message }}</div> @enderror
+        <div class="product-ai-name">
+            <input type="text" name="name" value="{{ old('name', $product->name) }}" class="form-control @error('name') is-invalid @enderror" required>
+            <button type="button" class="btn btn-outline-success rounded-pill" data-ai-generate>
+                <i class="bi bi-stars ms-1"></i>
+                توليد
+            </button>
+        </div>
+        @error('name') <div class="invalid-feedback d-block">{{ $message }}</div> @enderror
+        <div class="form-hint">اكتب الاسم ثم اضغط توليد لملء التصنيف والوصف والسعر وبقية الحقول.</div>
+        <div class="product-ai-copy-status text-muted small mt-1" data-ai-status hidden></div>
     </div>
     <div class="col-md-4 mb-3">
         <label class="form-label">رمز المنتج</label>
@@ -18,6 +27,13 @@
         @error('sku') <div class="invalid-feedback">{{ $message }}</div> @enderror
         <div class="form-hint">يُولَّد تلقائياً إذا تُرك فارغاً.</div>
     </div>
+</div>
+
+<div class="mb-3">
+    <label class="form-label">الباركود</label>
+    <input type="text" name="barcode" value="{{ old('barcode', $product->barcode) }}" class="form-control @error('barcode') is-invalid @enderror" dir="ltr">
+    @error('barcode') <div class="invalid-feedback">{{ $message }}</div> @enderror
+    <div class="form-hint">يُستخدم لربط صورة الاستيراد مثل 3.png بالمنتج ذي الباركود 3.</div>
 </div>
 
 <div class="mb-3">
@@ -116,33 +132,25 @@
     @endif
 </div>
 
-<div class="product-ai-copy" data-product-ai-copy data-endpoint="{{ route('admin.products.generate-copy') }}">
-    <div class="d-flex align-items-center justify-content-between gap-2 mb-2">
-        <span class="product-ai-copy-status text-muted small" data-ai-status hidden></span>
-        <button type="button" class="btn btn-sm btn-outline-success rounded-pill" data-ai-generate>
-            <i class="bi bi-stars ms-1"></i>
-            توليد
-        </button>
-    </div>
-    <div class="mb-3">
-        <label class="form-label">الفوائد</label>
-        <textarea name="benefits" rows="4" class="form-control @error('benefits') is-invalid @enderror" data-ai-field="benefits">{{ $benefits }}</textarea>
-        @error('benefits') <div class="invalid-feedback">{{ $message }}</div> @enderror
-        <div class="form-hint">سطر لكل فائدة. يمكن توليدها تلقائياً.</div>
-    </div>
+<div class="mb-3">
+    <label class="form-label">الفوائد</label>
+    <textarea name="benefits" rows="4" class="form-control @error('benefits') is-invalid @enderror" data-ai-field="benefits">{{ $benefits }}</textarea>
+    @error('benefits') <div class="invalid-feedback">{{ $message }}</div> @enderror
+    <div class="form-hint">سطر لكل فائدة. تُملأ مع زر توليد.</div>
+</div>
 
-    <div class="mb-3">
-        <label class="form-label">كلمات البحث</label>
-        <input type="text" name="keywords" value="{{ $keywords }}" class="form-control @error('keywords') is-invalid @enderror" data-ai-field="keywords">
-        @error('keywords') <div class="invalid-feedback">{{ $message }}</div> @enderror
-        <div class="form-hint">افصل الكلمات بفاصلة.</div>
-    </div>
+<div class="mb-3">
+    <label class="form-label">كلمات البحث</label>
+    <input type="text" name="keywords" value="{{ $keywords }}" class="form-control @error('keywords') is-invalid @enderror" data-ai-field="keywords">
+    @error('keywords') <div class="invalid-feedback">{{ $message }}</div> @enderror
+    <div class="form-hint">افصل الكلمات بفاصلة.</div>
+</div>
 
-    <div class="mb-3">
-        <label class="form-label">طريقة الاستخدام</label>
-        <textarea name="usage_instructions" rows="3" class="form-control @error('usage_instructions') is-invalid @enderror" data-ai-field="usage_instructions">{{ old('usage_instructions', $product->usage_instructions) }}</textarea>
-        @error('usage_instructions') <div class="invalid-feedback">{{ $message }}</div> @enderror
-    </div>
+<div class="mb-3">
+    <label class="form-label">طريقة الاستخدام</label>
+    <textarea name="usage_instructions" rows="3" class="form-control @error('usage_instructions') is-invalid @enderror" data-ai-field="usage_instructions">{{ old('usage_instructions', $product->usage_instructions) }}</textarea>
+    @error('usage_instructions') <div class="invalid-feedback">{{ $message }}</div> @enderror
+</div>
 </div>
 
 <div class="row">

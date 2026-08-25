@@ -202,4 +202,22 @@
             </div>
         </form>
     </div>
+
+    <div class="page-card p-4 p-md-5 overflow-hidden mt-3" style="max-width: 920px">
+        <form method="POST" action="{{ route('admin.settings.products.destroy-all') }}" data-wipe-products-form data-wipe-phrase="{{ $strings::WIPE_PRODUCTS_CONFIRMATION_PHRASE }}" data-wipe-confirm="{{ $strings::CONFIRM_WIPE_PRODUCTS }}">
+            @csrf
+            @method('DELETE')
+            <div class="settings-danger mb-0">
+                <h2 class="settings-danger-title">حذف كل المنتجات</h2>
+                <p class="settings-danger-lead">يحذف كل المنتجات من الكتالوج والتطبيق نهائياً. تبقى الطلبات السابقة في السجل بدون ربط بالمنتج.</p>
+                <p class="settings-danger-count">المنتجات الحالية: <strong>{{ $productCount }}</strong></p>
+                <label class="form-label">اكتب «{{ $strings::WIPE_PRODUCTS_CONFIRMATION_PHRASE }}» للتأكيد</label>
+                <input type="text" name="confirmation" value="{{ old('confirmation') }}" class="form-control @error('confirmation') is-invalid @enderror" autocomplete="off" {{ $productCount === 0 ? 'disabled' : '' }} placeholder="{{ $strings::WIPE_PRODUCTS_CONFIRMATION_PHRASE }}" data-wipe-products-input>
+                @error('confirmation') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                <button type="submit" class="btn btn-outline-danger rounded-pill mt-3" {{ $productCount === 0 ? 'disabled' : '' }}>
+                    حذف كل المنتجات
+                </button>
+            </div>
+        </form>
+    </div>
 </x-layouts.admin>

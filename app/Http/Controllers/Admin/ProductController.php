@@ -47,8 +47,12 @@ class ProductController extends Controller
         ]);
     }
 
-    public function generateCopy(ProductCopyRequest $request, ProductCopyGenerator $generator): JsonResponse
-    {
+    public function generateCopy(
+        ProductCopyRequest $request,
+        ProductCopyGenerator $generator,
+    ): JsonResponse {
+        set_time_limit(90);
+
         try {
             $copy = $generator->generate($request->validated());
         } catch (RuntimeException $e) {
@@ -70,6 +74,13 @@ class ProductController extends Controller
             'benefits' => implode("\n", $copy['benefits']),
             'keywords' => implode(', ', $copy['keywords']),
             'usage_instructions' => $copy['usage_instructions'],
+            'description' => $copy['description'],
+            'category_id' => $copy['category_id'],
+            'price' => $copy['price'],
+            'stock' => $copy['stock'],
+            'piece_count' => $copy['piece_count'],
+            'weight_label' => $copy['weight_label'],
+            'quantity_label' => $copy['quantity_label'],
         ]);
     }
 
@@ -106,19 +117,23 @@ class ProductController extends Controller
     public function import(ProductImportRequest $request): RedirectResponse
     {
         try {
-            $result = $this->importer->import($request->file('file'));
+            $result = $this->importer->import(
+                $request->file('file'),
+                $request->file('images_zip'),
+            );
         } catch (\Throwable $e) {
             return back()->with('error', $e->getMessage());
         }
 
         $message = sprintf(
-            'تم الاستيراد: %d منتج جديد، %d محدَّث.',
+            'تم الاستيراد: %d منتج جديد، %d محدَّث، %d صورة.',
             $result['created'],
             $result['updated'],
+            $result['images'] ?? 0,
         );
 
         if ($result['errors'] !== []) {
-            $message .= ' بعض الصفوف لم تُستورد.';
+            $message .= ' بعض الصفوف أو الصور لم تُستورد.';
         }
 
         return redirect()

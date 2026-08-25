@@ -243,6 +243,12 @@ final class AppStrings
 
     public const PRODUCT_DELETED = 'تم حذف المنتج بنجاح.';
 
+    public const PRODUCTS_WIPED = 'تم حذف كل المنتجات من التطبيق.';
+
+    public const CONFIRM_WIPE_PRODUCTS = 'سيتم حذف كل المنتجات من الكتالوج والتطبيق نهائياً. تبقى الطلبات السابقة في السجل. هل أنت متأكد؟';
+
+    public const WIPE_PRODUCTS_CONFIRMATION_PHRASE = 'حذف الكل';
+
     public const IMPORT_PRODUCTS = 'استيراد المنتجات';
 
     public const DOWNLOAD_PRODUCT_TEMPLATE = 'تحميل قالب Excel';

@@ -2,15 +2,21 @@
 
 namespace App\Services\Admin;
 
+use App\Enums\BannerLinkType;
 use App\Enums\PromoType;
-use App\Models\Product;
 use App\Jobs\RefreshProductRecommendations;
+use App\Models\Banner;
+use App\Models\Product;
+use App\Models\ProductImage;
+use App\Models\ProductRelation;
+use App\Models\Setting;
 use App\Services\Ai\ProductCopyGenerator;
 use App\Support\Constants;
 use App\Support\Media;
 use App\Support\Slug;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Throwable;
@@ -46,17 +52,22 @@ class ProductService
         $imageUrl = trim((string) ($data['image_url'] ?? ''));
         $gallery = $data['gallery'] ?? [];
         $galleryUrls = $data['gallery_urls'] ?? '';
-        unset($data['image'], $data['image_url'], $data['gallery'], $data['gallery_urls'], $data['delete_image_ids']);
+        $skipAiCopy = (bool) ($data['skip_ai_copy'] ?? false);
+        unset($data['image'], $data['image_url'], $data['gallery'], $data['gallery_urls'], $data['delete_image_ids'], $data['skip_ai_copy']);
 
         $data['sku'] = $this->sku($data['sku'] ?? null);
         $data['slug'] = Slug::unique($data['name'], 'products');
-        $data = $this->fillGeneratedCopy($data);
+        if (! $skipAiCopy) {
+            $data = $this->fillGeneratedCopy($data);
+        }
         $data = $this->normalize($data);
 
         $product = Product::query()->create($data);
         $this->syncPrimaryImage($product, $image, $imageUrl);
         $this->syncGallery($product, $gallery, $galleryUrls);
-        RefreshProductRecommendations::dispatch($product->id)->afterResponse();
+        if (! $skipAiCopy) {
+            RefreshProductRecommendations::dispatch($product->id)->afterResponse();
+        }
 
         return $product;
     }
@@ -68,18 +79,23 @@ class ProductService
         $gallery = $data['gallery'] ?? [];
         $galleryUrls = $data['gallery_urls'] ?? '';
         $deleteIds = $data['delete_image_ids'] ?? [];
-        unset($data['image'], $data['image_url'], $data['gallery'], $data['gallery_urls'], $data['delete_image_ids']);
+        $skipAiCopy = (bool) ($data['skip_ai_copy'] ?? false);
+        unset($data['image'], $data['image_url'], $data['gallery'], $data['gallery_urls'], $data['delete_image_ids'], $data['skip_ai_copy']);
 
         $data['sku'] = $this->sku($data['sku'] ?? $product->sku, $product->id);
         $data['slug'] = Slug::unique($data['name'], 'products', 'slug', $product->id);
-        $data = $this->fillGeneratedCopy($data);
+        if (! $skipAiCopy) {
+            $data = $this->fillGeneratedCopy($data);
+        }
         $data = $this->normalize($data);
 
         $product->update($data);
         $this->deleteGalleryImages($product, $deleteIds);
         $this->syncPrimaryImage($product, $image, $imageUrl ?: $product->primaryImage?->url);
         $this->syncGallery($product, $gallery, $galleryUrls);
-        RefreshProductRecommendations::dispatch($product->id)->afterResponse();
+        if (! $skipAiCopy) {
+            RefreshProductRecommendations::dispatch($product->id)->afterResponse();
+        }
 
         return $product;
     }
@@ -97,6 +113,36 @@ class ProductService
         }
         $product->images()->delete();
         $product->delete();
+    }
+
+    public function deleteAll(): int
+    {
+        $count = Product::withTrashed()->count();
+        if ($count === 0) {
+            return 0;
+        }
+
+        $imageUrls = ProductImage::query()->pluck('url');
+
+        DB::transaction(function () {
+            Banner::query()
+                ->where('link_type', BannerLinkType::Product)
+                ->update([
+                    'link_type' => BannerLinkType::None,
+                    'link_id' => null,
+                ]);
+
+            Setting::setValue(Constants::SETTING_MARKETING_SOLD_PRODUCT_IDS, '[]');
+            ProductRelation::query()->delete();
+            ProductImage::query()->delete();
+            Product::withTrashed()->forceDelete();
+        });
+
+        foreach ($imageUrls as $url) {
+            Media::delete(is_string($url) ? $url : null);
+        }
+
+        return $count;
     }
 
     /**
@@ -202,6 +248,28 @@ class ProductService
 
         $product->images()->create([
             'url' => $url,
+            'alt' => $product->name,
+            'is_primary' => true,
+            'sort_order' => 0,
+        ]);
+    }
+
+    public function attachPrimaryImageFromPath(Product $product, string $absolutePath): void
+    {
+        $path = Media::storePath($absolutePath, 'products', $product->primaryImage?->url);
+        if (! $path) {
+            return;
+        }
+
+        $primary = $product->primaryImage;
+        if ($primary) {
+            $primary->update(['url' => $path, 'alt' => $product->name]);
+
+            return;
+        }
+
+        $product->images()->create([
+            'url' => $path,
             'alt' => $product->name,
             'is_primary' => true,
             'sort_order' => 0,

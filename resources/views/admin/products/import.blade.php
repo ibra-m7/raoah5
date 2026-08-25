@@ -1,14 +1,14 @@
 <x-layouts.admin :title="$title">
     <x-admin.page-head
         :title="$title"
-        subtitle="عبّئ القالب دفعة واحدة ثم ارفعه — لا حاجة لإدخال كل منتج يدوياً"
+        subtitle="عبّئ القالب دفعة واحدة ثم ارفعه مع صور ZIP — لا حاجة لإدخال كل منتج يدوياً"
     />
 
     <div class="row g-4">
         <div class="col-lg-7">
             <div class="page-card p-4 p-md-5">
                 <x-admin.help-note>
-                    نزّل القالب أولاً. الأعمدة الحمراء إلزامية، والخضراء اختيارية. انسخ اسم القسم من ورقة «الأقسام» داخل الملف.
+                    نزّل القالب (50 منتجاً، باركود من 1 إلى 50). سمِّ كل صورة برقم الباركود مثل 3.png وضعها في ZIP ثم ارفع الملفين معاً.
                 </x-admin.help-note>
 
                 <a href="{{ route('admin.products.import.template') }}" class="btn btn-brand mb-4">
@@ -23,6 +23,12 @@
                         <input type="file" name="file" accept=".xls,.xlsx,.csv,.xml" class="form-control @error('file') is-invalid @enderror" required>
                         @error('file') <div class="invalid-feedback">{{ $message }}</div> @enderror
                         <div class="form-hint">الحد الأقصى 10 ميجابايت. الصيغ: xls / xlsx / csv</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">صور المنتجات (ZIP) — اختياري</label>
+                        <input type="file" name="images_zip" accept=".zip,application/zip" class="form-control @error('images_zip') is-invalid @enderror">
+                        @error('images_zip') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                        <div class="form-hint">أسماء الملفات = الباركود، مثل 1.png و 3.jpg. الحد الأقصى 50 ميجابايت.</div>
                     </div>
                     <div class="d-flex gap-2">
                         <button class="btn btn-brand">بدء الاستيراد</button>

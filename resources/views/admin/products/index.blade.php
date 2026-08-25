@@ -73,6 +73,7 @@
                                     ])),
                                     'fields' => array_values(array_filter([
                                         ['label' => 'رمز المنتج', 'value' => $product->sku],
+                                        ['label' => 'الباركود', 'value' => $product->barcode],
                                         ['label' => 'القسم', 'value' => $product->category?->name],
                                         ['label' => 'السعر', 'value' => number_format((float) $product->price, 2).' '.$strings::CURRENCY],
                                         ['label' => 'سعر العرض', 'value' => $product->has_discount ? number_format((float) $product->discount_price, 2).' '.$strings::CURRENCY : null],
@@ -100,7 +101,7 @@
                                         </span>
                                         <span class="entity-open-text">
                                             <strong>{{ $product->name }}</strong>
-                                            <small>{{ $product->sku }}</small>
+                                            <small>{{ $product->sku }}@if($product->barcode) · {{ $product->barcode }}@endif</small>
                                         </span>
                                     </button>
                                 </td>

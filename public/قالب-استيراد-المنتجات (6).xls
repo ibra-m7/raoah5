@@ -1,0 +1,1586 @@
+<?xml version="1.0"?>
+<?mso-application progid="Excel.Sheet"?>
+<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
+ xmlns:o="urn:schemas-microsoft-com:office:office"
+ xmlns:x="urn:schemas-microsoft-com:office:excel"
+ xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"
+ xmlns:html="http://www.w3.org/TR/REC-html40">
+ <DocumentProperties xmlns="urn:schemas-microsoft-com:office:office">
+  <Author>روعة الخمسة</Author>
+  <Version>16.00</Version>
+ </DocumentProperties>
+ <OfficeDocumentSettings xmlns="urn:schemas-microsoft-com:office:office">
+  <AllowPNG/>
+ </OfficeDocumentSettings>
+ <ExcelWorkbook xmlns="urn:schemas-microsoft-com:office:excel">
+  <WindowHeight>6276</WindowHeight>
+  <WindowWidth>17064</WindowWidth>
+  <WindowTopX>32767</WindowTopX>
+  <WindowTopY>32767</WindowTopY>
+  <ProtectStructure>False</ProtectStructure>
+  <ProtectWindows>False</ProtectWindows>
+ </ExcelWorkbook>
+ <Styles>
+  <Style ss:ID="Default" ss:Name="Normal">
+   <Alignment ss:Vertical="Bottom"/>
+   <Borders/>
+   <Font ss:FontName="Arial" x:CharSet="178" x:Family="Swiss" ss:Size="11"
+    ss:Color="#000000"/>
+   <Interior/>
+   <NumberFormat/>
+   <Protection/>
+  </Style>
+  <Style ss:ID="s62">
+   <Alignment ss:Horizontal="Right" ss:Vertical="Bottom"
+    ss:ReadingOrder="RightToLeft" ss:WrapText="1"/>
+   <Font ss:FontName="Cairo" ss:Size="11"/>
+  </Style>
+  <Style ss:ID="s63">
+   <Alignment ss:Horizontal="Center" ss:Vertical="Bottom" ss:WrapText="1"/>
+   <Font ss:FontName="Arial" ss:Size="11" ss:Color="#993300" ss:Bold="1"/>
+   <Interior ss:Color="#FDECEC" ss:Pattern="Solid"/>
+  </Style>
+  <Style ss:ID="s64">
+   <Alignment ss:Horizontal="Center" ss:Vertical="Bottom" ss:WrapText="1"/>
+   <Font ss:FontName="Arial" ss:Size="11" ss:Color="#333333" ss:Bold="1"/>
+   <Interior ss:Color="#E8F8EC" ss:Pattern="Solid"/>
+  </Style>
+  <Style ss:ID="s65">
+   <Alignment ss:Horizontal="Right" ss:Vertical="Bottom"
+    ss:ReadingOrder="RightToLeft" ss:WrapText="1"/>
+   <Font ss:FontName="Arial" ss:Size="14" ss:Color="#333333" ss:Bold="1"/>
+  </Style>
+ </Styles>
+ <Worksheet ss:Name="المنتجات">
+  <Table ss:ExpandedColumnCount="15" ss:ExpandedRowCount="51" x:FullColumns="1"
+   x:FullRows="1" ss:StyleID="s62" ss:DefaultColumnWidth="52.8"
+   ss:DefaultRowHeight="24.6">
+   <Column ss:StyleID="s62" ss:AutoFitWidth="0" ss:Width="120" ss:Span="4"/>
+   <Column ss:Index="6" ss:StyleID="s62" ss:AutoFitWidth="0" ss:Width="150"
+    ss:Span="9"/>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell ss:StyleID="s63"><Data ss:Type="String">الاسم *</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String">القسم *</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String">السعر *</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String">المخزون *</Data></Cell>
+    <Cell ss:StyleID="s64"><Data ss:Type="String">الباركود</Data></Cell>
+    <Cell ss:StyleID="s64"><Data ss:Type="String">رمز المنتج</Data></Cell>
+    <Cell ss:StyleID="s64"><Data ss:Type="String">سعر العرض</Data></Cell>
+    <Cell ss:StyleID="s64"><Data ss:Type="String">الوصف</Data></Cell>
+    <Cell ss:StyleID="s64"><Data ss:Type="String">رابط الصورة</Data></Cell>
+    <Cell ss:StyleID="s64"><Data ss:Type="String">الفوائد</Data></Cell>
+    <Cell ss:StyleID="s64"><Data ss:Type="String">كلمات البحث</Data></Cell>
+    <Cell ss:StyleID="s64"><Data ss:Type="String">طريقة الاستخدام</Data></Cell>
+    <Cell ss:StyleID="s64"><Data ss:Type="String">مميز</Data></Cell>
+    <Cell ss:StyleID="s64"><Data ss:Type="String">ظاهر</Data></Cell>
+    <Cell ss:StyleID="s64"><Data ss:Type="String">الترتيب</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">سماعات بلوتوث لاسلكية</Data></Cell>
+    <Cell><Data ss:Type="String">الكترونيات </Data></Cell>
+    <Cell><Data ss:Type="String">11</Data></Cell>
+    <Cell><Data ss:Type="String">21</Data></Cell>
+    <Cell><Data ss:Type="String">1</Data></Cell>
+    <Cell><Data ss:Type="String">SKU-001</Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String">لا</Data></Cell>
+    <Cell><Data ss:Type="String">نعم</Data></Cell>
+    <Cell><Data ss:Type="String">1</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">شاحن سريع USB-C 65 واط</Data></Cell>
+    <Cell><Data ss:Type="String">الكترونيات </Data></Cell>
+    <Cell><Data ss:Type="String">12</Data></Cell>
+    <Cell><Data ss:Type="String">22</Data></Cell>
+    <Cell><Data ss:Type="String">2</Data></Cell>
+    <Cell><Data ss:Type="String">SKU-002</Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String">لا</Data></Cell>
+    <Cell><Data ss:Type="String">نعم</Data></Cell>
+    <Cell><Data ss:Type="String">2</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">كابل شحن Type-C بطول 2 متر</Data></Cell>
+    <Cell><Data ss:Type="String">الكترونيات </Data></Cell>
+    <Cell><Data ss:Type="String">13</Data></Cell>
+    <Cell><Data ss:Type="String">23</Data></Cell>
+    <Cell><Data ss:Type="String">3</Data></Cell>
+    <Cell><Data ss:Type="String">SKU-003</Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String">لا</Data></Cell>
+    <Cell><Data ss:Type="String">نعم</Data></Cell>
+    <Cell><Data ss:Type="String">3</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">باور بانك 20000 مللي أمبير</Data></Cell>
+    <Cell><Data ss:Type="String">الكترونيات </Data></Cell>
+    <Cell><Data ss:Type="String">14</Data></Cell>
+    <Cell><Data ss:Type="String">24</Data></Cell>
+    <Cell><Data ss:Type="String">4</Data></Cell>
+    <Cell><Data ss:Type="String">SKU-004</Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String">لا</Data></Cell>
+    <Cell><Data ss:Type="String">نعم</Data></Cell>
+    <Cell><Data ss:Type="String">4</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">حافظة سيليكون لهاتف آيفون 15</Data></Cell>
+    <Cell><Data ss:Type="String">الكترونيات </Data></Cell>
+    <Cell><Data ss:Type="String">15</Data></Cell>
+    <Cell><Data ss:Type="String">25</Data></Cell>
+    <Cell><Data ss:Type="String">5</Data></Cell>
+    <Cell><Data ss:Type="String">SKU-005</Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String">لا</Data></Cell>
+    <Cell><Data ss:Type="String">نعم</Data></Cell>
+    <Cell><Data ss:Type="String">5</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">واقي شاشة زجاجي مقوّى</Data></Cell>
+    <Cell><Data ss:Type="String">الكترونيات </Data></Cell>
+    <Cell><Data ss:Type="String">16</Data></Cell>
+    <Cell><Data ss:Type="String">26</Data></Cell>
+    <Cell><Data ss:Type="String">6</Data></Cell>
+    <Cell><Data ss:Type="String">SKU-006</Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String">لا</Data></Cell>
+    <Cell><Data ss:Type="String">نعم</Data></Cell>
+    <Cell><Data ss:Type="String">6</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">حامل هاتف مغناطيسي للسيارة</Data></Cell>
+    <Cell><Data ss:Type="String">الكترونيات </Data></Cell>
+    <Cell><Data ss:Type="String">17</Data></Cell>
+    <Cell><Data ss:Type="String">27</Data></Cell>
+    <Cell><Data ss:Type="String">7</Data></Cell>
+    <Cell><Data ss:Type="String">SKU-007</Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String">لا</Data></Cell>
+    <Cell><Data ss:Type="String">نعم</Data></Cell>
+    <Cell><Data ss:Type="String">7</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">ساعة ذكية رياضية</Data></Cell>
+    <Cell><Data ss:Type="String">الكترونيات </Data></Cell>
+    <Cell><Data ss:Type="String">18</Data></Cell>
+    <Cell><Data ss:Type="String">28</Data></Cell>
+    <Cell><Data ss:Type="String">8</Data></Cell>
+    <Cell><Data ss:Type="String">SKU-008</Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String">لا</Data></Cell>
+    <Cell><Data ss:Type="String">نعم</Data></Cell>
+    <Cell><Data ss:Type="String">8</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">ماوس لاسلكي صامت</Data></Cell>
+    <Cell><Data ss:Type="String">الكترونيات </Data></Cell>
+    <Cell><Data ss:Type="String">19</Data></Cell>
+    <Cell><Data ss:Type="String">29</Data></Cell>
+    <Cell><Data ss:Type="String">9</Data></Cell>
+    <Cell><Data ss:Type="String">SKU-009</Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String">لا</Data></Cell>
+    <Cell><Data ss:Type="String">نعم</Data></Cell>
+    <Cell><Data ss:Type="String">9</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">لوحة مفاتيح بلوتوث قابلة للطي</Data></Cell>
+    <Cell><Data ss:Type="String">الكترونيات </Data></Cell>
+    <Cell><Data ss:Type="String">20</Data></Cell>
+    <Cell><Data ss:Type="String">30</Data></Cell>
+    <Cell><Data ss:Type="String">10</Data></Cell>
+    <Cell><Data ss:Type="String">SKU-010</Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String">لا</Data></Cell>
+    <Cell><Data ss:Type="String">نعم</Data></Cell>
+    <Cell><Data ss:Type="String">10</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">فلاش ميموري USB 64 جيجا</Data></Cell>
+    <Cell><Data ss:Type="String">الكترونيات </Data></Cell>
+    <Cell><Data ss:Type="String">21</Data></Cell>
+    <Cell><Data ss:Type="String">31</Data></Cell>
+    <Cell><Data ss:Type="String">11</Data></Cell>
+    <Cell><Data ss:Type="String">SKU-011</Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String">لا</Data></Cell>
+    <Cell><Data ss:Type="String">نعم</Data></Cell>
+    <Cell><Data ss:Type="String">11</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">كارت ذاكرة microSD 128 جيجا</Data></Cell>
+    <Cell><Data ss:Type="String">الكترونيات </Data></Cell>
+    <Cell><Data ss:Type="String">22</Data></Cell>
+    <Cell><Data ss:Type="String">32</Data></Cell>
+    <Cell><Data ss:Type="String">12</Data></Cell>
+    <Cell><Data ss:Type="String">SKU-012</Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String">لا</Data></Cell>
+    <Cell><Data ss:Type="String">نعم</Data></Cell>
+    <Cell><Data ss:Type="String">12</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">محول HDMI إلى VGA</Data></Cell>
+    <Cell><Data ss:Type="String">الكترونيات </Data></Cell>
+    <Cell><Data ss:Type="String">23</Data></Cell>
+    <Cell><Data ss:Type="String">33</Data></Cell>
+    <Cell><Data ss:Type="String">13</Data></Cell>
+    <Cell><Data ss:Type="String">SKU-013</Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String">لا</Data></Cell>
+    <Cell><Data ss:Type="String">نعم</Data></Cell>
+    <Cell><Data ss:Type="String">13</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">سماعة رأس للألعاب مع مايك</Data></Cell>
+    <Cell><Data ss:Type="String">الكترونيات </Data></Cell>
+    <Cell><Data ss:Type="String">24</Data></Cell>
+    <Cell><Data ss:Type="String">34</Data></Cell>
+    <Cell><Data ss:Type="String">14</Data></Cell>
+    <Cell><Data ss:Type="String">SKU-014</Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String">لا</Data></Cell>
+    <Cell><Data ss:Type="String">نعم</Data></Cell>
+    <Cell><Data ss:Type="String">14</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">مكبر صوت بلوتوث محمول</Data></Cell>
+    <Cell><Data ss:Type="String">الكترونيات </Data></Cell>
+    <Cell><Data ss:Type="String">25</Data></Cell>
+    <Cell><Data ss:Type="String">35</Data></Cell>
+    <Cell><Data ss:Type="String">15</Data></Cell>
+    <Cell><Data ss:Type="String">SKU-015</Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String">لا</Data></Cell>
+    <Cell><Data ss:Type="String">نعم</Data></Cell>
+    <Cell><Data ss:Type="String">15</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">كاميرا ويب Full HD</Data></Cell>
+    <Cell><Data ss:Type="String">الكترونيات </Data></Cell>
+    <Cell><Data ss:Type="String">26</Data></Cell>
+    <Cell><Data ss:Type="String">36</Data></Cell>
+    <Cell><Data ss:Type="String">16</Data></Cell>
+    <Cell><Data ss:Type="String">SKU-016</Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String">لا</Data></Cell>
+    <Cell><Data ss:Type="String">نعم</Data></Cell>
+    <Cell><Data ss:Type="String">16</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">إضاءة LED للمكتب قابلة للتعديل</Data></Cell>
+    <Cell><Data ss:Type="String">الكترونيات </Data></Cell>
+    <Cell><Data ss:Type="String">27</Data></Cell>
+    <Cell><Data ss:Type="String">37</Data></Cell>
+    <Cell><Data ss:Type="String">17</Data></Cell>
+    <Cell><Data ss:Type="String">SKU-017</Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String">لا</Data></Cell>
+    <Cell><Data ss:Type="String">نعم</Data></Cell>
+    <Cell><Data ss:Type="String">17</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">مروحة تبريد للابتوب</Data></Cell>
+    <Cell><Data ss:Type="String">الكترونيات </Data></Cell>
+    <Cell><Data ss:Type="String">28</Data></Cell>
+    <Cell><Data ss:Type="String">38</Data></Cell>
+    <Cell><Data ss:Type="String">18</Data></Cell>
+    <Cell><Data ss:Type="String">SKU-018</Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String">لا</Data></Cell>
+    <Cell><Data ss:Type="String">نعم</Data></Cell>
+    <Cell><Data ss:Type="String">18</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">حقيبة لابتوب مقاومة للماء 15.6 إنش</Data></Cell>
+    <Cell><Data ss:Type="String">الكترونيات </Data></Cell>
+    <Cell><Data ss:Type="String">29</Data></Cell>
+    <Cell><Data ss:Type="String">39</Data></Cell>
+    <Cell><Data ss:Type="String">19</Data></Cell>
+    <Cell><Data ss:Type="String">SKU-019</Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String">لا</Data></Cell>
+    <Cell><Data ss:Type="String">نعم</Data></Cell>
+    <Cell><Data ss:Type="String">19</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">قاعدة تبريد للابتوب بمروحتين</Data></Cell>
+    <Cell><Data ss:Type="String">الكترونيات </Data></Cell>
+    <Cell><Data ss:Type="String">30</Data></Cell>
+    <Cell><Data ss:Type="String">40</Data></Cell>
+    <Cell><Data ss:Type="String">20</Data></Cell>
+    <Cell><Data ss:Type="String">SKU-020</Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String">لا</Data></Cell>
+    <Cell><Data ss:Type="String">نعم</Data></Cell>
+    <Cell><Data ss:Type="String">20</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">قلم ستايلس للتابلت</Data></Cell>
+    <Cell><Data ss:Type="String">الكترونيات </Data></Cell>
+    <Cell><Data ss:Type="String">31</Data></Cell>
+    <Cell><Data ss:Type="String">41</Data></Cell>
+    <Cell><Data ss:Type="String">21</Data></Cell>
+    <Cell><Data ss:Type="String">SKU-021</Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String">لا</Data></Cell>
+    <Cell><Data ss:Type="String">نعم</Data></Cell>
+    <Cell><Data ss:Type="String">21</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">حافظة آيباد مع حامل</Data></Cell>
+    <Cell><Data ss:Type="String">الكترونيات </Data></Cell>
+    <Cell><Data ss:Type="String">32</Data></Cell>
+    <Cell><Data ss:Type="String">42</Data></Cell>
+    <Cell><Data ss:Type="String">22</Data></Cell>
+    <Cell><Data ss:Type="String">SKU-022</Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String">لا</Data></Cell>
+    <Cell><Data ss:Type="String">نعم</Data></Cell>
+    <Cell><Data ss:Type="String">22</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">نظارة واقع افتراضي VR</Data></Cell>
+    <Cell><Data ss:Type="String">الكترونيات </Data></Cell>
+    <Cell><Data ss:Type="String">33</Data></Cell>
+    <Cell><Data ss:Type="String">43</Data></Cell>
+    <Cell><Data ss:Type="String">23</Data></Cell>
+    <Cell><Data ss:Type="String">SKU-023</Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String">لا</Data></Cell>
+    <Cell><Data ss:Type="String">نعم</Data></Cell>
+    <Cell><Data ss:Type="String">23</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">ريموت تحكم للتلفاز الذكي</Data></Cell>
+    <Cell><Data ss:Type="String">الكترونيات </Data></Cell>
+    <Cell><Data ss:Type="String">34</Data></Cell>
+    <Cell><Data ss:Type="String">44</Data></Cell>
+    <Cell><Data ss:Type="String">24</Data></Cell>
+    <Cell><Data ss:Type="String">SKU-024</Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String">لا</Data></Cell>
+    <Cell><Data ss:Type="String">نعم</Data></Cell>
+    <Cell><Data ss:Type="String">24</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">محول طاقة متعدد المنافذ</Data></Cell>
+    <Cell><Data ss:Type="String">الكترونيات </Data></Cell>
+    <Cell><Data ss:Type="String">35</Data></Cell>
+    <Cell><Data ss:Type="String">45</Data></Cell>
+    <Cell><Data ss:Type="String">25</Data></Cell>
+    <Cell><Data ss:Type="String">SKU-025</Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String">لا</Data></Cell>
+    <Cell><Data ss:Type="String">نعم</Data></Cell>
+    <Cell><Data ss:Type="String">25</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">شاحن سيارة مزدوج USB</Data></Cell>
+    <Cell><Data ss:Type="String">الكترونيات </Data></Cell>
+    <Cell><Data ss:Type="String">36</Data></Cell>
+    <Cell><Data ss:Type="String">46</Data></Cell>
+    <Cell><Data ss:Type="String">26</Data></Cell>
+    <Cell><Data ss:Type="String">SKU-026</Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String">لا</Data></Cell>
+    <Cell><Data ss:Type="String">نعم</Data></Cell>
+    <Cell><Data ss:Type="String">26</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">كابل Lightning أصلي الطول 1 متر</Data></Cell>
+    <Cell><Data ss:Type="String">الكترونيات </Data></Cell>
+    <Cell><Data ss:Type="String">37</Data></Cell>
+    <Cell><Data ss:Type="String">47</Data></Cell>
+    <Cell><Data ss:Type="String">27</Data></Cell>
+    <Cell><Data ss:Type="String">SKU-027</Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String">لا</Data></Cell>
+    <Cell><Data ss:Type="String">نعم</Data></Cell>
+    <Cell><Data ss:Type="String">27</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">سماعة أذن سلكية مع مايك</Data></Cell>
+    <Cell><Data ss:Type="String">الكترونيات </Data></Cell>
+    <Cell><Data ss:Type="String">38</Data></Cell>
+    <Cell><Data ss:Type="String">48</Data></Cell>
+    <Cell><Data ss:Type="String">28</Data></Cell>
+    <Cell><Data ss:Type="String">SKU-028</Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String">لا</Data></Cell>
+    <Cell><Data ss:Type="String">نعم</Data></Cell>
+    <Cell><Data ss:Type="String">28</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">مايكروفون Condenser للكمبيوتر</Data></Cell>
+    <Cell><Data ss:Type="String">الكترونيات </Data></Cell>
+    <Cell><Data ss:Type="String">39</Data></Cell>
+    <Cell><Data ss:Type="String">49</Data></Cell>
+    <Cell><Data ss:Type="String">29</Data></Cell>
+    <Cell><Data ss:Type="String">SKU-029</Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String">لا</Data></Cell>
+    <Cell><Data ss:Type="String">نعم</Data></Cell>
+    <Cell><Data ss:Type="String">29</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">ذراع تحكم لاسلكي للألعاب</Data></Cell>
+    <Cell><Data ss:Type="String">الكترونيات </Data></Cell>
+    <Cell><Data ss:Type="String">40</Data></Cell>
+    <Cell><Data ss:Type="String">50</Data></Cell>
+    <Cell><Data ss:Type="String">30</Data></Cell>
+    <Cell><Data ss:Type="String">SKU-030</Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String">لا</Data></Cell>
+    <Cell><Data ss:Type="String">نعم</Data></Cell>
+    <Cell><Data ss:Type="String">30</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">قاعدة شحن لاسلكي 15 واط</Data></Cell>
+    <Cell><Data ss:Type="String">الكترونيات </Data></Cell>
+    <Cell><Data ss:Type="String">41</Data></Cell>
+    <Cell><Data ss:Type="String">51</Data></Cell>
+    <Cell><Data ss:Type="String">31</Data></Cell>
+    <Cell><Data ss:Type="String">SKU-031</Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String">لا</Data></Cell>
+    <Cell><Data ss:Type="String">نعم</Data></Cell>
+    <Cell><Data ss:Type="String">31</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">حلقة MagSafe مغناطيسية</Data></Cell>
+    <Cell><Data ss:Type="String">الكترونيات </Data></Cell>
+    <Cell><Data ss:Type="String">42</Data></Cell>
+    <Cell><Data ss:Type="String">52</Data></Cell>
+    <Cell><Data ss:Type="String">32</Data></Cell>
+    <Cell><Data ss:Type="String">SKU-032</Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String">لا</Data></Cell>
+    <Cell><Data ss:Type="String">نعم</Data></Cell>
+    <Cell><Data ss:Type="String">32</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">غطاء حماية لكاميرا الهاتف</Data></Cell>
+    <Cell><Data ss:Type="String">الكترونيات </Data></Cell>
+    <Cell><Data ss:Type="String">43</Data></Cell>
+    <Cell><Data ss:Type="String">53</Data></Cell>
+    <Cell><Data ss:Type="String">33</Data></Cell>
+    <Cell><Data ss:Type="String">SKU-033</Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String">لا</Data></Cell>
+    <Cell><Data ss:Type="String">نعم</Data></Cell>
+    <Cell><Data ss:Type="String">33</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">حامل تابلت مكتبي قابل للطي</Data></Cell>
+    <Cell><Data ss:Type="String">الكترونيات </Data></Cell>
+    <Cell><Data ss:Type="String">44</Data></Cell>
+    <Cell><Data ss:Type="String">54</Data></Cell>
+    <Cell><Data ss:Type="String">34</Data></Cell>
+    <Cell><Data ss:Type="String">SKU-034</Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String">لا</Data></Cell>
+    <Cell><Data ss:Type="String">نعم</Data></Cell>
+    <Cell><Data ss:Type="String">34</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">محول OTG من USB-C إلى USB</Data></Cell>
+    <Cell><Data ss:Type="String">الكترونيات </Data></Cell>
+    <Cell><Data ss:Type="String">45</Data></Cell>
+    <Cell><Data ss:Type="String">55</Data></Cell>
+    <Cell><Data ss:Type="String">35</Data></Cell>
+    <Cell><Data ss:Type="String">SKU-035</Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String">لا</Data></Cell>
+    <Cell><Data ss:Type="String">نعم</Data></Cell>
+    <Cell><Data ss:Type="String">35</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">كابل شبكة Ethernet Cat6 بطول 5 متر</Data></Cell>
+    <Cell><Data ss:Type="String">الكترونيات </Data></Cell>
+    <Cell><Data ss:Type="String">46</Data></Cell>
+    <Cell><Data ss:Type="String">56</Data></Cell>
+    <Cell><Data ss:Type="String">36</Data></Cell>
+    <Cell><Data ss:Type="String">SKU-036</Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String">لا</Data></Cell>
+    <Cell><Data ss:Type="String">نعم</Data></Cell>
+    <Cell><Data ss:Type="String">36</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">راوتر لاسلكي ثنائي النطاق</Data></Cell>
+    <Cell><Data ss:Type="String">الكترونيات </Data></Cell>
+    <Cell><Data ss:Type="String">47</Data></Cell>
+    <Cell><Data ss:Type="String">57</Data></Cell>
+    <Cell><Data ss:Type="String">37</Data></Cell>
+    <Cell><Data ss:Type="String">SKU-037</Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String">لا</Data></Cell>
+    <Cell><Data ss:Type="String">نعم</Data></Cell>
+    <Cell><Data ss:Type="String">37</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">موسع مدى واي فاي</Data></Cell>
+    <Cell><Data ss:Type="String">الكترونيات </Data></Cell>
+    <Cell><Data ss:Type="String">48</Data></Cell>
+    <Cell><Data ss:Type="String">58</Data></Cell>
+    <Cell><Data ss:Type="String">38</Data></Cell>
+    <Cell><Data ss:Type="String">SKU-038</Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String">لا</Data></Cell>
+    <Cell><Data ss:Type="String">نعم</Data></Cell>
+    <Cell><Data ss:Type="String">38</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">طابعة صور محمولة</Data></Cell>
+    <Cell><Data ss:Type="String">الكترونيات </Data></Cell>
+    <Cell><Data ss:Type="String">49</Data></Cell>
+    <Cell><Data ss:Type="String">59</Data></Cell>
+    <Cell><Data ss:Type="String">39</Data></Cell>
+    <Cell><Data ss:Type="String">SKU-039</Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String">لا</Data></Cell>
+    <Cell><Data ss:Type="String">نعم</Data></Cell>
+    <Cell><Data ss:Type="String">39</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">ماسح ضوئي محمول للمستندات</Data></Cell>
+    <Cell><Data ss:Type="String">الكترونيات </Data></Cell>
+    <Cell><Data ss:Type="String">10</Data></Cell>
+    <Cell><Data ss:Type="String">60</Data></Cell>
+    <Cell><Data ss:Type="String">40</Data></Cell>
+    <Cell><Data ss:Type="String">SKU-040</Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String">لا</Data></Cell>
+    <Cell><Data ss:Type="String">نعم</Data></Cell>
+    <Cell><Data ss:Type="String">40</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">قرص صلب خارجي 1 تيرابايت</Data></Cell>
+    <Cell><Data ss:Type="String">الكترونيات </Data></Cell>
+    <Cell><Data ss:Type="String">11</Data></Cell>
+    <Cell><Data ss:Type="String">61</Data></Cell>
+    <Cell><Data ss:Type="String">41</Data></Cell>
+    <Cell><Data ss:Type="String">SKU-041</Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String">لا</Data></Cell>
+    <Cell><Data ss:Type="String">نعم</Data></Cell>
+    <Cell><Data ss:Type="String">41</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">SSD خارجي 500 جيجا</Data></Cell>
+    <Cell><Data ss:Type="String">الكترونيات </Data></Cell>
+    <Cell><Data ss:Type="String">12</Data></Cell>
+    <Cell><Data ss:Type="String">62</Data></Cell>
+    <Cell><Data ss:Type="String">42</Data></Cell>
+    <Cell><Data ss:Type="String">SKU-042</Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String">لا</Data></Cell>
+    <Cell><Data ss:Type="String">نعم</Data></Cell>
+    <Cell><Data ss:Type="String">42</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">مشغل MP3 مع سماعات</Data></Cell>
+    <Cell><Data ss:Type="String">الكترونيات </Data></Cell>
+    <Cell><Data ss:Type="String">13</Data></Cell>
+    <Cell><Data ss:Type="String">63</Data></Cell>
+    <Cell><Data ss:Type="String">43</Data></Cell>
+    <Cell><Data ss:Type="String">SKU-043</Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String">لا</Data></Cell>
+    <Cell><Data ss:Type="String">نعم</Data></Cell>
+    <Cell><Data ss:Type="String">43</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">راديو بلوتوث مع ساعة منبّه</Data></Cell>
+    <Cell><Data ss:Type="String">الكترونيات </Data></Cell>
+    <Cell><Data ss:Type="String">14</Data></Cell>
+    <Cell><Data ss:Type="String">64</Data></Cell>
+    <Cell><Data ss:Type="String">44</Data></Cell>
+    <Cell><Data ss:Type="String">SKU-044</Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String">لا</Data></Cell>
+    <Cell><Data ss:Type="String">نعم</Data></Cell>
+    <Cell><Data ss:Type="String">44</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">مصباح ليزر للمؤتمرات</Data></Cell>
+    <Cell><Data ss:Type="String">الكترونيات </Data></Cell>
+    <Cell><Data ss:Type="String">15</Data></Cell>
+    <Cell><Data ss:Type="String">65</Data></Cell>
+    <Cell><Data ss:Type="String">45</Data></Cell>
+    <Cell><Data ss:Type="String">SKU-045</Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String">لا</Data></Cell>
+    <Cell><Data ss:Type="String">نعم</Data></Cell>
+    <Cell><Data ss:Type="String">45</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">قلم ليزر أحمر للعرض</Data></Cell>
+    <Cell><Data ss:Type="String">الكترونيات </Data></Cell>
+    <Cell><Data ss:Type="String">16</Data></Cell>
+    <Cell><Data ss:Type="String">66</Data></Cell>
+    <Cell><Data ss:Type="String">46</Data></Cell>
+    <Cell><Data ss:Type="String">SKU-046</Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String">لا</Data></Cell>
+    <Cell><Data ss:Type="String">نعم</Data></Cell>
+    <Cell><Data ss:Type="String">46</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">حقيبة منظمة لكابلات الشحن</Data></Cell>
+    <Cell><Data ss:Type="String">الكترونيات </Data></Cell>
+    <Cell><Data ss:Type="String">17</Data></Cell>
+    <Cell><Data ss:Type="String">67</Data></Cell>
+    <Cell><Data ss:Type="String">47</Data></Cell>
+    <Cell><Data ss:Type="String">SKU-047</Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String">لا</Data></Cell>
+    <Cell><Data ss:Type="String">نعم</Data></Cell>
+    <Cell><Data ss:Type="String">47</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">مجموعة مفكات للإلكترونيات</Data></Cell>
+    <Cell><Data ss:Type="String">الكترونيات </Data></Cell>
+    <Cell><Data ss:Type="String">18</Data></Cell>
+    <Cell><Data ss:Type="String">68</Data></Cell>
+    <Cell><Data ss:Type="String">48</Data></Cell>
+    <Cell><Data ss:Type="String">SKU-048</Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String">لا</Data></Cell>
+    <Cell><Data ss:Type="String">نعم</Data></Cell>
+    <Cell><Data ss:Type="String">48</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">منظف شاشات مع قماش ميكروفايبر</Data></Cell>
+    <Cell><Data ss:Type="String">الكترونيات </Data></Cell>
+    <Cell><Data ss:Type="String">19</Data></Cell>
+    <Cell><Data ss:Type="String">69</Data></Cell>
+    <Cell><Data ss:Type="String">49</Data></Cell>
+    <Cell><Data ss:Type="String">SKU-049</Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String">لا</Data></Cell>
+    <Cell><Data ss:Type="String">نعم</Data></Cell>
+    <Cell><Data ss:Type="String">49</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">شريط LED RGB بطول 5 متر مع جهاز تحكم</Data></Cell>
+    <Cell><Data ss:Type="String">الكترونيات </Data></Cell>
+    <Cell><Data ss:Type="String">20</Data></Cell>
+    <Cell><Data ss:Type="String">70</Data></Cell>
+    <Cell><Data ss:Type="String">50</Data></Cell>
+    <Cell><Data ss:Type="String">SKU-050</Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String">لا</Data></Cell>
+    <Cell><Data ss:Type="String">نعم</Data></Cell>
+    <Cell><Data ss:Type="String">50</Data></Cell>
+   </Row>
+  </Table>
+  <WorksheetOptions xmlns="urn:schemas-microsoft-com:office:excel">
+   <Selected/>
+   <FreezePanes/>
+   <FrozenNoSplit/>
+   <SplitHorizontal>1</SplitHorizontal>
+   <TopRowBottomPane>42</TopRowBottomPane>
+   <ActivePane>2</ActivePane>
+   <Panes>
+    <Pane>
+     <Number>3</Number>
+    </Pane>
+    <Pane>
+     <Number>2</Number>
+     <ActiveRow>52</ActiveRow>
+     <ActiveCol>2</ActiveCol>
+    </Pane>
+   </Panes>
+   <ProtectObjects>False</ProtectObjects>
+   <ProtectScenarios>False</ProtectScenarios>
+  </WorksheetOptions>
+ </Worksheet>
+ <Worksheet ss:Name="التعليمات">
+  <Table ss:ExpandedColumnCount="3" ss:ExpandedRowCount="26" x:FullColumns="1"
+   x:FullRows="1" ss:StyleID="s62" ss:DefaultColumnWidth="52.8"
+   ss:DefaultRowHeight="24.6">
+   <Column ss:StyleID="s62" ss:AutoFitWidth="0" ss:Width="90"/>
+   <Column ss:StyleID="s62" ss:AutoFitWidth="0" ss:Width="70.2"/>
+   <Column ss:StyleID="s62" ss:AutoFitWidth="0" ss:Width="420"/>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell ss:StyleID="s65"><Data ss:Type="String">كيف تستخدم القالب</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">1) لا تحذف صف العناوين الأول ولا تغيّر أسماء الأعمدة.</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">2) الأعمدة الحمراء إلزامية في كل صف. الخضراء اختيارية.</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">3) القالب يحتوي 50 منتجاً بأسماء حقيقية (إلكترونيات وإكسسوارات). الباركود من 1 إلى 50 — عدّل الأسماء والأسعار حسب متجرك.</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">4) سمِّ صور المنتجات برقم الباركود مثل 3.png أو 3.jpg وضعها في ملف ZIP.</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">5) ارفع ملف Excel مع ملف ZIP من صفحة الاستيراد لربط كل صورة بمنتجها تلقائياً.</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">6) انسخ اسم القسم من ورقة «الأقسام» كما هو بدون زيادة مسافات.</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">7) إذا وضعت «رمز المنتج» أو «الباركود» لمنتج موجود مسبقاً سيتم تحديثه بدل إنشاء صف جديد.</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String"></Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell ss:StyleID="s65"><Data ss:Type="String">الأعمدة</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell ss:StyleID="s64"><Data ss:Type="String">العمود</Data></Cell>
+    <Cell ss:StyleID="s64"><Data ss:Type="String">إلزامي؟</Data></Cell>
+    <Cell ss:StyleID="s64"><Data ss:Type="String">الشرح</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell ss:StyleID="s63"><Data ss:Type="String">الاسم</Data></Cell>
+    <Cell><Data ss:Type="String">نعم</Data></Cell>
+    <Cell><Data ss:Type="String">اسم المنتج كما سيظهر في التطبيق</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell ss:StyleID="s63"><Data ss:Type="String">القسم</Data></Cell>
+    <Cell><Data ss:Type="String">نعم</Data></Cell>
+    <Cell><Data ss:Type="String">انسخ الاسم حرفياً من ورقة الأقسام</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell ss:StyleID="s63"><Data ss:Type="String">السعر</Data></Cell>
+    <Cell><Data ss:Type="String">نعم</Data></Cell>
+    <Cell><Data ss:Type="String">السعر الأصلي بالريال، أرقام فقط</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell ss:StyleID="s63"><Data ss:Type="String">المخزون</Data></Cell>
+    <Cell><Data ss:Type="String">نعم</Data></Cell>
+    <Cell><Data ss:Type="String">الكمية المتوفرة</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell ss:StyleID="s64"><Data ss:Type="String">الباركود</Data></Cell>
+    <Cell><Data ss:Type="String">لا</Data></Cell>
+    <Cell><Data ss:Type="String">رقم يطابق اسم الصورة في ZIP مثل 3.png للمنتج ذي الباركود 3</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell ss:StyleID="s64"><Data ss:Type="String">رمز المنتج</Data></Cell>
+    <Cell><Data ss:Type="String">لا</Data></Cell>
+    <Cell><Data ss:Type="String">اختياري. إن وُجد منتج بنفس الرمز يُحدَّث بدل إنشائه</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell ss:StyleID="s64"><Data ss:Type="String">سعر العرض</Data></Cell>
+    <Cell><Data ss:Type="String">لا</Data></Cell>
+    <Cell><Data ss:Type="String">أقل من السعر الأصلي ليظهر في العروض</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell ss:StyleID="s64"><Data ss:Type="String">الوصف</Data></Cell>
+    <Cell><Data ss:Type="String">لا</Data></Cell>
+    <Cell><Data ss:Type="String">وصف قصير للمنتج</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell ss:StyleID="s64"><Data ss:Type="String">رابط الصورة</Data></Cell>
+    <Cell><Data ss:Type="String">لا</Data></Cell>
+    <Cell><Data ss:Type="String">رابط مباشر إن لم تستخدم ZIP</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell ss:StyleID="s64"><Data ss:Type="String">الفوائد</Data></Cell>
+    <Cell><Data ss:Type="String">لا</Data></Cell>
+    <Cell><Data ss:Type="String">افصل كل فائدة بـ |</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell ss:StyleID="s64"><Data ss:Type="String">كلمات البحث</Data></Cell>
+    <Cell><Data ss:Type="String">لا</Data></Cell>
+    <Cell><Data ss:Type="String">افصل بفاصلة</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell ss:StyleID="s64"><Data ss:Type="String">طريقة الاستخدام</Data></Cell>
+    <Cell><Data ss:Type="String">لا</Data></Cell>
+    <Cell><Data ss:Type="String">نص حر</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell ss:StyleID="s64"><Data ss:Type="String">مميز</Data></Cell>
+    <Cell><Data ss:Type="String">لا</Data></Cell>
+    <Cell><Data ss:Type="String">نعم أو لا</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell ss:StyleID="s64"><Data ss:Type="String">ظاهر</Data></Cell>
+    <Cell><Data ss:Type="String">لا</Data></Cell>
+    <Cell><Data ss:Type="String">نعم أو لا — الافتراضي نعم</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell ss:StyleID="s64"><Data ss:Type="String">الترتيب</Data></Cell>
+    <Cell><Data ss:Type="String">لا</Data></Cell>
+    <Cell><Data ss:Type="String">رقم أصغر يظهر أولاً</Data></Cell>
+   </Row>
+  </Table>
+  <WorksheetOptions xmlns="urn:schemas-microsoft-com:office:excel">
+   <ProtectObjects>False</ProtectObjects>
+   <ProtectScenarios>False</ProtectScenarios>
+  </WorksheetOptions>
+ </Worksheet>
+ <Worksheet ss:Name="الأقسام">
+  <Table ss:ExpandedColumnCount="2" ss:ExpandedRowCount="122" x:FullColumns="1"
+   x:FullRows="1" ss:StyleID="s62" ss:DefaultColumnWidth="52.8"
+   ss:DefaultRowHeight="24.6">
+   <Column ss:StyleID="s62" ss:AutoFitWidth="0" ss:Width="220.2"/>
+   <Column ss:StyleID="s62" ss:AutoFitWidth="0" ss:Width="160.20000000000002"/>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell ss:StyleID="s64"><Data ss:Type="String">اسم القسم (انسخه لعمود القسم)</Data></Cell>
+    <Cell ss:StyleID="s64"><Data ss:Type="String">القسم الأب</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">أجبان</Data></Cell>
+    <Cell><Data ss:Type="String">الحليب والألبان</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">أجبان</Data></Cell>
+    <Cell><Data ss:Type="String">الحليب والألبان</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">أدوات المسح</Data></Cell>
+    <Cell><Data ss:Type="String">العناية بالمنزل</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">أدوات المسح</Data></Cell>
+    <Cell><Data ss:Type="String">العناية بالمنزل</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">أرز بسمتي</Data></Cell>
+    <Cell><Data ss:Type="String">الأرز والحبوب</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">أرز بسمتي</Data></Cell>
+    <Cell><Data ss:Type="String">الأرز والحبوب</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">أرز مصري</Data></Cell>
+    <Cell><Data ss:Type="String">الأرز والحبوب</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">أرز مصري</Data></Cell>
+    <Cell><Data ss:Type="String">الأرز والحبوب</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">أسماك مجمدة</Data></Cell>
+    <Cell><Data ss:Type="String">الأطعمة المجمدة</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">أسماك مجمدة</Data></Cell>
+    <Cell><Data ss:Type="String">الأطعمة المجمدة</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">أعشاب</Data></Cell>
+    <Cell><Data ss:Type="String">الخضروات والفواكه</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">أعشاب</Data></Cell>
+    <Cell><Data ss:Type="String">الخضروات والفواكه</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">أكياس وقفازات</Data></Cell>
+    <Cell><Data ss:Type="String">العناية بالمنزل</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">أكياس وقفازات</Data></Cell>
+    <Cell><Data ss:Type="String">العناية بالمنزل</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">إسفنج ومماسح</Data></Cell>
+    <Cell><Data ss:Type="String">منظفات المطبخ</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">إسفنج ومماسح</Data></Cell>
+    <Cell><Data ss:Type="String">منظفات المطبخ</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">إلكترونيات وأجهزة</Data></Cell>
+    <Cell><Data ss:Type="String">—</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">إلكترونيات وأجهزة</Data></Cell>
+    <Cell><Data ss:Type="String">—</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">ادوات طبية</Data></Cell>
+    <Cell><Data ss:Type="String">—</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">الأرز والحبوب</Data></Cell>
+    <Cell><Data ss:Type="String">مواد غذائية</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">الأرز والحبوب</Data></Cell>
+    <Cell><Data ss:Type="String">المقاضي</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">الأطعمة المجمدة</Data></Cell>
+    <Cell><Data ss:Type="String">مواد غذائية</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">الأطعمة المجمدة</Data></Cell>
+    <Cell><Data ss:Type="String">المقاضي</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">الحليب النباتي</Data></Cell>
+    <Cell><Data ss:Type="String">مواد غذائية</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">الحليب النباتي</Data></Cell>
+    <Cell><Data ss:Type="String">المشروبات والمفرحات</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">الحليب والألبان</Data></Cell>
+    <Cell><Data ss:Type="String">مواد غذائية</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">الحليب والألبان</Data></Cell>
+    <Cell><Data ss:Type="String">المقاضي</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">الخبز والمخبوزات</Data></Cell>
+    <Cell><Data ss:Type="String">مواد غذائية</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">الخبز والمخبوزات</Data></Cell>
+    <Cell><Data ss:Type="String">المقاضي</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">الخضروات والفواكه</Data></Cell>
+    <Cell><Data ss:Type="String">مواد غذائية</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">الخضروات والفواكه</Data></Cell>
+    <Cell><Data ss:Type="String">المقاضي</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">الزيوت والصلصات</Data></Cell>
+    <Cell><Data ss:Type="String">مواد غذائية</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">الزيوت والصلصات</Data></Cell>
+    <Cell><Data ss:Type="String">المقاضي</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">العناية بالمنزل</Data></Cell>
+    <Cell><Data ss:Type="String">—</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">المشروبات</Data></Cell>
+    <Cell><Data ss:Type="String">مواد غذائية</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">المشروبات</Data></Cell>
+    <Cell><Data ss:Type="String">المقاضي</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">المشروبات والمفرحات</Data></Cell>
+    <Cell><Data ss:Type="String">—</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">المعكرونة والمعلبات</Data></Cell>
+    <Cell><Data ss:Type="String">مواد غذائية</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">المعكرونة والمعلبات</Data></Cell>
+    <Cell><Data ss:Type="String">المقاضي</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">المقاضي</Data></Cell>
+    <Cell><Data ss:Type="String">—</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">برغل وكسكس</Data></Cell>
+    <Cell><Data ss:Type="String">الأرز والحبوب</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">برغل وكسكس</Data></Cell>
+    <Cell><Data ss:Type="String">الأرز والحبوب</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">بطاطس مجمدة</Data></Cell>
+    <Cell><Data ss:Type="String">الأطعمة المجمدة</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">بطاطس مجمدة</Data></Cell>
+    <Cell><Data ss:Type="String">الأطعمة المجمدة</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">تونة وسردين</Data></Cell>
+    <Cell><Data ss:Type="String">المعكرونة والمعلبات</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">تونة وسردين</Data></Cell>
+    <Cell><Data ss:Type="String">المعكرونة والمعلبات</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">جل المرحاض</Data></Cell>
+    <Cell><Data ss:Type="String">منظفات الحمام</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">جل المرحاض</Data></Cell>
+    <Cell><Data ss:Type="String">منظفات الحمام</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">حليب طازج</Data></Cell>
+    <Cell><Data ss:Type="String">الحليب والألبان</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">حليب طازج</Data></Cell>
+    <Cell><Data ss:Type="String">الحليب والألبان</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">خضروات</Data></Cell>
+    <Cell><Data ss:Type="String">الخضروات والفواكه</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">خضروات</Data></Cell>
+    <Cell><Data ss:Type="String">الخضروات والفواكه</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">خضروات مجمدة</Data></Cell>
+    <Cell><Data ss:Type="String">الأطعمة المجمدة</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">خضروات مجمدة</Data></Cell>
+    <Cell><Data ss:Type="String">الأطعمة المجمدة</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">دجاج مجمد</Data></Cell>
+    <Cell><Data ss:Type="String">الأطعمة المجمدة</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">دجاج مجمد</Data></Cell>
+    <Cell><Data ss:Type="String">الأطعمة المجمدة</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">رائجة اليوم</Data></Cell>
+    <Cell><Data ss:Type="String">—</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">زبادي</Data></Cell>
+    <Cell><Data ss:Type="String">الحليب والألبان</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">زبادي</Data></Cell>
+    <Cell><Data ss:Type="String">الحليب والألبان</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">سائل جلي</Data></Cell>
+    <Cell><Data ss:Type="String">منظفات المطبخ</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">سائل جلي</Data></Cell>
+    <Cell><Data ss:Type="String">منظفات المطبخ</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">شاي</Data></Cell>
+    <Cell><Data ss:Type="String">شاي وقهوة</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">شاي</Data></Cell>
+    <Cell><Data ss:Type="String">شاي وقهوة</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">شاي وقهوة</Data></Cell>
+    <Cell><Data ss:Type="String">مواد غذائية</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">شاي وقهوة</Data></Cell>
+    <Cell><Data ss:Type="String">المشروبات والمفرحات</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">عدس وحبوب</Data></Cell>
+    <Cell><Data ss:Type="String">الأرز والحبوب</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">عدس وحبوب</Data></Cell>
+    <Cell><Data ss:Type="String">الأرز والحبوب</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">عصائر طبيعية</Data></Cell>
+    <Cell><Data ss:Type="String">مواد غذائية</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">عصائر طبيعية</Data></Cell>
+    <Cell><Data ss:Type="String">المشروبات والمفرحات</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">عصير برتقال</Data></Cell>
+    <Cell><Data ss:Type="String">عصائر طبيعية</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">عصير برتقال</Data></Cell>
+    <Cell><Data ss:Type="String">عصائر طبيعية</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">عصير تفاح</Data></Cell>
+    <Cell><Data ss:Type="String">عصائر طبيعية</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">عصير تفاح</Data></Cell>
+    <Cell><Data ss:Type="String">عصائر طبيعية</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">غسيل الملابس</Data></Cell>
+    <Cell><Data ss:Type="String">العناية بالمنزل</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">غسيل الملابس</Data></Cell>
+    <Cell><Data ss:Type="String">العناية بالمنزل</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">فواكه</Data></Cell>
+    <Cell><Data ss:Type="String">الخضروات والفواكه</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">فواكه</Data></Cell>
+    <Cell><Data ss:Type="String">الخضروات والفواكه</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">قهوة</Data></Cell>
+    <Cell><Data ss:Type="String">شاي وقهوة</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">قهوة</Data></Cell>
+    <Cell><Data ss:Type="String">شاي وقهوة</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">كوكتيل فواكه</Data></Cell>
+    <Cell><Data ss:Type="String">عصائر طبيعية</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">كوكتيل فواكه</Data></Cell>
+    <Cell><Data ss:Type="String">عصائر طبيعية</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">لبنة وقشطة</Data></Cell>
+    <Cell><Data ss:Type="String">الحليب والألبان</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">لبنة وقشطة</Data></Cell>
+    <Cell><Data ss:Type="String">الحليب والألبان</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">لحوم مجمدة</Data></Cell>
+    <Cell><Data ss:Type="String">الأطعمة المجمدة</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">لحوم مجمدة</Data></Cell>
+    <Cell><Data ss:Type="String">الأطعمة المجمدة</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">مبيدات حشرية</Data></Cell>
+    <Cell><Data ss:Type="String">العناية بالمنزل</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">مبيدات حشرية</Data></Cell>
+    <Cell><Data ss:Type="String">العناية بالمنزل</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">مركزات وعصائر</Data></Cell>
+    <Cell><Data ss:Type="String">مواد غذائية</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">مركزات وعصائر</Data></Cell>
+    <Cell><Data ss:Type="String">المشروبات والمفرحات</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">مشروبات الطاقة</Data></Cell>
+    <Cell><Data ss:Type="String">مواد غذائية</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">مشروبات الطاقة</Data></Cell>
+    <Cell><Data ss:Type="String">المشروبات والمفرحات</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">مشروبات رياضية</Data></Cell>
+    <Cell><Data ss:Type="String">مواد غذائية</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">مشروبات رياضية</Data></Cell>
+    <Cell><Data ss:Type="String">المشروبات والمفرحات</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">مشروبات غازية</Data></Cell>
+    <Cell><Data ss:Type="String">مواد غذائية</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">مشروبات غازية</Data></Cell>
+    <Cell><Data ss:Type="String">المشروبات والمفرحات</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">معجنات مجمدة</Data></Cell>
+    <Cell><Data ss:Type="String">الأطعمة المجمدة</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">معجنات مجمدة</Data></Cell>
+    <Cell><Data ss:Type="String">الأطعمة المجمدة</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">معطرات الجو</Data></Cell>
+    <Cell><Data ss:Type="String">العناية بالمنزل</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">معطرات الجو</Data></Cell>
+    <Cell><Data ss:Type="String">العناية بالمنزل</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">معكرونة</Data></Cell>
+    <Cell><Data ss:Type="String">المعكرونة والمعلبات</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">معكرونة</Data></Cell>
+    <Cell><Data ss:Type="String">المعكرونة والمعلبات</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">معلبات خضار</Data></Cell>
+    <Cell><Data ss:Type="String">المعكرونة والمعلبات</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">معلبات خضار</Data></Cell>
+    <Cell><Data ss:Type="String">المعكرونة والمعلبات</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">منتجات الحليب والالبان</Data></Cell>
+    <Cell><Data ss:Type="String">—</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">منظف أسطح</Data></Cell>
+    <Cell><Data ss:Type="String">منظفات المطبخ</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">منظف أسطح</Data></Cell>
+    <Cell><Data ss:Type="String">منظفات المطبخ</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">منظف البلاط</Data></Cell>
+    <Cell><Data ss:Type="String">منظفات الحمام</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">منظف البلاط</Data></Cell>
+    <Cell><Data ss:Type="String">منظفات الحمام</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">منظفات الحمام</Data></Cell>
+    <Cell><Data ss:Type="String">العناية بالمنزل</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">منظفات الحمام</Data></Cell>
+    <Cell><Data ss:Type="String">العناية بالمنزل</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">منظفات المطبخ</Data></Cell>
+    <Cell><Data ss:Type="String">العناية بالمنزل</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">منظفات المطبخ</Data></Cell>
+    <Cell><Data ss:Type="String">العناية بالمنزل</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">منظفات ومنتجات التنظيف</Data></Cell>
+    <Cell><Data ss:Type="String">—</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">مواد صحية</Data></Cell>
+    <Cell><Data ss:Type="String">رائجة اليوم</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">مواد غذائية</Data></Cell>
+    <Cell><Data ss:Type="String">—</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">مياه ومعدنية</Data></Cell>
+    <Cell><Data ss:Type="String">مواد غذائية</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">مياه ومعدنية</Data></Cell>
+    <Cell><Data ss:Type="String">المشروبات والمفرحات</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">نسكافيه</Data></Cell>
+    <Cell><Data ss:Type="String">شاي وقهوة</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">نسكافيه</Data></Cell>
+    <Cell><Data ss:Type="String">شاي وقهوة</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">ورق ومناديل</Data></Cell>
+    <Cell><Data ss:Type="String">العناية بالمنزل</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="22.05">
+    <Cell><Data ss:Type="String">ورق ومناديل</Data></Cell>
+    <Cell><Data ss:Type="String">العناية بالمنزل</Data></Cell>
+   </Row>
+  </Table>
+  <WorksheetOptions xmlns="urn:schemas-microsoft-com:office:excel">
+   <FreezePanes/>
+   <FrozenNoSplit/>
+   <SplitHorizontal>1</SplitHorizontal>
+   <TopRowBottomPane>1</TopRowBottomPane>
+   <ActivePane>2</ActivePane>
+   <Panes>
+    <Pane>
+     <Number>3</Number>
+    </Pane>
+    <Pane>
+     <Number>2</Number>
+    </Pane>
+   </Panes>
+   <ProtectObjects>False</ProtectObjects>
+   <ProtectScenarios>False</ProtectScenarios>
+  </WorksheetOptions>
+ </Worksheet>
+</Workbook>
