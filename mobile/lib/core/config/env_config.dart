@@ -28,22 +28,22 @@ class EnvConfig {
   }
 
   /// الشبكة المحلية (نفس الواي فاي).
-  static const localApi = 'http://172.20.2.63:8088/api';
+  static const localApi = 'http://172.20.2.95:8088/api';
 
   /// الإنتاج على Render.
   static const remoteApi = 'https://raoah5.onrender.com/api';
 
-  /// العنوان المفضّل من `.env` — إن وُجد، وإلا Render.
+  /// العنوان المفضّل من `.env` — إن وُجد، وإلا المحلي.
   static String get apiBaseUrl {
-    return _trimBase(dotenv.env['API_BASE_URL'] ?? remoteApi);
+    return _trimBase(dotenv.env['API_BASE_URL'] ?? localApi);
   }
 
-  /// ترتيب المحاولة: `.env` ثم Render ثم المحلي.
+  /// ترتيب المحاولة: `.env` ثم المحلي ثم Render.
   static List<String> get apiBaseUrls {
     return {
       apiBaseUrl,
-      remoteApi,
       localApi,
+      remoteApi,
     }.toList();
   }
 }

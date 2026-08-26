@@ -49,7 +49,9 @@ final class AdminMenu
                 'icon' => 'bi-gear',
                 'items' => [
                     ['label' => AppStrings::NAV_PAGES, 'route' => 'admin.pages.index', 'icon' => 'bi-file-text'],
+                    ['label' => AppStrings::NAV_SPLASH, 'route' => 'admin.splash-screens.index', 'icon' => 'bi-phone'],
                     ['label' => AppStrings::NAV_ONBOARDING, 'route' => 'admin.onboarding.index', 'icon' => 'bi-collection'],
+                    ['label' => AppStrings::NAV_SEARCH_PAGE, 'route' => 'admin.search-placeholders.index', 'icon' => 'bi-search'],
                     ['label' => AppStrings::NAV_NOTIFICATIONS, 'route' => 'admin.notifications.index', 'icon' => 'bi-bell'],
                     ['label' => AppStrings::NAV_PAYMENT_METHODS, 'route' => 'admin.payment-methods.index', 'icon' => 'bi-credit-card'],
                     ['label' => AppStrings::NAV_DELIVERY, 'route' => 'admin.delivery.index', 'icon' => 'bi-truck'],

@@ -19,6 +19,8 @@ class DeliveryRule extends Model
         'per_km_mode',
         'sort_order',
         'is_active',
+        'note',
+        'note_enabled',
     ];
 
     protected function casts(): array
@@ -31,6 +33,7 @@ class DeliveryRule extends Model
             'per_km_mode' => DeliveryPerKmMode::class,
             'sort_order' => 'integer',
             'is_active' => 'boolean',
+            'note_enabled' => 'boolean',
         ];
     }
 

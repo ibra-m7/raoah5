@@ -139,6 +139,40 @@ final class AppStrings
 
     public const NAV_ONBOARDING = 'شرائح الترحيب';
 
+    public const NAV_SEARCH_PAGE = 'صفحة البحث';
+
+    public const ADD_SEARCH_PLACEHOLDER = 'إضافة عبارة بحث';
+
+    public const EDIT_SEARCH_PLACEHOLDER = 'تعديل عبارة البحث';
+
+    public const SEARCH_PLACEHOLDER_CREATED = 'تم إضافة عبارة البحث بنجاح.';
+
+    public const SEARCH_PLACEHOLDER_UPDATED = 'تم تحديث عبارة البحث بنجاح.';
+
+    public const SEARCH_PLACEHOLDER_DELETED = 'تم حذف عبارة البحث بنجاح.';
+
+    public const ADD_ONBOARDING = 'إضافة شريحة ترحيب';
+
+    public const EDIT_ONBOARDING = 'تعديل شريحة الترحيب';
+
+    public const ONBOARDING_CREATED = 'تم إضافة شريحة الترحيب بنجاح.';
+
+    public const ONBOARDING_UPDATED = 'تم تحديث شريحة الترحيب بنجاح.';
+
+    public const ONBOARDING_DELETED = 'تم حذف شريحة الترحيب بنجاح.';
+
+    public const NAV_SPLASH = 'شاشة البداية';
+
+    public const ADD_SPLASH = 'إضافة شاشة بداية';
+
+    public const EDIT_SPLASH = 'تعديل شاشة البداية';
+
+    public const SPLASH_CREATED = 'تم إضافة شاشة البداية بنجاح.';
+
+    public const SPLASH_UPDATED = 'تم تحديث شاشة البداية بنجاح.';
+
+    public const SPLASH_DELETED = 'تم حذف شاشة البداية بنجاح.';
+
     public const NAV_SETTINGS = 'الإعدادات';
 
     public const NAV_PAYMENT_METHODS = 'طرق الدفع';
@@ -242,6 +276,12 @@ final class AppStrings
     public const PRODUCT_UPDATED = 'تم تحديث المنتج بنجاح.';
 
     public const PRODUCT_DELETED = 'تم حذف المنتج بنجاح.';
+
+    public const PRODUCT_COPY_GENERATED = 'تم توليد وصف المنتج والتصنيف والفوائد وكلمات البحث وطريقة الاستخدام.';
+
+    public const GENERATE_PRODUCT_COPY = 'توليد المحتوى';
+
+    public const CONFIRM_GENERATE_ALL_PRODUCT_COPY = 'سيتم توليد الوصف والتصنيف والفوائد وكلمات البحث وطريقة الاستخدام لجميع المنتجات. قد يستغرق ذلك بعض الوقت. هل تريد المتابعة؟';
 
     public const PRODUCTS_WIPED = 'تم حذف كل المنتجات من التطبيق.';
 

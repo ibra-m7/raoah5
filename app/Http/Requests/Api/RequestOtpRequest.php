@@ -21,9 +21,9 @@ class RequestOtpRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'phone.required' => 'أدخل رقم هاتفك للمتابعة.',
-            'phone.min' => 'رقم الهاتف قصير جداً.',
-            'phone.max' => 'رقم الهاتف غير صالح.',
+            'phone.required' => 'أدخل الرقم هنا.',
+            'phone.min' => 'رقم الجوال قصير جداً.',
+            'phone.max' => 'رقم الجوال غير صالح.',
         ];
     }
 

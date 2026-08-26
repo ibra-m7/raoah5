@@ -18,6 +18,7 @@ class Category extends Model
         'slug',
         'icon_url',
         'image_url',
+        'background_image_url',
         'color',
         'sort_order',
         'is_active',
@@ -76,5 +77,10 @@ class Category extends Model
     protected function imageSrc(): Attribute
     {
         return Attribute::get(fn () => Media::url($this->image_url));
+    }
+
+    protected function backgroundImageSrc(): Attribute
+    {
+        return Attribute::get(fn () => Media::url($this->background_image_url));
     }
 }

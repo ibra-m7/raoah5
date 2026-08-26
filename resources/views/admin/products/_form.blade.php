@@ -6,19 +6,19 @@
     $keywords = old('keywords', implode(', ', $product->keywords ?? []));
 @endphp
 
-<div data-product-ai-copy data-endpoint="{{ route('admin.products.generate-copy') }}">
+<div class="product-ai-copy" data-product-ai-copy data-endpoint="{{ route('admin.products.generate-copy') }}">
 <div class="row">
     <div class="col-md-8 mb-3">
         <label class="form-label">اسم المنتج</label>
         <div class="product-ai-name">
             <input type="text" name="name" value="{{ old('name', $product->name) }}" class="form-control @error('name') is-invalid @enderror" required>
-            <button type="button" class="btn btn-outline-success rounded-pill" data-ai-generate>
+            <button type="button" class="btn btn-success rounded-pill" data-ai-generate title="توليد الوصف والتصنيف والفوائد وكلمات البحث وطريقة الاستخدام">
                 <i class="bi bi-stars ms-1"></i>
-                توليد
+                {{ $strings::GENERATE_PRODUCT_COPY }}
             </button>
         </div>
         @error('name') <div class="invalid-feedback d-block">{{ $message }}</div> @enderror
-        <div class="form-hint">اكتب الاسم ثم اضغط توليد لملء التصنيف والوصف والسعر وبقية الحقول.</div>
+        <div class="form-hint">اكتب الاسم ثم اضغط «توليد المحتوى» لملء التصنيف والوصف والفوائد وكلمات البحث وطريقة الاستخدام.</div>
         <div class="product-ai-copy-status text-muted small mt-1" data-ai-status hidden></div>
     </div>
     <div class="col-md-4 mb-3">
@@ -51,7 +51,7 @@
 
 <div class="mb-3">
     <label class="form-label">الوصف</label>
-    <textarea name="description" rows="3" class="form-control @error('description') is-invalid @enderror">{{ old('description', $product->description) }}</textarea>
+    <textarea name="description" rows="3" class="form-control @error('description') is-invalid @enderror" data-ai-field="description">{{ old('description', $product->description) }}</textarea>
     @error('description') <div class="invalid-feedback">{{ $message }}</div> @enderror
 </div>
 
@@ -151,6 +151,39 @@
     <textarea name="usage_instructions" rows="3" class="form-control @error('usage_instructions') is-invalid @enderror" data-ai-field="usage_instructions">{{ old('usage_instructions', $product->usage_instructions) }}</textarea>
     @error('usage_instructions') <div class="invalid-feedback">{{ $message }}</div> @enderror
 </div>
+
+@php
+    $complementaryOptions = $complementaryOptions ?? collect();
+    $selectedComplementaryIds = collect($selectedComplementaryIds ?? [])->map(fn ($id) => (int) $id)->all();
+@endphp
+@if ($complementaryOptions->isNotEmpty())
+    <div class="mb-3">
+        <label class="form-label">يُشترى معه</label>
+        <div class="form-hint mb-2">اختر منتجات تظهر في قسم «يُشترى معه» داخل تفاصيل المنتج.</div>
+        <input type="search" class="form-control mb-2" placeholder="ابحث داخل المنتجات..." data-picker-search="#complementary-products">
+        <div class="picker-grid" id="complementary-products">
+            @foreach ($complementaryOptions as $option)
+                <label class="picker-item" data-picker-text="{{ $option->name }} {{ $option->sku }}">
+                    <input
+                        type="checkbox"
+                        name="complementary_product_ids[]"
+                        value="{{ $option->id }}"
+                        @checked(in_array((int) $option->id, $selectedComplementaryIds, true))
+                    >
+                    <span>
+                        <strong>{{ $option->name }}</strong>
+                        <small class="d-block text-muted">
+                            @if ($option->sku) {{ $option->sku }} · @endif
+                            {{ number_format((float) $option->price, 2) }} {{ $strings::CURRENCY }}
+                        </small>
+                    </span>
+                </label>
+            @endforeach
+        </div>
+        @error('complementary_product_ids') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
+        @error('complementary_product_ids.*') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
+    </div>
+@endif
 </div>
 
 <div class="row">

@@ -23,29 +23,32 @@ class DeliveryService
         ?int $exceptOrderId = null,
     ): DeliveryQuote {
         $distance = $this->distanceKm($address);
+        $matchedRule = DeliverySettings::enabled() && $distance !== null
+            ? $this->matchRule($distance)
+            : null;
 
         if ($couponFreeShipping) {
-            return DeliveryQuote::free('كوبون توصيل مجاني', $distance);
+            return $this->withNotes(DeliveryQuote::free('كوبون توصيل مجاني', $distance), $matchedRule);
         }
 
         if (DeliverySettings::firstOrderFree() && $user && $this->isFirstOrder($user, $exceptOrderId)) {
-            return DeliveryQuote::free('أول طلب مجاني', $distance);
+            return $this->withNotes(DeliveryQuote::free('أول طلب مجاني', $distance), $matchedRule);
         }
 
         $threshold = StoreSettings::freeShippingThreshold();
         if ($threshold > 0 && $subtotal >= $threshold) {
-            return DeliveryQuote::free('تجاوزت حد التوصيل المجاني للطلب', $distance);
+            return $this->withNotes(DeliveryQuote::free('تجاوزت حد التوصيل المجاني للطلب', $distance), $matchedRule);
         }
 
         if (! DeliverySettings::enabled()) {
             $fee = StoreSettings::shippingFee();
 
-            return $this->withPerks(new DeliveryQuote(
+            return $this->withPerks($this->withNotes(new DeliveryQuote(
                 $fee,
                 $fee <= 0,
                 $distance,
                 $fee <= 0 ? 'توصيل مجاني' : 'رسوم التوصيل الثابتة',
-            ), $user, $exceptOrderId);
+            )), $user, $exceptOrderId);
         }
 
         $maxKm = DeliverySettings::maxKm();
@@ -58,27 +61,48 @@ class DeliveryService
         if ($distance === null) {
             $fee = DeliverySettings::fallbackFee();
 
-            return $this->withPerks(new DeliveryQuote(
+            return $this->withPerks($this->withNotes(new DeliveryQuote(
                 $fee,
                 $fee <= 0,
                 null,
                 $fee <= 0 ? 'توصيل مجاني' : 'رسوم احتياطية — حدّد موقع المتجر وعنوان العميل لحساب المسافة',
-            ), $user, $exceptOrderId);
+            )), $user, $exceptOrderId);
         }
 
-        $rule = $this->matchRule($distance);
+        $rule = $matchedRule;
         if ($rule === null) {
             $fee = DeliverySettings::fallbackFee();
 
-            return $this->withPerks(new DeliveryQuote(
+            return $this->withPerks($this->withNotes(new DeliveryQuote(
                 $fee,
                 $fee <= 0,
                 $distance,
                 'لا توجد شريحة مسافة مطابقة — الرسوم الاحتياطية',
-            ), $user, $exceptOrderId);
+            )), $user, $exceptOrderId);
         }
 
-        return $this->withPerks($this->applyRule($rule, $distance), $user, $exceptOrderId);
+        return $this->withPerks($this->withNotes($this->applyRule($rule, $distance), $rule), $user, $exceptOrderId);
+    }
+
+    private function withNotes(DeliveryQuote $quote, ?DeliveryRule $rule = null): DeliveryQuote
+    {
+        if (! DeliverySettings::notesEnabled()) {
+            return $quote->withNote(null);
+        }
+
+        $parts = [];
+        $general = DeliverySettings::generalNote();
+        if ($general !== '') {
+            $parts[] = $general;
+        }
+        if ($rule !== null && $rule->note_enabled) {
+            $ruleNote = trim((string) ($rule->note ?? ''));
+            if ($ruleNote !== '') {
+                $parts[] = $ruleNote;
+            }
+        }
+
+        return $quote->withNote($parts === [] ? null : implode("\n", $parts));
     }
 
     private function applyRule(DeliveryRule $rule, float $distance): DeliveryQuote

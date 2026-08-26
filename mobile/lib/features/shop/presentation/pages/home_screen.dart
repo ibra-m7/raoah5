@@ -13,20 +13,20 @@ import '../../../../core/theme/app_scale.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/app_network_image.dart';
 import '../../../../core/widgets/brand_logo.dart';
-import '../../../../core/widgets/typing_placeholder.dart';
 import '../../../../features/auth/data/services/auth_session.dart';
 import '../../../../features/auth/presentation/manager/address_cubit.dart';
 import '../../../../features/auth/presentation/pages/profile_screen.dart';
 import '../../../../features/notifications/presentation/manager/notifications_cubit.dart';
 import '../../../../features/notifications/data/services/push_service.dart';
-import '../../../../features/auth/presentation/widgets/delivery_addresses_sheet.dart';
 import '../../data/models/category_model.dart';
 import '../../data/models/dynamic_page_model.dart';
 import '../../data/models/product_model.dart';
 import 'custom_dynamic_page_screen.dart';
+import 'category_browse_screen.dart';
 import '../manager/catalog_cubit.dart';
 import '../manager/favorite_cubit.dart';
 import '../manager/orders_cubit.dart';
+import '../widgets/header_search_bar.dart';
 import '../widgets/main_bottom_nav_bar.dart';
 import '../widgets/main_shell_scope.dart';
 import '../widgets/price_line.dart';
@@ -72,250 +72,12 @@ class _SectionWaveClipper extends CustomClipper<Path> {
 
 const _homeAppBarColor = Color(0xFFFAFFFC);
 
-// ── زر الموقع بجانب البحث — أيقونة + اسم العنوان ──────────────────────────
-class _HomeLocationButton extends StatelessWidget {
-  const _HomeLocationButton({this.onImage = false});
-
-  final bool onImage;
-
-  @override
-  Widget build(BuildContext context) {
-    return BlocBuilder<AddressCubit, AddressState>(
-      builder: (context, state) {
-        final name = state.selected?.headerName ?? AppStrings.homeLocationHome;
-        final style = Theme.of(context).textTheme.labelLarge?.copyWith(
-          fontWeight: FontWeight.w800,
-          color: AppTheme.darkText,
-          fontSize: 12.5,
-        );
-        return GestureDetector(
-          onTap: () => DeliveryAddressesSheet.show(context),
-          behavior: HitTestBehavior.opaque,
-          child: SizedBox(
-            height: AppScale.of(context).searchH,
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                color: onImage ? AppTheme.surface : Colors.transparent,
-                borderRadius: BorderRadius.circular(22),
-              ),
-              child: Padding(
-                padding: const EdgeInsetsDirectional.only(start: 2, end: 2),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(
-                      Icons.location_on_rounded,
-                      color: AppTheme.primary,
-                      size: 20,
-                    ),
-                    const SizedBox(width: 3),
-                    Flexible(
-                      child: _MarqueeText(text: name, style: style),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        );
-      },
-    );
-  }
-}
-
-/// شريط اسم متحرك عندما يفيض النص عن العرض المتاح.
-class _MarqueeText extends StatefulWidget {
-  final String text;
-  final TextStyle? style;
-  final bool alwaysScroll;
-
-  const _MarqueeText({
-    required this.text,
-    this.style,
-    this.alwaysScroll = false,
-  });
-
-  @override
-  State<_MarqueeText> createState() => _MarqueeTextState();
-}
-
-class _MarqueeTextState extends State<_MarqueeText>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _ctrl;
-
-  @override
-  void initState() {
-    super.initState();
-    _ctrl = AnimationController(vsync: this);
-  }
-
-  @override
-  void didUpdateWidget(_MarqueeText oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.text != widget.text ||
-        oldWidget.alwaysScroll != widget.alwaysScroll) {
-      _stop();
-    }
-  }
-
-  @override
-  void dispose() {
-    _ctrl.dispose();
-    super.dispose();
-  }
-
-  void _run(double overflowWidth) {
-    final ms = (2800 + overflowWidth * 28).round().clamp(4000, 16000);
-    final next = Duration(milliseconds: ms);
-    if (_ctrl.duration != next) {
-      _ctrl.duration = next;
-    }
-    if (!_ctrl.isAnimating) {
-      _ctrl.repeat();
-    }
-  }
-
-  void _stop() {
-    if (_ctrl.isAnimating) {
-      _ctrl.stop();
-      _ctrl.reset();
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final painter = TextPainter(
-          text: TextSpan(text: widget.text, style: widget.style),
-          maxLines: 1,
-          textDirection: Directionality.of(context),
-          textScaler: MediaQuery.textScalerOf(context),
-        )..layout();
-
-        final maxW = constraints.maxWidth;
-        if (!widget.alwaysScroll && painter.width <= maxW + 1) {
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (mounted) _stop();
-          });
-          return Text(
-            widget.text,
-            maxLines: 1,
-            softWrap: false,
-            overflow: TextOverflow.clip,
-            style: widget.style,
-          );
-        }
-
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (mounted) _run(painter.width);
-        });
-        const gap = 36.0;
-        final loop = painter.width + gap;
-
-        return ClipRect(
-          child: AnimatedBuilder(
-            animation: _ctrl,
-            builder: (context, _) {
-              final dx = _ctrl.value * loop;
-              return Stack(
-                clipBehavior: Clip.hardEdge,
-                children: [
-                  Transform.translate(
-                    offset: Offset(dx, 0),
-                    child: Text(
-                      widget.text,
-                      maxLines: 1,
-                      softWrap: false,
-                      style: widget.style,
-                    ),
-                  ),
-                  Transform.translate(
-                    offset: Offset(dx - loop, 0),
-                    child: Text(
-                      widget.text,
-                      maxLines: 1,
-                      softWrap: false,
-                      style: widget.style,
-                    ),
-                  ),
-                ],
-              );
-            },
-          ),
-        );
-      },
-    );
-  }
-}
-
 class _HomeBrandMark extends StatelessWidget {
   const _HomeBrandMark();
 
   @override
   Widget build(BuildContext context) {
     return const BrandLogoMark(size: 78);
-  }
-}
-
-// ── شريط البحث للرأس — بيضاوي بظل ────────────────────────────────────────────
-class _HeaderSearchBar extends StatelessWidget {
-  final double height;
-  final VoidCallback onTap;
-
-  const _HeaderSearchBar({required this.height, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    final hintStyle = Theme.of(context).textTheme.bodyMedium?.copyWith(
-      color: AppTheme.mutedText.withValues(alpha: 0.75),
-      fontSize: 13,
-    );
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        height: height,
-        decoration: BoxDecoration(
-          color: AppTheme.surface,
-          borderRadius: BorderRadius.circular(21),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.07),
-              blurRadius: 12,
-              offset: const Offset(0, 3),
-            ),
-          ],
-        ),
-        child: Stack(
-          alignment: Alignment.center,
-          children: [
-            const Align(
-              alignment: AlignmentDirectional.centerStart,
-              child: Padding(
-                padding: EdgeInsetsDirectional.only(start: 12),
-                child: Icon(
-                  Icons.search_rounded,
-                  color: AppTheme.primary,
-                  size: 20,
-                ),
-              ),
-            ),
-            Positioned.fill(
-              child: Padding(
-                padding: const EdgeInsetsDirectional.only(start: 40, end: 16),
-                child: Align(
-                  alignment: AlignmentDirectional.centerStart,
-                  child: TypingPlaceholder(
-                    phrases: AppStrings.homeSearchHints,
-                    style: hintStyle,
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
   }
 }
 
@@ -436,52 +198,6 @@ class _HomeNotificationsButton extends StatelessWidget {
               size: 26,
             ),
           ),
-        );
-      },
-    );
-  }
-}
-
-class _HomeSearchRow extends StatelessWidget {
-  final VoidCallback onSearchTap;
-  final bool onImage;
-  final double chromeVisibility;
-
-  const _HomeSearchRow({
-    required this.onSearchTap,
-    this.onImage = false,
-    this.chromeVisibility = 1,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final showLocation = chromeVisibility > 0.02;
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        return Row(
-          children: [
-            Expanded(
-              child: _HeaderSearchBar(
-                height: AppScale.of(context).searchH,
-                onTap: onSearchTap,
-              ),
-            ),
-            if (showLocation) ...[
-              const SizedBox(width: 4),
-              ConstrainedBox(
-                constraints: BoxConstraints(
-                  maxWidth: constraints.maxWidth * 0.25,
-                ),
-                child: IgnorePointer(
-                  ignoring: chromeVisibility < 0.2,
-                  child: Opacity(
-                    opacity: chromeVisibility,
-                    child: _HomeLocationButton(onImage: onImage),
-                  ),
-                ),
-              ),
-            ],
-          ],
         );
       },
     );
@@ -702,7 +418,7 @@ class _HomeMagicHeaderDelegate extends SliverPersistentHeaderDelegate {
                   left: searchInset,
                   right: searchInset,
                   height: searchH,
-                  child: _HomeSearchRow(
+                  child: HeaderSearchRow(
                     onSearchTap: onSearchTap,
                     onImage: p > 0.4,
                     chromeVisibility: chrome,
@@ -1135,14 +851,12 @@ class _SectionFireIcon extends StatelessWidget {
 
 // ── شريط أقسام سريعة — دائرة ممتلئة بالصورة بدون تشويه ─────────────────────
 class _ExploreCategoriesStrip extends StatelessWidget {
-  final String? selectedId;
-  final ValueChanged<String> onSelect;
+  final ValueChanged<String> onCategoryTap;
   final List<CategoryModel> categories;
   final VoidCallback? onViewAll;
 
   const _ExploreCategoriesStrip({
-    required this.selectedId,
-    required this.onSelect,
+    required this.onCategoryTap,
     required this.categories,
     this.onViewAll,
   });
@@ -1150,14 +864,6 @@ class _ExploreCategoriesStrip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scale = AppScale.of(context);
-    final all = [
-      const CategoryModel(
-        id: '__all__',
-        name: AppStrings.homeCategoryAll,
-        iconUrl: '',
-      ),
-      ...categories,
-    ];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1222,26 +928,16 @@ class _ExploreCategoriesStrip extends StatelessWidget {
             physics: const BouncingScrollPhysics(),
             cacheExtent: 200,
             padding: EdgeInsets.symmetric(horizontal: scale.pagePad),
-            itemCount: all.length,
+            itemCount: categories.length,
             separatorBuilder: (_, _) => SizedBox(width: scale.s(12)),
             itemBuilder: (_, i) {
-              final cat = all[i];
-              final isAll = cat.id == '__all__';
-              final isSelected = isAll
-                  ? selectedId == null
-                  : selectedId == cat.id;
+              final cat = categories[i];
               return _ExploreCategoryTile(
-                name: isAll
-                    ? AppStrings.homeCategoryAll
-                    : _shortCategoryLabel(cat.name),
-                imageUrl: isAll
-                    ? ''
-                    : (cat.displayImage.isNotEmpty
-                          ? cat.displayImage
-                          : cat.iconUrl),
-                isAll: isAll,
-                isSelected: isSelected,
-                onTap: () => onSelect(isAll ? '__all__' : cat.id),
+                name: _shortCategoryLabel(cat.name),
+                imageUrl: cat.displayImage.isNotEmpty
+                    ? cat.displayImage
+                    : cat.iconUrl,
+                onTap: () => onCategoryTap(cat.id),
               );
             },
           ),
@@ -1262,15 +958,11 @@ class _ExploreCategoriesStrip extends StatelessWidget {
 class _ExploreCategoryTile extends StatelessWidget {
   final String name;
   final String imageUrl;
-  final bool isAll;
-  final bool isSelected;
   final VoidCallback onTap;
 
   const _ExploreCategoryTile({
     required this.name,
     required this.imageUrl,
-    required this.isAll,
-    required this.isSelected,
     required this.onTap,
   });
 
@@ -1291,10 +983,8 @@ class _ExploreCategoryTile extends StatelessWidget {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: isSelected
-                      ? AppTheme.primary
-                      : const Color(0x22000000),
-                  width: isSelected ? 2 : 1,
+                  color: const Color(0x22000000),
+                  width: 1,
                 ),
               ),
               child: Container(
@@ -1312,26 +1002,20 @@ class _ExploreCategoryTile extends StatelessWidget {
                   ],
                 ),
                 clipBehavior: Clip.antiAlias,
-                child: isAll
-                    ? Icon(
-                        Icons.apps_rounded,
-                        color: AppTheme.primaryDark,
-                        size: scale.s(26),
-                      )
-                    : AppNetworkImage(
-                        imageUrl,
-                        fit: BoxFit.cover,
-                        width: size,
-                        height: size,
-                        error: ColoredBox(
-                          color: AppTheme.primarySurface,
-                          child: Icon(
-                            Icons.category_rounded,
-                            color: AppTheme.mutedText,
-                            size: scale.s(24),
-                          ),
-                        ),
-                      ),
+                child: AppNetworkImage(
+                  imageUrl,
+                  fit: BoxFit.cover,
+                  width: size,
+                  height: size,
+                  error: ColoredBox(
+                    color: AppTheme.primarySurface,
+                    child: Icon(
+                      Icons.category_rounded,
+                      color: AppTheme.mutedText,
+                      size: scale.s(24),
+                    ),
+                  ),
+                ),
               ),
             ),
             SizedBox(height: scale.s(6)),
@@ -1343,8 +1027,8 @@ class _ExploreCategoryTile extends StatelessWidget {
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.labelMedium?.copyWith(
                   fontSize: scale.s(11),
-                  fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
-                  color: isSelected ? AppTheme.primaryDark : AppTheme.darkText,
+                  fontWeight: FontWeight.w600,
+                  color: AppTheme.darkText,
                   height: 1.15,
                 ),
               ),
@@ -1540,7 +1224,6 @@ class _HomeTab extends StatefulWidget {
 }
 
 class _HomeTabState extends State<_HomeTab> {
-  String? _selectedCategory;
   bool _didPrecache = false;
   String _precacheSig = '';
 
@@ -1586,13 +1269,15 @@ class _HomeTabState extends State<_HomeTab> {
     }
   }
 
-  List<ProductModel> _filteredProducts(CatalogState catalog) {
-    var list = catalog.products;
-    if (_selectedCategory != null) {
-      final ids = catalog.categoryTreeIds(_selectedCategory!);
-      return list.where((p) => ids.contains(p.categoryId)).toList();
-    }
-    return list;
+  void _openCategoryBrowse(String categoryId) {
+    final catalog = context.read<CatalogCubit>().state;
+    Navigator.of(context).pushNamed(
+      AppRouter.categoryBrowse,
+      arguments: CategoryBrowseArgs(
+        categoryId: categoryId,
+        initial: catalog.categoryById(categoryId),
+      ),
+    );
   }
 
   void _openSearch() {
@@ -1631,8 +1316,7 @@ class _HomeTabState extends State<_HomeTab> {
             );
           }
           final isLoading = catalog.loading && catalog.products.isEmpty;
-          final filtered = _filteredProducts(catalog);
-          final browsingHome = _selectedCategory == null;
+          final products = catalog.products;
           final slides = _promoSlidesFor(catalog);
 
           return RefreshIndicator(
@@ -1679,22 +1363,13 @@ class _HomeTabState extends State<_HomeTab> {
                   else
                     SliverToBoxAdapter(
                       child: _ExploreCategoriesStrip(
-                        selectedId: _selectedCategory,
                         categories: catalog.categories,
                         onViewAll: () =>
                             MainShellScope.read(context).selectTab(1),
-                        onSelect: (id) => setState(() {
-                          if (id == '__all__') {
-                            _selectedCategory = null;
-                          } else {
-                            _selectedCategory = _selectedCategory == id
-                                ? null
-                                : id;
-                          }
-                        }),
+                        onCategoryTap: _openCategoryBrowse,
                       ),
                     ),
-                  if (!isLoading && browsingHome)
+                  if (!isLoading)
                     ...catalog.sections.asMap().entries.map((entry) {
                       final i = entry.key;
                       final section = entry.value;
@@ -1723,48 +1398,23 @@ class _HomeTabState extends State<_HomeTab> {
                         ),
                       );
                     }),
-                  if (!isLoading &&
-                      browsingHome &&
-                      catalog.suggested.isNotEmpty)
-                    SliverToBoxAdapter(
-                      child: _CurvedProductCarouselSection(
-                        title: 'منتجات مقترحة لك',
-                        subtitle: 'اختيارات تناسب سلتك وعادات الشراء',
-                        products: catalog.suggested,
-                        gradientColors: const [
-                          Color(0xFFEDE7F6),
-                          Color(0xFFF8F5FC),
-                        ],
-                        curveTop: catalog.sections.isEmpty,
-                        curveBottom: true,
-                      ),
-                    ),
-                  if (!isLoading && browsingHome && filtered.isNotEmpty)
+                  if (!isLoading && products.isNotEmpty)
                     const SliverToBoxAdapter(child: _HomeRestProductsDivider()),
                   if (isLoading)
                     const SliverPadding(
                       padding: EdgeInsets.fromLTRB(16, 0, 16, 16),
                       sliver: _ProductGridShimmer(),
                     )
-                  else if (filtered.isEmpty && !browsingHome)
-                    SliverToBoxAdapter(
-                      child: _EmptyState(
-                        query: '',
-                        onClear: () => setState(() {
-                          _selectedCategory = null;
-                        }),
-                      ),
-                    )
-                  else if (filtered.isNotEmpty)
+                  else if (products.isNotEmpty)
                     SliverPadding(
                       padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                       sliver: SliverGrid(
                         delegate: SliverChildBuilderDelegate(
                           (ctx, i) => ProductCard(
-                            product: filtered[i],
-                            heroTag: 'home_grid_${i}_${filtered[i].id}',
+                            product: products[i],
+                            heroTag: 'home_grid_${i}_${products[i].id}',
                           ),
-                          childCount: filtered.length,
+                          childCount: products.length,
                         ),
                         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                           crossAxisCount: AppScale.homeGridCrossAxisCount,
@@ -1811,9 +1461,8 @@ class _HomeTabState extends State<_HomeTab> {
                               Padding(
                                 padding: const EdgeInsets.all(6),
                                 child: ElevatedButton(
-                                  onPressed: () => setState(() {
-                                    _selectedCategory = null;
-                                  }),
+                                  onPressed: () =>
+                                      MainShellScope.read(context).selectTab(1),
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: AppTheme.primaryDark,
                                     foregroundColor: Colors.white,

@@ -194,7 +194,11 @@ class CategoryService
         $data['parent_id'] = $data['parent_id'] ?: null;
         $data['icon_url'] = Media::store($data['icon'] ?? null, 'categories/icons');
         $data['image_url'] = Media::store($data['image'] ?? null, 'categories/images');
-        unset($data['icon'], $data['image']);
+        $data['background_image_url'] = Media::store(
+            $data['background_image'] ?? null,
+            'categories/backgrounds',
+        );
+        unset($data['icon'], $data['image'], $data['background_image']);
 
         $category = Category::query()->create($data);
         $this->syncRootDisplaySection($category);
@@ -218,7 +222,12 @@ class CategoryService
         $data['parent_id'] = $parentId;
         $data['icon_url'] = Media::store($data['icon'] ?? null, 'categories/icons', $category->icon_url);
         $data['image_url'] = Media::store($data['image'] ?? null, 'categories/images', $category->image_url);
-        unset($data['icon'], $data['image']);
+        $data['background_image_url'] = Media::store(
+            $data['background_image'] ?? null,
+            'categories/backgrounds',
+            $category->background_image_url,
+        );
+        unset($data['icon'], $data['image'], $data['background_image']);
 
         $category->update($data);
         $this->syncRootDisplaySection($category->fresh());
@@ -279,6 +288,7 @@ class CategoryService
 
             Media::delete($category->icon_url);
             Media::delete($category->image_url);
+            Media::delete($category->background_image_url);
             $category->displaySections()->detach();
             $category->delete();
 

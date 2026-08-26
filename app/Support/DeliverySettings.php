@@ -19,6 +19,21 @@ final class DeliverySettings
         return self::bool(Constants::SETTING_DELIVERY_FIRST_ORDER_FREE, true);
     }
 
+    public static function hideDeliverySubtitle(): bool
+    {
+        return self::bool(Constants::SETTING_DELIVERY_HIDE_SUBTITLE, false);
+    }
+
+    public static function notesEnabled(): bool
+    {
+        return self::bool(Constants::SETTING_DELIVERY_NOTES_ENABLED, false);
+    }
+
+    public static function generalNote(): string
+    {
+        return trim((string) Setting::getValue(Constants::SETTING_DELIVERY_GENERAL_NOTE, ''));
+    }
+
     public static function storeLat(): ?float
     {
         return self::nullableFloat(Constants::SETTING_DELIVERY_STORE_LAT);
@@ -59,6 +74,9 @@ final class DeliverySettings
         return [
             'enabled' => self::enabled(),
             'first_order_free' => self::firstOrderFree(),
+            'hide_delivery_subtitle' => self::hideDeliverySubtitle(),
+            'notes_enabled' => self::notesEnabled(),
+            'general_note' => self::generalNote(),
             'has_store_location' => self::hasStoreLocation(),
             'store_lat' => self::storeLat(),
             'store_lng' => self::storeLng(),
@@ -95,6 +113,8 @@ final class DeliverySettings
                     'per_km_mode' => $rule->per_km_mode->value,
                     'range' => $rule->rangeLabel(),
                     'label' => $rule->priceLabel(),
+                    'note' => (string) ($rule->note ?? ''),
+                    'note_enabled' => (bool) $rule->note_enabled,
                 ])
                 ->values()
                 ->all();

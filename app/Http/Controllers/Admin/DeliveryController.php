@@ -20,6 +20,8 @@ use Illuminate\View\View;
 
 class DeliveryController extends Controller
 {
+    private const TABS = ['policy', 'slots', 'rules', 'perks'];
+
     public function index(): View
     {
         $rules = DeliveryRule::query()
@@ -34,12 +36,18 @@ class DeliveryController extends Controller
 
         return view('admin.delivery.index', [
             'title' => AppStrings::NAV_DELIVERY,
+            'tab' => $this->resolveTab(request('tab', old('active_tab'))),
             'rules' => $rules,
             'perks' => $perks,
             'slots' => $slots,
+            'slotsByWeekday' => $slots->groupBy('weekday'),
+            'weekdayNames' => DeliverySlotWindow::weekdayNames(),
             'settings' => [
                 'delivery_enabled' => DeliverySettings::enabled(),
                 'delivery_first_order_free' => DeliverySettings::firstOrderFree(),
+                'delivery_hide_subtitle' => DeliverySettings::hideDeliverySubtitle(),
+                'delivery_notes_enabled' => DeliverySettings::notesEnabled(),
+                'delivery_general_note' => DeliverySettings::generalNote(),
                 'delivery_store_lat' => DeliverySettings::storeLat(),
                 'delivery_store_lng' => DeliverySettings::storeLng(),
                 'delivery_store_address' => DeliverySettings::storeAddress(),
@@ -56,6 +64,9 @@ class DeliveryController extends Controller
 
         Setting::setValue(Constants::SETTING_DELIVERY_ENABLED, $data['delivery_enabled'] ? '1' : '0');
         Setting::setValue(Constants::SETTING_DELIVERY_FIRST_ORDER_FREE, $data['delivery_first_order_free'] ? '1' : '0');
+        Setting::setValue(Constants::SETTING_DELIVERY_HIDE_SUBTITLE, $data['delivery_hide_subtitle'] ? '1' : '0');
+        Setting::setValue(Constants::SETTING_DELIVERY_NOTES_ENABLED, $data['delivery_notes_enabled'] ? '1' : '0');
+        Setting::setValue(Constants::SETTING_DELIVERY_GENERAL_NOTE, $data['delivery_general_note'] ?? '');
         Setting::setValue(Constants::SETTING_DELIVERY_STORE_LAT, $data['delivery_store_lat'] ?? '');
         Setting::setValue(Constants::SETTING_DELIVERY_STORE_LNG, $data['delivery_store_lng'] ?? '');
         Setting::setValue(Constants::SETTING_DELIVERY_STORE_ADDRESS, $data['delivery_store_address'] ?? '');
@@ -65,107 +76,112 @@ class DeliveryController extends Controller
             Setting::setValue(Constants::SETTING_FREE_SHIPPING_THRESHOLD, $data['free_shipping_threshold']);
         }
 
-        return back()->with('success', AppStrings::DELIVERY_SETTINGS_SAVED);
+        return $this->redirectToTab('policy')->with('success', AppStrings::DELIVERY_SETTINGS_SAVED);
     }
 
     public function create(): RedirectResponse
     {
-        return redirect()->route('admin.delivery.index');
+        return $this->redirectToTab('rules');
     }
 
     public function store(DeliveryRuleRequest $request): RedirectResponse
     {
         DeliveryRule::query()->create($request->validated());
 
-        return redirect()
-            ->route('admin.delivery.index')
-            ->with('success', AppStrings::DELIVERY_RULE_CREATED);
+        return $this->redirectToTab('rules')->with('success', AppStrings::DELIVERY_RULE_CREATED);
     }
 
     public function edit(DeliveryRule $delivery_rule): RedirectResponse
     {
-        return redirect()->route('admin.delivery.index');
+        return $this->redirectToTab('rules');
     }
 
     public function update(DeliveryRuleRequest $request, DeliveryRule $delivery_rule): RedirectResponse
     {
         $delivery_rule->update($request->validated());
 
-        return redirect()
-            ->route('admin.delivery.index')
-            ->with('success', AppStrings::DELIVERY_RULE_UPDATED);
+        return $this->redirectToTab('rules')->with('success', AppStrings::DELIVERY_RULE_UPDATED);
     }
 
     public function destroy(DeliveryRule $delivery_rule): RedirectResponse
     {
         $delivery_rule->delete();
 
-        return redirect()
-            ->route('admin.delivery.index')
-            ->with('success', AppStrings::DELIVERY_RULE_DELETED);
+        return $this->redirectToTab('rules')->with('success', AppStrings::DELIVERY_RULE_DELETED);
     }
 
     public function createPerk(): RedirectResponse
     {
-        return redirect()->route('admin.delivery.index');
+        return $this->redirectToTab('perks');
     }
 
     public function storePerk(DeliveryPerkRequest $request): RedirectResponse
     {
         DeliveryPerk::query()->create($request->validated());
 
-        return redirect()
-            ->route('admin.delivery.index')
-            ->with('success', AppStrings::DELIVERY_PERK_CREATED);
+        return $this->redirectToTab('perks')->with('success', AppStrings::DELIVERY_PERK_CREATED);
     }
 
     public function editPerk(DeliveryPerk $delivery_perk): RedirectResponse
     {
-        return redirect()->route('admin.delivery.index');
+        return $this->redirectToTab('perks');
     }
 
     public function updatePerk(DeliveryPerkRequest $request, DeliveryPerk $delivery_perk): RedirectResponse
     {
         $delivery_perk->update($request->validated());
 
-        return redirect()
-            ->route('admin.delivery.index')
-            ->with('success', AppStrings::DELIVERY_PERK_UPDATED);
+        return $this->redirectToTab('perks')->with('success', AppStrings::DELIVERY_PERK_UPDATED);
     }
 
     public function destroyPerk(DeliveryPerk $delivery_perk): RedirectResponse
     {
         $delivery_perk->delete();
 
-        return redirect()
-            ->route('admin.delivery.index')
-            ->with('success', AppStrings::DELIVERY_PERK_DELETED);
+        return $this->redirectToTab('perks')->with('success', AppStrings::DELIVERY_PERK_DELETED);
     }
 
     public function storeSlot(DeliverySlotWindowRequest $request): RedirectResponse
     {
-        DeliverySlotWindow::query()->create($request->validated());
+        $data = $request->validated();
+        unset($data['weekdays'], $data['weekday']);
 
-        return redirect()
-            ->route('admin.delivery.index')
-            ->with('success', AppStrings::DELIVERY_SLOT_CREATED);
+        foreach ($request->weekdays() as $weekday) {
+            DeliverySlotWindow::query()->create([
+                ...$data,
+                'weekday' => $weekday,
+            ]);
+        }
+
+        return $this->redirectToTab('slots')->with('success', AppStrings::DELIVERY_SLOT_CREATED);
     }
 
     public function updateSlot(DeliverySlotWindowRequest $request, DeliverySlotWindow $delivery_slot_window): RedirectResponse
     {
-        $delivery_slot_window->update($request->validated());
+        $data = $request->validated();
+        unset($data['weekdays']);
 
-        return redirect()
-            ->route('admin.delivery.index')
-            ->with('success', AppStrings::DELIVERY_SLOT_UPDATED);
+        $delivery_slot_window->update($data);
+
+        return $this->redirectToTab('slots')->with('success', AppStrings::DELIVERY_SLOT_UPDATED);
     }
 
     public function destroySlot(DeliverySlotWindow $delivery_slot_window): RedirectResponse
     {
         $delivery_slot_window->delete();
 
-        return redirect()
-            ->route('admin.delivery.index')
-            ->with('success', AppStrings::DELIVERY_SLOT_DELETED);
+        return $this->redirectToTab('slots')->with('success', AppStrings::DELIVERY_SLOT_DELETED);
+    }
+
+    private function resolveTab(mixed $tab): string
+    {
+        $value = is_string($tab) ? $tab : 'policy';
+
+        return in_array($value, self::TABS, true) ? $value : 'policy';
+    }
+
+    private function redirectToTab(string $tab): RedirectResponse
+    {
+        return redirect()->route('admin.delivery.index', ['tab' => $this->resolveTab($tab)]);
     }
 }

@@ -108,6 +108,14 @@
                     </div>
 
                     <div class="settings-links">
+                        <a href="{{ route('admin.splash-screens.index') }}" class="settings-link">
+                            <i class="bi bi-phone"></i>
+                            <span>شاشة البداية</span>
+                        </a>
+                        <a href="{{ route('admin.onboarding.index') }}" class="settings-link">
+                            <i class="bi bi-collection"></i>
+                            <span>شرائح الترحيب</span>
+                        </a>
                         <a href="{{ route('admin.delivery.index') }}" class="settings-link">
                             <i class="bi bi-truck"></i>
                             <span>مناطق ورسوم التوصيل</span>

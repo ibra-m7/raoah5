@@ -10,6 +10,7 @@ use App\Models\Order;
 use App\Models\Product;
 use App\Models\User;
 use App\Services\Admin\AdminEventService;
+use App\Services\Coupons\CouponQuote;
 use App\Services\Coupons\CouponService;
 use App\Services\Couriers\CourierLedgerService;
 use App\Services\Delivery\DeliveryService;
@@ -85,7 +86,10 @@ class OrderService
         $order = DB::transaction(function () use ($user, $payload) {
             $lines = $this->buildLines($payload['items'] ?? []);
             $subtotal = round($lines->sum('line_total'), 2);
-            $quote = $this->coupons->quote($user, $payload['coupon_code'] ?? null, $lines);
+            $quotes = $this->resolveCouponQuotes($user, $payload, $lines);
+            $freeShippingFromCoupons = $quotes->contains(fn ($quote) => $quote->freeShipping);
+            $discount = round(min($subtotal, $quotes->sum(fn ($quote) => $quote->discount)), 2);
+            $primaryQuote = $quotes->first();
 
             $address = $this->resolveAddress($user, $payload['address_id'] ?? null);
             if ($address === null) {
@@ -98,11 +102,10 @@ class OrderService
                 $user,
                 $address,
                 $subtotal,
-                $quote?->freeShipping ?? false,
+                $freeShippingFromCoupons,
             );
             $shipping = $delivery->fee;
             $hasFree = $delivery->isFree;
-            $discount = $quote?->discount ?? 0.0;
             $total = round(max(0, $subtotal - $discount + $shipping), 2);
 
             $methodSlug = (string) ($payload['payment_method'] ?? 'cash');
@@ -118,7 +121,9 @@ class OrderService
 
             $fulfillment = ($payload['fulfillment_type'] ?? 'now') === 'scheduled' ? 'scheduled' : 'now';
             $scheduledAt = $fulfillment === 'scheduled' ? ($payload['scheduled_at'] ?? null) : null;
-            $couponCode = $quote?->coupon->code;
+            $couponCode = $quotes->isEmpty
+                ? null
+                : $quotes->map(fn ($quote) => $quote->coupon->code)->implode(', ');
 
             $order = Order::query()->create([
                 'user_id' => $user->id,
@@ -140,7 +145,7 @@ class OrderService
                 'shipping_street' => $payload['shipping_street'] ?? $address->street,
                 'shipping_details' => $payload['shipping_details'] ?? $address->details,
                 'notes' => $payload['notes'] ?? null,
-                'coupon_id' => $quote?->coupon->id,
+                'coupon_id' => $primaryQuote?->coupon->id,
                 'coupon_code' => $couponCode,
                 'discount_amount' => $discount,
                 'fulfillment_type' => $fulfillment,
@@ -161,8 +166,8 @@ class OrderService
                 $product->decrement('stock', $line['quantity']);
             }
 
-            if ($quote !== null) {
-                $this->coupons->redeem($quote->coupon, $user, $order->id, $discount);
+            foreach ($quotes as $quote) {
+                $this->coupons->redeem($quote->coupon, $user, $order->id, $quote->discount);
             }
 
             $order->statusHistories()->create([
@@ -599,6 +604,40 @@ class OrderService
         }
 
         return $lines;
+    }
+
+    /**
+     * @param  array<string, mixed>  $payload
+     * @param  Collection<int, array{product: Product, quantity: int, unit_price: float, line_total: float}>  $lines
+     * @return Collection<int, CouponQuote>
+     */
+    private function resolveCouponQuotes(User $user, array $payload, Collection $lines): Collection
+    {
+        $codes = [];
+        if (! empty($payload['coupon_codes']) && is_array($payload['coupon_codes'])) {
+            foreach ($payload['coupon_codes'] as $code) {
+                $normalized = strtoupper(preg_replace('/\s+/', '', (string) $code) ?? '');
+                if ($normalized !== '') {
+                    $codes[] = $normalized;
+                }
+            }
+        } elseif (! empty($payload['coupon_code'])) {
+            $normalized = strtoupper(preg_replace('/\s+/', '', (string) $payload['coupon_code']) ?? '');
+            if ($normalized !== '') {
+                $codes[] = $normalized;
+            }
+        }
+
+        $codes = array_values(array_unique($codes));
+        $quotes = collect();
+        foreach ($codes as $code) {
+            $quote = $this->coupons->quote($user, $code, $lines);
+            if ($quote !== null) {
+                $quotes->push($quote);
+            }
+        }
+
+        return $quotes;
     }
 
     private function resolveAddress(User $user, mixed $addressId): ?\App\Models\Address

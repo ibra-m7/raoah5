@@ -22,7 +22,10 @@ class ProductRecommendationEngine
         foreach ($this->relationsOf($product->id) as $relation) {
             $relatedId = (int) $relation->related_product_id;
             $bonus = $relation->type === ProductRelationType::Complementary ? 40.0 : 12.0;
-            if (($relation->source ?? '') === 'ai') {
+            $source = (string) ($relation->source ?? 'manual');
+            if ($source === 'manual') {
+                $bonus += 120.0;
+            } elseif ($source === 'ai') {
                 $bonus += 8.0;
             }
             $scores[$relatedId] = ($scores[$relatedId] ?? 0) + $bonus;

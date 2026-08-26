@@ -34,7 +34,7 @@ class OtpAuthController extends Controller
             return ApiResponse::success('تم تسجيل الدخول بنجاح.', $data);
         }
 
-        return ApiResponse::success('تم إرسال رمز التحقق عبر واتساب.', $data);
+            return ApiResponse::success('تم إرسال رمز التحقق.', $data);
     }
 
     public function verifyOtp(VerifyOtpRequest $request, OtpAuthService $otp): JsonResponse

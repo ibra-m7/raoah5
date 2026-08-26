@@ -458,6 +458,44 @@ body {
     object-fit: cover;
 }
 
+.payment-method-thumb {
+    width: 40px;
+    height: 28px;
+    border-radius: 8px;
+    background: var(--color-primary-surface);
+    border: 1px solid var(--color-primary-light);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    flex-shrink: 0;
+    vertical-align: middle;
+}
+
+.payment-method-thumb img {
+    max-width: 34px;
+    max-height: 22px;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+}
+
+.payment-method-thumb i {
+    font-size: 1rem;
+    line-height: 1;
+    color: var(--color-primary-dark);
+}
+
+.payment-icon-preview {
+    width: 56px;
+    height: 40px;
+    object-fit: contain;
+    border-radius: 10px;
+    border: 1px solid var(--color-primary-light);
+    background: #fff;
+    padding: 4px;
+}
+
 .entity-open {
     display: inline-flex;
     align-items: center;
@@ -508,6 +546,33 @@ body {
 .detail-modal {
     border: 0;
     border-radius: 24px;
+}
+
+/* Form wrapping header/body/footer breaks Bootstrap scrollable modals — restore flex scroll. */
+.modal-dialog-scrollable .modal-content > form {
+    display: flex;
+    flex-direction: column;
+    max-height: inherit;
+    min-height: 0;
+    overflow: hidden;
+    flex: 1 1 auto;
+}
+
+.modal-dialog-scrollable .modal-content > form > .modal-body,
+.modal-dialog-scrollable .modal-content > .modal-scroll-form > .modal-body {
+    overflow-y: auto !important;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    min-height: 0;
+}
+
+.modal-dialog-scrollable .modal-content > .modal-scroll-form {
+    display: flex;
+    flex-direction: column;
+    max-height: inherit;
+    min-height: 0;
+    overflow: hidden;
+    flex: 1 1 auto;
 }
 
 .detail-hero {
@@ -1234,6 +1299,10 @@ video {
 .settings-pane-lead {
     color: var(--color-muted-text);
     margin-bottom: 1.25rem;
+}
+
+.opacity-60 {
+    opacity: 0.6;
 }
 
 .settings-links {

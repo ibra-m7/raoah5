@@ -13,6 +13,18 @@
             <i class="bi bi-file-earmark-excel ms-1"></i>
             {{ $strings::IMPORT_PRODUCTS }}
         </a>
+        <form method="POST" action="{{ route('admin.products.generate-all-copy') }}" class="d-inline">
+            @csrf
+            <button
+                type="submit"
+                class="btn btn-success rounded-pill"
+                title="توليد الوصف والتصنيف والفوائد وكلمات البحث وطريقة الاستخدام لجميع المنتجات"
+                onclick="if (!confirm(@json($strings::CONFIRM_GENERATE_ALL_PRODUCT_COPY))) return false; this.disabled = true; this.innerHTML = '<span class=&quot;spinner-border spinner-border-sm ms-1&quot;></span> جاري التوليد...'; this.form.submit();"
+            >
+                <i class="bi bi-stars ms-1"></i>
+                {{ $strings::GENERATE_PRODUCT_COPY }}
+            </button>
+        </form>
     </div>
     @if (session('import_errors'))
         <div class="page-card p-3 mb-3 border border-danger-subtle">

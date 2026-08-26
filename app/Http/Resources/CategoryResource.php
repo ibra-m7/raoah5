@@ -18,6 +18,7 @@ class CategoryResource extends JsonResource
             'slug' => $this->slug,
             'icon_url' => Media::url($this->icon_url) ?? '',
             'image_url' => Media::url($this->image_url) ?? '',
+            'background_image_url' => Media::url($this->background_image_url) ?? '',
             'color' => $this->color,
             'sort_order' => (int) $this->sort_order,
             'products_count' => (int) ($this->products_count ?? 0),

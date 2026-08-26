@@ -9,6 +9,8 @@ use App\Http\Controllers\Api\Courier\CourierAuthController;
 use App\Http\Controllers\Api\Courier\CourierOrderController;
 use App\Http\Controllers\Api\DeliveryController;
 use App\Http\Controllers\Api\DynamicPageController;
+use App\Http\Controllers\Api\SearchLogController;
+use App\Http\Controllers\Api\StartupController;
 use App\Http\Controllers\Api\HomeController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\OrderController;
@@ -16,6 +18,7 @@ use App\Http\Controllers\Api\ProductController;
 use App\Http\Controllers\Api\RecommendationController;
 use Illuminate\Support\Facades\Route;
 
+Route::get('startup', StartupController::class);
 Route::get('home', HomeController::class);
 Route::get('categories', [CategoryController::class, 'index']);
 Route::get('categories/{category}', [CategoryController::class, 'show']);
@@ -24,6 +27,7 @@ Route::get('products/{product}/recommendations', [RecommendationController::clas
 Route::post('recommendations/cart', [RecommendationController::class, 'forCart']);
 Route::get('products/{product}', [ProductController::class, 'show']);
 Route::get('pages/{page}', [DynamicPageController::class, 'show']);
+Route::post('search/log', [SearchLogController::class, 'store'])->middleware('throttle:60,1');
 
 Route::get('ai/config', [AiAssistantController::class, 'config']);
 Route::post('ai/chat', [AiAssistantController::class, 'chat'])

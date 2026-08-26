@@ -16,6 +16,9 @@ class DeliverySettingsRequest extends FormRequest
         return [
             'delivery_enabled' => ['nullable', 'boolean'],
             'delivery_first_order_free' => ['nullable', 'boolean'],
+            'delivery_hide_subtitle' => ['nullable', 'boolean'],
+            'delivery_notes_enabled' => ['nullable', 'boolean'],
+            'delivery_general_note' => ['nullable', 'string', 'max:500'],
             'delivery_store_lat' => ['nullable', 'numeric', 'between:-90,90'],
             'delivery_store_lng' => ['nullable', 'numeric', 'between:-180,180'],
             'delivery_store_address' => ['nullable', 'string', 'max:255'],
@@ -42,6 +45,11 @@ class DeliverySettingsRequest extends FormRequest
         $this->merge([
             'delivery_enabled' => $this->boolean('delivery_enabled'),
             'delivery_first_order_free' => $this->boolean('delivery_first_order_free'),
+            'delivery_hide_subtitle' => $this->boolean('delivery_hide_subtitle'),
+            'delivery_notes_enabled' => $this->boolean('delivery_notes_enabled'),
+            'delivery_general_note' => $this->filled('delivery_general_note')
+                ? trim((string) $this->input('delivery_general_note'))
+                : '',
             'delivery_store_lat' => $this->filled('delivery_store_lat') ? $this->input('delivery_store_lat') : null,
             'delivery_store_lng' => $this->filled('delivery_store_lng') ? $this->input('delivery_store_lng') : null,
             'delivery_max_km' => $this->filled('delivery_max_km') ? $this->input('delivery_max_km') : null,

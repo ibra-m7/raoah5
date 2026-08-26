@@ -22,18 +22,10 @@ class OtpAuthService
     {
         $phone = Phone::normalize($rawPhone);
         if ($phone === null) {
-            throw new OtpException('رقم الجوال غير صالح. أدخل رقماً سعودياً مثل 5xxxxxxxx.');
+            throw new OtpException('رقم الجوال غير صالح. أدخل الرقم مثل 05XXXXXXXX.');
         }
 
-        $existing = User::query()
-            ->where('phone', $phone)
-            ->where('role', UserRole::Customer)
-            ->first();
-
-        if ($existing !== null) {
-            return $this->sessionWithoutOtp($existing, $phone);
-        }
-
+        // فقط الرقمين التجريبيين يتجاوزان OTP — أي رقم آخر (حتى المسجّل) يحتاج رمز تحقق.
         if (Phone::skipsOtp($phone)) {
             return $this->sessionWithoutOtp($this->provisionCustomer($phone), $phone);
         }

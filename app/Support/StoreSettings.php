@@ -5,6 +5,7 @@ namespace App\Support;
 use App\Enums\PaymentMethod;
 use App\Models\Setting;
 use App\Models\StorePaymentMethod;
+use App\Services\Admin\SearchPlaceholderService;
 use App\Support\Media;
 
 final class StoreSettings
@@ -118,6 +119,7 @@ final class StoreSettings
             'marketing_sold_count' => self::marketingSoldCount(),
             'fallback_product_image_url' => self::fallbackProductImageUrl(),
             'payment_methods' => self::checkoutPaymentMethods(),
+            'search_placeholders' => SearchPlaceholderService::activePhrases(),
         ];
     }
 

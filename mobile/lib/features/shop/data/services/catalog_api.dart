@@ -90,6 +90,29 @@ class CatalogApi {
     return CartRecommendations.fromJson(_dataMap(json));
   }
 
+  Future<void> logSearch({
+    required String query,
+    String? matchedProductId,
+    int resultsCount = 0,
+  }) async {
+    final q = query.trim();
+    if (q.isEmpty) return;
+    try {
+      await _client.post(
+        '/search/log',
+        {
+          'query': q,
+          'matched_product_id': int.tryParse(matchedProductId ?? ''),
+          'results_count': resultsCount,
+          'source': 'app',
+        },
+        auth: true,
+      );
+    } catch (_) {
+      // لا نمنع البحث إذا فشل التسجيل.
+    }
+  }
+
   Future<ProductModel?> product(String id) async {
     try {
       final json = await _client.get('/products/$id', auth: false);

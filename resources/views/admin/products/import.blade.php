@@ -1,8 +1,5 @@
 <x-layouts.admin :title="$title">
-    <x-admin.page-head
-        :title="$title"
-        subtitle="عبّئ القالب دفعة واحدة ثم ارفعه مع صور ZIP — لا حاجة لإدخال كل منتج يدوياً"
-    />
+    <x-admin.page-head :title="$title" />
 
     <div class="row g-4">
         <div class="col-lg-7">

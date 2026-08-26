@@ -21,7 +21,9 @@ use App\Http\Controllers\Admin\PageController;
 use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\Admin\ReviewController;
 use App\Http\Controllers\Admin\SearchController;
+use App\Http\Controllers\Admin\SearchPlaceholderController;
 use App\Http\Controllers\Admin\SettingController;
+use App\Http\Controllers\Admin\SplashScreenController;
 use App\Http\Controllers\Admin\StorePaymentMethodController;
 use Illuminate\Support\Facades\Route;
 
@@ -38,6 +40,7 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::get('search', SearchController::class)->name('search');
 
     Route::post('products/generate-copy', [ProductController::class, 'generateCopy'])->name('products.generate-copy');
+    Route::post('products/generate-all-copy', [ProductController::class, 'generateAllContent'])->name('products.generate-all-copy');
     Route::get('products/import', [ProductController::class, 'importForm'])->name('products.import');
     Route::post('products/import', [ProductController::class, 'import'])->name('products.import.store');
     Route::get('products/import/template', [ProductController::class, 'template'])->name('products.import.template');
@@ -60,7 +63,9 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::delete('customers/{customer}', [CustomerController::class, 'destroy'])->name('customers.destroy');
     Route::get('reviews', [ReviewController::class, 'index'])->name('reviews.index');
     Route::get('pages', [PageController::class, 'index'])->name('pages.index');
-    Route::get('onboarding', [OnboardingController::class, 'index'])->name('onboarding.index');
+    Route::resource('splash-screens', SplashScreenController::class)->except(['show']);
+    Route::resource('onboarding', OnboardingController::class)->except(['show']);
+    Route::resource('search-placeholders', SearchPlaceholderController::class)->except(['show', 'create', 'edit']);
     Route::get('notifications', [NotificationController::class, 'index'])->name('notifications.index');
     Route::post('notifications', [NotificationController::class, 'store'])->name('notifications.store');
     Route::delete('notifications/log', [NotificationController::class, 'clearLog'])->name('notifications.log.clear');

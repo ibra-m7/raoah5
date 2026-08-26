@@ -44,6 +44,8 @@ class ProductController extends Controller
             'title' => AppStrings::ADD_PRODUCT,
             'categories' => $this->products->productFormCategoryOptions(),
             'product' => new Product(['is_active' => true, 'stock' => 0, 'sort_order' => 0]),
+            'complementaryOptions' => $this->products->complementaryOptions(),
+            'selectedComplementaryIds' => old('complementary_product_ids', []),
         ]);
     }
 
@@ -82,6 +84,85 @@ class ProductController extends Controller
             'weight_label' => $copy['weight_label'],
             'quantity_label' => $copy['quantity_label'],
         ]);
+    }
+
+    public function generateAllContent(ProductCopyGenerator $generator): RedirectResponse
+    {
+        set_time_limit(0);
+
+        $ok = 0;
+        $fail = 0;
+
+        try {
+            Product::query()
+                ->orderBy('id')
+                ->chunkById(25, function ($products) use ($generator, &$ok, &$fail) {
+                    foreach ($products as $product) {
+                        try {
+                            $copy = $generator->generate([
+                                'name' => $product->name,
+                                'category_id' => $product->category_id,
+                                'description' => $product->description,
+                                'weight_label' => $product->weight_label,
+                                'quantity_label' => $product->quantity_label,
+                                'piece_count' => $product->piece_count,
+                            ]);
+
+                            $product->update([
+                                'description' => $copy['description'] !== ''
+                                    ? $copy['description']
+                                    : $product->description,
+                                'category_id' => $copy['category_id'] ?? $product->category_id,
+                                'benefits' => $copy['benefits'] !== []
+                                    ? $copy['benefits']
+                                    : $product->benefits,
+                                'keywords' => $copy['keywords'] !== []
+                                    ? $copy['keywords']
+                                    : $product->keywords,
+                                'usage_instructions' => $copy['usage_instructions'] !== ''
+                                    ? $copy['usage_instructions']
+                                    : $product->usage_instructions,
+                            ]);
+                            $ok++;
+                        } catch (RuntimeException $e) {
+                            $fail++;
+                            Log::warning('product.copy.bulk_item_failed', [
+                                'product_id' => $product->id,
+                                'reason' => mb_substr($e->getMessage(), 0, 180),
+                            ]);
+
+                            if ($e->getMessage() === 'missing_key') {
+                                throw $e;
+                            }
+                        }
+                    }
+                });
+        } catch (RuntimeException $e) {
+            if ($e->getMessage() === 'missing_key') {
+                return back()->with('error', 'مفتاح الذكاء الاصطناعي غير جاهز.');
+            }
+
+            return back()->with(
+                'error',
+                $ok > 0
+                    ? "تم التوليد لـ {$ok} منتج، ثم توقف بسبب خطأ في الخدمة."
+                    : 'تعذّر التوليد الآن. حاول مرة أخرى.'
+            );
+        }
+
+        if ($ok === 0 && $fail === 0) {
+            return back()->with('error', 'لا توجد منتجات للتوليد.');
+        }
+
+        if ($ok === 0) {
+            return back()->with('error', 'تعذّر التوليد لجميع المنتجات. حاول مرة أخرى.');
+        }
+
+        $message = $fail > 0
+            ? "تم توليد المحتوى لـ {$ok} منتج، وفشل {$fail}."
+            : "تم توليد المحتوى لجميع المنتجات ({$ok}).";
+
+        return back()->with('success', $message);
     }
 
     public function store(ProductRequest $request): RedirectResponse
@@ -146,10 +227,22 @@ class ProductController extends Controller
     {
         $product->load('primaryImage', 'images', 'category');
 
+        $manualComplementaryIds = $product->productRelations()
+            ->where('type', \App\Enums\ProductRelationType::Complementary)
+            ->where('source', 'manual')
+            ->orderBy('sort_order')
+            ->pluck('related_product_id')
+            ->all();
+
         return view('admin.products.edit', [
             'title' => AppStrings::EDIT_PRODUCT,
             'categories' => $this->products->productFormCategoryOptions($product->category_id),
             'product' => $product,
+            'complementaryOptions' => $this->products->complementaryOptions($product->id),
+            'selectedComplementaryIds' => old(
+                'complementary_product_ids',
+                $manualComplementaryIds,
+            ),
         ]);
     }
 

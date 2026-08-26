@@ -51,24 +51,57 @@
     </div>
 </div>
 
-<div class="row">
-    <div class="col-md-4 mb-3">
-        <label class="form-label">{{ $strings::COLOR }}</label>
-        <div class="color-picker-field">
-            <input type="color" name="color" value="{{ $color }}" class="color-picker-input @error('color') is-invalid @enderror" data-color-sync="#color-hex">
-            <span id="color-hex" class="color-picker-hex">{{ $color }}</span>
+@if ($level === 'root')
+    <div class="row">
+        <div class="col-md-6 mb-3">
+            <label class="form-label">لون خلفية الصفحة</label>
+            <div class="color-picker-field">
+                <input type="color" name="color" value="{{ $color }}" class="color-picker-input @error('color') is-invalid @enderror" data-color-sync="#color-hex-root">
+                <span id="color-hex-root" class="color-picker-hex">{{ $color }}</span>
+            </div>
+            @error('color') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
+            <div class="form-text">يظهر في صفحة القسم عند عدم وجود صورة خلفية.</div>
         </div>
-        @error('color') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
-    </div>
-    <div class="col-md-4 mb-3">
-        <label class="form-label">{{ $strings::SORT_ORDER }}</label>
-        <input type="number" min="0" name="sort_order" value="{{ old('sort_order', $category->sort_order ?? 0) }}" class="form-control @error('sort_order') is-invalid @enderror">
-        @error('sort_order') <div class="invalid-feedback">{{ $message }}</div> @enderror
-    </div>
-    <div class="col-md-4 mb-3 d-flex align-items-end">
-        <div class="form-check mb-2">
-            <input class="form-check-input" type="checkbox" name="is_active" value="1" id="is_active" @checked(old('is_active', $category->is_active))>
-            <label class="form-check-label" for="is_active">{{ $strings::ACTIVE }}</label>
+        <div class="col-md-6 mb-3">
+            <label class="form-label">صورة خلفية الصفحة (اختياري)</label>
+            <input type="file" name="background_image" accept="image/*" class="form-control @error('background_image') is-invalid @enderror" data-image-preview="#background-image-preview">
+            @error('background_image') <div class="invalid-feedback">{{ $message }}</div> @enderror
+            <img id="background-image-preview" src="{{ $category->background_image_src }}" alt="" class="upload-preview mt-2" @if(! $category->background_image_src) hidden @endif>
         </div>
     </div>
-</div>
+    <div class="row">
+        <div class="col-md-4 mb-3">
+            <label class="form-label">{{ $strings::SORT_ORDER }}</label>
+            <input type="number" min="0" name="sort_order" value="{{ old('sort_order', $category->sort_order ?? 0) }}" class="form-control @error('sort_order') is-invalid @enderror">
+            @error('sort_order') <div class="invalid-feedback">{{ $message }}</div> @enderror
+        </div>
+        <div class="col-md-4 mb-3 d-flex align-items-end">
+            <div class="form-check mb-2">
+                <input class="form-check-input" type="checkbox" name="is_active" value="1" id="is_active" @checked(old('is_active', $category->is_active))>
+                <label class="form-check-label" for="is_active">{{ $strings::ACTIVE }}</label>
+            </div>
+        </div>
+    </div>
+@else
+    <div class="row">
+        <div class="col-md-4 mb-3">
+            <label class="form-label">{{ $strings::COLOR }}</label>
+            <div class="color-picker-field">
+                <input type="color" name="color" value="{{ $color }}" class="color-picker-input @error('color') is-invalid @enderror" data-color-sync="#color-hex">
+                <span id="color-hex" class="color-picker-hex">{{ $color }}</span>
+            </div>
+            @error('color') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
+        </div>
+        <div class="col-md-4 mb-3">
+            <label class="form-label">{{ $strings::SORT_ORDER }}</label>
+            <input type="number" min="0" name="sort_order" value="{{ old('sort_order', $category->sort_order ?? 0) }}" class="form-control @error('sort_order') is-invalid @enderror">
+            @error('sort_order') <div class="invalid-feedback">{{ $message }}</div> @enderror
+        </div>
+        <div class="col-md-4 mb-3 d-flex align-items-end">
+            <div class="form-check mb-2">
+                <input class="form-check-input" type="checkbox" name="is_active" value="1" id="is_active" @checked(old('is_active', $category->is_active))>
+                <label class="form-check-label" for="is_active">{{ $strings::ACTIVE }}</label>
+            </div>
+        </div>
+    </div>
+@endif

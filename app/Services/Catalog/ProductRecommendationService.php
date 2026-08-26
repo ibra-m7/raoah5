@@ -2,8 +2,10 @@
 
 namespace App\Services\Catalog;
 
+use App\Enums\ProductRelationType;
 use App\Http\Resources\ProductResource;
 use App\Models\Product;
+use App\Models\ProductRelation;
 use App\Models\User;
 use App\Services\Ai\RecommendationTrainer;
 use Illuminate\Support\Collection;
@@ -23,11 +25,32 @@ class ProductRecommendationService
     {
         $product->loadMissing(['category', 'productRelations']);
 
+        $manualIds = ProductRelation::query()
+            ->where('product_id', $product->id)
+            ->where('type', ProductRelationType::Complementary)
+            ->where('source', 'manual')
+            ->orderBy('sort_order')
+            ->pluck('related_product_id')
+            ->map(fn ($id) => (int) $id)
+            ->all();
+
+        $manual = $manualIds === []
+            ? collect()
+            : $this->engine->applyOrder(
+                Product::query()
+                    ->active()
+                    ->with($this->engine->relations())
+                    ->whereIn('id', $manualIds)
+                    ->get(),
+                $manualIds,
+            );
+
         $bought = $this->applyCachedRank(
             'bought_together',
             ['product_id' => $product->id],
             $this->engine->boughtTogether($product, 12)
-        );
+        )->reject(fn (Product $item) => in_array((int) $item->id, $manualIds, true));
+
         $similar = $this->applyCachedRank(
             'similar',
             ['product_id' => $product->id],
@@ -35,7 +58,7 @@ class ProductRecommendationService
         );
 
         return [
-            'bought_together' => $this->resources($bought->take(8)),
+            'bought_together' => $this->resources($manual->concat($bought)->take(8)->values()),
             'similar' => $this->resources($similar->take(8)),
             'suggested' => $this->resources($this->forYou(null, [(int) $product->id], 8)),
         ];

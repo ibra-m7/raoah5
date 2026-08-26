@@ -34,12 +34,14 @@
                     <tbody>
                         @foreach ($methods as $method)
                             <tr>
-                                <td>
-                                    @if ($method->icon_url)
-                                        <img src="{{ \App\Support\Media::url($method->icon_url) }}" alt="" height="32" style="object-fit: contain">
-                                    @else
-                                        <i class="{{ $method->icon }} fs-4 text-success"></i>
-                                    @endif
+                                <td class="align-middle" style="width: 56px">
+                                    <span class="payment-method-thumb">
+                                        @if ($method->icon_url)
+                                            <img src="{{ \App\Support\Media::url($method->icon_url) }}" alt="">
+                                        @else
+                                            <i class="{{ $method->icon ?: 'bi-credit-card' }}"></i>
+                                        @endif
+                                    </span>
                                 </td>
                                 <td>
                                     <div class="fw-bold">{{ $method->label }}</div>

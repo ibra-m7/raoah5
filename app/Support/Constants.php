@@ -23,6 +23,12 @@ final class Constants
 
     public const SETTING_DELIVERY_FIRST_ORDER_FREE = 'delivery_first_order_free';
 
+    public const SETTING_DELIVERY_HIDE_SUBTITLE = 'delivery_hide_subtitle';
+
+    public const SETTING_DELIVERY_NOTES_ENABLED = 'delivery_notes_enabled';
+
+    public const SETTING_DELIVERY_GENERAL_NOTE = 'delivery_general_note';
+
     public const SETTING_DELIVERY_STORE_LAT = 'delivery_store_lat';
 
     public const SETTING_DELIVERY_STORE_LNG = 'delivery_store_lng';

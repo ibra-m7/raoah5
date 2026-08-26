@@ -26,7 +26,9 @@ class StoreOrderRequest extends FormRequest
                 Rule::in(StoreSettings::activePaymentSlugs() ?: ['cash']),
             ],
             'notes' => ['nullable', 'string', 'max:500'],
-            'coupon_code' => ['nullable', 'string', 'max:40'],
+            'coupon_code' => ['nullable', 'string', 'max:120'],
+            'coupon_codes' => ['nullable', 'array', 'max:5'],
+            'coupon_codes.*' => ['required', 'string', 'max:40'],
             'fulfillment_type' => ['nullable', 'string', Rule::in(['now', 'scheduled'])],
             'scheduled_at' => ['nullable', 'date', 'after:now'],
             'address_id' => [
@@ -52,15 +54,31 @@ class StoreOrderRequest extends FormRequest
             'items.*.product_id' => 'المنتج',
             'items.*.quantity' => 'الكمية',
             'coupon_code' => 'كود الخصم',
+            'coupon_codes' => 'أكواد الخصم',
         ];
     }
 
     protected function prepareForValidation(): void
     {
-        if ($this->filled('coupon_code')) {
-            $this->merge([
-                'coupon_code' => strtoupper(preg_replace('/\s+/', '', (string) $this->input('coupon_code')) ?? ''),
-            ]);
+        $codes = [];
+        if ($this->filled('coupon_codes') && is_array($this->input('coupon_codes'))) {
+            foreach ($this->input('coupon_codes') as $code) {
+                $normalized = strtoupper(preg_replace('/\s+/', '', (string) $code) ?? '');
+                if ($normalized !== '') {
+                    $codes[] = $normalized;
+                }
+            }
         }
+        if ($this->filled('coupon_code')) {
+            $single = strtoupper(preg_replace('/\s+/', '', (string) $this->input('coupon_code')) ?? '');
+            if ($single !== '') {
+                $codes[] = $single;
+            }
+        }
+        $codes = array_values(array_unique($codes));
+        $this->merge([
+            'coupon_codes' => $codes,
+            'coupon_code' => $codes[0] ?? null,
+        ]);
     }
 }

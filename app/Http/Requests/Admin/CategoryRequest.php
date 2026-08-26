@@ -25,6 +25,7 @@ class CategoryRequest extends FormRequest
             'level' => ['nullable', 'in:root,category,sub'],
             'icon' => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp,svg,gif,bmp,heic,avif', 'max:4096'],
             'image' => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp,gif,bmp,heic,avif', 'max:8192'],
+            'background_image' => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp,gif,bmp,heic,avif', 'max:8192'],
             'color' => ['nullable', 'regex:/^#[0-9A-Fa-f]{6}$/'],
             'sort_order' => ['nullable', 'integer', 'min:0', 'max:9999'],
             'is_active' => ['nullable', 'boolean'],
@@ -50,7 +51,8 @@ class CategoryRequest extends FormRequest
             'parent_id' => $parent,
             'icon' => 'الأيقونة',
             'image' => 'الصورة',
-            'color' => 'اللون',
+            'background_image' => 'صورة خلفية الصفحة',
+            'color' => $this->input('level') === 'root' ? 'لون خلفية الصفحة' : 'اللون',
             'sort_order' => 'الترتيب',
             'is_active' => 'الحالة',
         ];

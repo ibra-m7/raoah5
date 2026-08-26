@@ -3,6 +3,7 @@
 namespace App\Services\Admin;
 
 use App\Enums\BannerLinkType;
+use App\Enums\ProductRelationType;
 use App\Enums\PromoType;
 use App\Jobs\RefreshProductRecommendations;
 use App\Models\Banner;
@@ -46,6 +47,14 @@ class ProductService
         return app(CategoryService::class)->productCategoryOptions($currentId);
     }
 
+    public function complementaryOptions(?int $exceptId = null): Collection
+    {
+        return Product::query()
+            ->when($exceptId, fn ($query) => $query->whereKeyNot($exceptId))
+            ->orderBy('name')
+            ->get(['id', 'name', 'sku', 'price']);
+    }
+
     public function create(array $data): Product
     {
         $image = $data['image'] ?? null;
@@ -53,7 +62,16 @@ class ProductService
         $gallery = $data['gallery'] ?? [];
         $galleryUrls = $data['gallery_urls'] ?? '';
         $skipAiCopy = (bool) ($data['skip_ai_copy'] ?? false);
-        unset($data['image'], $data['image_url'], $data['gallery'], $data['gallery_urls'], $data['delete_image_ids'], $data['skip_ai_copy']);
+        $complementaryIds = $data['complementary_product_ids'] ?? [];
+        unset(
+            $data['image'],
+            $data['image_url'],
+            $data['gallery'],
+            $data['gallery_urls'],
+            $data['delete_image_ids'],
+            $data['skip_ai_copy'],
+            $data['complementary_product_ids'],
+        );
 
         $data['sku'] = $this->sku($data['sku'] ?? null);
         $data['slug'] = Slug::unique($data['name'], 'products');
@@ -65,6 +83,7 @@ class ProductService
         $product = Product::query()->create($data);
         $this->syncPrimaryImage($product, $image, $imageUrl);
         $this->syncGallery($product, $gallery, $galleryUrls);
+        $this->syncComplementary($product, $complementaryIds);
         if (! $skipAiCopy) {
             RefreshProductRecommendations::dispatch($product->id)->afterResponse();
         }
@@ -80,7 +99,16 @@ class ProductService
         $galleryUrls = $data['gallery_urls'] ?? '';
         $deleteIds = $data['delete_image_ids'] ?? [];
         $skipAiCopy = (bool) ($data['skip_ai_copy'] ?? false);
-        unset($data['image'], $data['image_url'], $data['gallery'], $data['gallery_urls'], $data['delete_image_ids'], $data['skip_ai_copy']);
+        $complementaryIds = $data['complementary_product_ids'] ?? [];
+        unset(
+            $data['image'],
+            $data['image_url'],
+            $data['gallery'],
+            $data['gallery_urls'],
+            $data['delete_image_ids'],
+            $data['skip_ai_copy'],
+            $data['complementary_product_ids'],
+        );
 
         $data['sku'] = $this->sku($data['sku'] ?? $product->sku, $product->id);
         $data['slug'] = Slug::unique($data['name'], 'products', 'slug', $product->id);
@@ -93,11 +121,46 @@ class ProductService
         $this->deleteGalleryImages($product, $deleteIds);
         $this->syncPrimaryImage($product, $image, $imageUrl ?: $product->primaryImage?->url);
         $this->syncGallery($product, $gallery, $galleryUrls);
+        $this->syncComplementary($product, $complementaryIds);
         if (! $skipAiCopy) {
             RefreshProductRecommendations::dispatch($product->id)->afterResponse();
         }
 
         return $product;
+    }
+
+    /**
+     * @param  list<int|string>|mixed  $ids
+     */
+    public function syncComplementary(Product $product, mixed $ids): void
+    {
+        $selected = collect(is_array($ids) ? $ids : [])
+            ->map(fn ($id) => (int) $id)
+            ->filter(fn (int $id) => $id > 0 && $id !== (int) $product->id)
+            ->unique()
+            ->values()
+            ->all();
+
+        ProductRelation::query()
+            ->where('product_id', $product->id)
+            ->where('type', ProductRelationType::Complementary)
+            ->where('source', 'manual')
+            ->when($selected !== [], fn ($query) => $query->whereNotIn('related_product_id', $selected))
+            ->delete();
+
+        foreach ($selected as $index => $relatedId) {
+            ProductRelation::query()->updateOrCreate(
+                [
+                    'product_id' => $product->id,
+                    'related_product_id' => $relatedId,
+                    'type' => ProductRelationType::Complementary,
+                ],
+                [
+                    'sort_order' => $index,
+                    'source' => 'manual',
+                ],
+            );
+        }
     }
 
     public function delete(Product $product): void

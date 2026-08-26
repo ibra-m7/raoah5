@@ -44,6 +44,12 @@ class ProductRequest extends FormRequest
             'sort_order' => ['nullable', 'integer', 'min:0', 'max:9999'],
             'is_active' => ['nullable', 'boolean'],
             'is_featured' => ['nullable', 'boolean'],
+            'complementary_product_ids' => ['nullable', 'array'],
+            'complementary_product_ids.*' => [
+                'integer',
+                'exists:products,id',
+                Rule::notIn([(int) optional($this->route('product'))->id]),
+            ],
         ];
     }
 
@@ -68,6 +74,8 @@ class ProductRequest extends FormRequest
             'benefits' => 'الفوائد',
             'keywords' => 'كلمات البحث',
             'usage_instructions' => 'طريقة الاستخدام',
+            'complementary_product_ids' => 'يُشترى معه',
+            'complementary_product_ids.*' => 'منتج يُشترى معه',
         ];
     }
 

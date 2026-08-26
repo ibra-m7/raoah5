@@ -29,7 +29,7 @@
     @error('icon_file') <div class="invalid-feedback">{{ $message }}</div> @enderror
     <div class="form-hint">ارفع شعار مدى أو STC Pay أو البطاقة ليظهر في التطبيق. PNG بخلفية شفافة أفضل.</div>
     @php $iconSrc = \App\Support\Media::url($method->icon_url); @endphp
-    <img id="payment-icon-preview" src="{{ $iconSrc }}" alt="" class="upload-preview mt-2" @if(! $iconSrc) hidden @endif>
+    <img id="payment-icon-preview" src="{{ $iconSrc }}" alt="" class="payment-icon-preview mt-2" @if(! $iconSrc) hidden @endif>
 </div>
 
 <div class="row">

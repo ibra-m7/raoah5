@@ -4,7 +4,7 @@ namespace App\Support;
 
 final class Phone
 {
-    /** آخر 9 أرقام: يدخلان بدون OTP حتى على Render. */
+    /** آخر 9 أرقام: فقط هذان يدخلان بدون OTP (اختبار). باقي الأرقام تحتاج رمز تحقق. */
     private const OTP_BYPASS_NATIONAL = [
         '778396448',
         '777234341',

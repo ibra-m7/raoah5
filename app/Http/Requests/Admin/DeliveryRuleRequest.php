@@ -33,6 +33,8 @@ class DeliveryRuleRequest extends FormRequest
             'per_km_mode' => ['nullable', Rule::enum(DeliveryPerKmMode::class)],
             'sort_order' => ['nullable', 'integer', 'min:0', 'max:9999'],
             'is_active' => ['nullable', 'boolean'],
+            'note' => ['nullable', 'string', 'max:500'],
+            'note_enabled' => ['nullable', 'boolean'],
         ];
     }
 
@@ -45,6 +47,7 @@ class DeliveryRuleRequest extends FormRequest
             'pricing_type' => 'نوع التسعير',
             'amount' => 'السعر',
             'per_km_mode' => 'طريقة حساب الكيلومتر',
+            'note' => 'ملاحظة الشريحة',
         ];
     }
 
@@ -52,6 +55,8 @@ class DeliveryRuleRequest extends FormRequest
     {
         $this->merge([
             'is_active' => $this->boolean('is_active'),
+            'note_enabled' => $this->boolean('note_enabled'),
+            'note' => $this->filled('note') ? trim((string) $this->input('note')) : null,
             'max_km' => $this->filled('max_km') ? $this->input('max_km') : null,
             'sort_order' => $this->filled('sort_order') ? $this->input('sort_order') : 0,
             'amount' => $this->input('pricing_type') === DeliveryPricingType::Free->value

@@ -73,3 +73,23 @@
         </div>
     </div>
 </div>
+
+<div class="mb-0 mt-2 p-3 rounded-4 border" style="background: var(--color-primary-surface, #e8f8ec); border-color: var(--color-primary-light, #c8ecd3) !important;">
+    <div class="form-check mb-2">
+        <input class="form-check-input" type="checkbox" name="note_enabled" value="1" id="rule_note_enabled" @checked($useOld ? old('note_enabled', $rule->note_enabled ?? false) : ($rule->note_enabled ?? false))>
+        <label class="form-check-label fw-bold" for="rule_note_enabled">تفعيل ملاحظة هذه الشريحة</label>
+    </div>
+    <label class="form-label" for="rule_note">ملاحظة الشريحة</label>
+    <textarea
+        id="rule_note"
+        name="note"
+        rows="3"
+        class="form-control {{ $useOld && $errors->has('note') ? 'is-invalid' : '' }}"
+        style="min-height: 96px; resize: vertical;"
+        placeholder="مثال: رسوم إضافية للمناطق البعيدة"
+    >{{ $useOld ? old('note', $rule->note ?? '') : ($rule->note ?? '') }}</textarea>
+    @if ($useOld)
+        @error('note') <div class="invalid-feedback">{{ $message }}</div> @enderror
+    @endif
+    <div class="form-hint mt-2 mb-0">تظهر تحت «التوصيل» في التطبيق عند تفعيل الملاحظة وتفعيل ملاحظات التوصيل في السياسة.</div>
+</div>

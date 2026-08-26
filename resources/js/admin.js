@@ -1018,7 +1018,8 @@ const clearFormErrors = (form) => {
 const setDeliveryFormMode = (form, id) => {
     const method = form.querySelector("[data-http-method]");
     const editing = form.querySelector("[data-editing-id]");
-    const title = form.querySelector("[data-rule-title], [data-perk-title]");
+    const scope = form.closest(".modal") || form;
+    const title = scope.querySelector("[data-rule-title], [data-perk-title], [data-phrase-title]");
     if (id) {
         form.action = `${String(form.dataset.updateBase || "").replace(/\/$/, "")}/${id}`;
         if (method) {
@@ -1086,6 +1087,8 @@ const resetRuleForm = (form) => {
     setFormField(form, "per_km_mode", "entire");
     setFormField(form, "sort_order", "0");
     setFormField(form, "is_active", "1");
+    setFormField(form, "note", "");
+    setFormField(form, "note_enabled", "0");
     syncRulePricingUI(form);
 };
 
@@ -1103,6 +1106,8 @@ const fillRuleForm = (form, data) => {
     setFormField(form, "per_km_mode", data.perKmMode || "entire");
     setFormField(form, "sort_order", data.sortOrder ?? "0");
     setFormField(form, "is_active", data.isActive);
+    setFormField(form, "note", data.note || "");
+    setFormField(form, "note_enabled", data.noteEnabled);
     syncRulePricingUI(form);
 };
 
@@ -1138,10 +1143,45 @@ const fillPerkForm = (form, data) => {
     syncPerkRewardUI(form);
 };
 
+const fillSlotForm = (form, data = {}) => {
+    if (!form) {
+        return;
+    }
+    const id = data.id || data.editingId || "";
+    const editing = form.querySelector("[data-editing-id]");
+    if (editing) {
+        editing.value = id;
+    }
+    const base = form.getAttribute("data-update-base") || "";
+    if (id && base) {
+        form.action = `${base.replace(/\/$/, "")}/${id}`;
+    }
+    const weekday = form.querySelector("[data-slot-weekday]");
+    const start = form.querySelector("[data-slot-start]");
+    const end = form.querySelector("[data-slot-end]");
+    const sort = form.querySelector("[data-slot-sort]");
+    const active = form.querySelector("[data-slot-active]");
+    if (weekday) {
+        weekday.value = String(data.weekday ?? "0");
+    }
+    if (start) {
+        start.value = data.startTime || "10:00";
+    }
+    if (end) {
+        end.value = data.endTime || "12:00";
+    }
+    if (sort) {
+        sort.value = data.sortOrder ?? "0";
+    }
+    if (active) {
+        active.checked = String(data.isActive ?? "1") === "1";
+    }
+};
+
 const bindDeliveryPage = () => {
     syncRulePricingUI();
     syncPerkRewardUI();
-    ["deliveryRuleModal", "deliveryPerkModal"].forEach((id) => {
+    ["deliveryRuleModal", "deliveryPerkModal", "deliverySlotModal"].forEach((id) => {
         const modal = document.getElementById(id);
         if (modal?.dataset.open === "1") {
             window.bootstrap.Modal.getOrCreateInstance(modal).show();
@@ -1191,6 +1231,12 @@ document.addEventListener("show.bs.modal", (event) => {
         } else if (trigger.hasAttribute("data-delivery-rule-create")) {
             resetRuleForm(form);
         }
+        requestAnimationFrame(() => {
+            const body = modal.querySelector(".modal-body");
+            if (body) {
+                body.scrollTop = 0;
+            }
+        });
         return;
     }
     if (modal.id === "deliveryPerkModal") {
@@ -1199,6 +1245,13 @@ document.addEventListener("show.bs.modal", (event) => {
             fillPerkForm(form, trigger.dataset);
         } else if (trigger.hasAttribute("data-delivery-perk-create")) {
             resetPerkForm(form);
+        }
+        return;
+    }
+    if (modal.id === "deliverySlotModal") {
+        const form = modal.querySelector("#deliverySlotForm");
+        if (trigger.hasAttribute("data-delivery-slot-edit")) {
+            fillSlotForm(form, trigger.dataset);
         }
     }
 });
@@ -1490,11 +1543,13 @@ const bindProductAiCopy = (root = document) => {
         };
 
         const applyCopy = (copy, force) => {
-            fillText(field("description"), copy.description, false);
-            if (copy.category_id && empty(field("category_id"))) {
+            fillText(field("description"), copy.description, force);
+            fillText(aiField("description"), copy.description, force);
+            if (copy.category_id && (force || empty(field("category_id")))) {
                 const select = field("category_id");
                 if (select) {
                     select.value = String(copy.category_id);
+                    select.dispatchEvent(new Event("change", { bubbles: true }));
                 }
             }
             fillNumber(field("price"), copy.price, false);
@@ -1564,4 +1619,88 @@ const bindProductAiCopy = (root = document) => {
 
 bindProductAiCopy();
 window.addEventListener("admin:content-ready", () => bindProductAiCopy());
+
+const resetSearchPhraseForm = (form) => {
+    if (!form) {
+        return;
+    }
+    clearFormErrors(form);
+    setDeliveryFormMode(form, null);
+    setFormField(form, "phrase", "");
+    setFormField(form, "sort_order", "0");
+    setFormField(form, "is_active", "1");
+};
+
+const fillSearchPhraseForm = (form, data) => {
+    if (!form) {
+        return;
+    }
+    clearFormErrors(form);
+    setDeliveryFormMode(form, data.id);
+    setFormField(form, "phrase", data.phrase || "");
+    setFormField(form, "sort_order", data.sortOrder ?? "0");
+    setFormField(form, "is_active", data.isActive);
+};
+
+const bindSearchPlaceholdersPage = () => {
+    const modal = document.getElementById("searchPhraseModal");
+    if (modal?.dataset.open === "1") {
+        window.bootstrap.Modal.getOrCreateInstance(modal).show();
+    }
+};
+
+const renderCustomerSearchLogs = (name, logs) => {
+    const title = document.querySelector("[data-customer-logs-title]");
+    const body = document.querySelector("[data-customer-logs-body]");
+    if (title) {
+        title.textContent = name ? `كلمات بحث: ${name}` : "كلمات البحث";
+    }
+    if (!(body instanceof HTMLElement)) {
+        return;
+    }
+    const rows = Array.isArray(logs) ? logs : [];
+    if (rows.length === 0) {
+        body.innerHTML = `<tr><td colspan="3" class="text-muted">لا توجد كلمات.</td></tr>`;
+        return;
+    }
+    body.innerHTML = rows
+        .map((row) => {
+            const query = escLive(row.query || "");
+            const date = escLive(row.date || "—");
+            const product = row.found
+                ? escLive(row.product || "منتج موجود")
+                : '<span class="text-warning">غير موجود</span>';
+            return `<tr><td class="fw-semibold">${query}</td><td>${date}</td><td>${product}</td></tr>`;
+        })
+        .join("");
+};
+
+document.addEventListener("show.bs.modal", (event) => {
+    const modal = event.target;
+    const trigger = event.relatedTarget;
+    if (!(modal instanceof HTMLElement) || !(trigger instanceof HTMLElement)) {
+        return;
+    }
+    if (modal.id === "searchPhraseModal") {
+        const form = modal.querySelector("#searchPhraseForm");
+        if (trigger.hasAttribute("data-search-phrase-edit")) {
+            fillSearchPhraseForm(form, trigger.dataset);
+        } else if (trigger.hasAttribute("data-search-phrase-create")) {
+            resetSearchPhraseForm(form);
+        }
+        return;
+    }
+    if (modal.id === "customerSearchLogsModal" && trigger.hasAttribute("data-customer-search-logs")) {
+        let logs = [];
+        try {
+            logs = JSON.parse(trigger.getAttribute("data-logs") || "[]");
+        } catch (_) {
+            logs = [];
+        }
+        renderCustomerSearchLogs(trigger.dataset.name || "", logs);
+    }
+});
+
+bindSearchPlaceholdersPage();
+window.addEventListener("admin:content-ready", bindSearchPlaceholdersPage);
 

@@ -15,6 +15,7 @@ final class DeliveryQuote
         public readonly ?int $perkId = null,
         public readonly ?string $perkName = null,
         public readonly float $perkDiscount = 0.0,
+        public readonly ?string $note = null,
     ) {}
 
     public static function free(
@@ -22,8 +23,9 @@ final class DeliveryQuote
         ?float $distanceKm = null,
         ?int $ruleId = null,
         ?string $ruleName = null,
+        ?string $note = null,
     ): self {
-        return new self(0.0, true, $distanceKm, $label, $ruleId, $ruleName);
+        return new self(0.0, true, $distanceKm, $label, $ruleId, $ruleName, note: $note);
     }
 
     public function withPerk(float $fee, string $label, int $perkId, string $perkName, float $discount): self
@@ -39,6 +41,24 @@ final class DeliveryQuote
             $perkId,
             $perkName,
             $discount,
+            $this->note,
+        );
+    }
+
+    public function withNote(?string $note): self
+    {
+        return new self(
+            $this->fee,
+            $this->isFree,
+            $this->distanceKm,
+            $this->label,
+            $this->ruleId,
+            $this->ruleName,
+            $this->originalFee,
+            $this->perkId,
+            $this->perkName,
+            $this->perkDiscount,
+            $note,
         );
     }
 
@@ -52,6 +72,7 @@ final class DeliveryQuote
             'is_free' => $this->isFree,
             'distance_km' => $this->distanceKm,
             'label' => $this->label,
+            'note' => $this->note,
             'rule_id' => $this->ruleId,
             'rule_name' => $this->ruleName,
             'original_fee' => $this->originalFee > 0 ? $this->originalFee : $this->fee,
