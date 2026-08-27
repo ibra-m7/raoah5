@@ -19,6 +19,7 @@ class BannerRequest extends FormRequest
 
         return [
             'title' => ['required', 'string', 'max:255'],
+            'show_title' => ['nullable', 'boolean'],
             'subtitle' => ['nullable', 'string', 'max:255'],
             'image' => [$creating ? 'required' : 'nullable', 'file', 'mimes:jpg,jpeg,png,webp,gif', 'max:4096'],
             'image_url' => ['nullable', 'url', 'max:2048'],
@@ -78,6 +79,7 @@ class BannerRequest extends FormRequest
 
         $this->merge([
             'is_active' => $this->boolean('is_active'),
+            'show_title' => $this->boolean('show_title'),
             'link_id' => $linkId ?: null,
             'link_url' => $this->input('link_url') ?: null,
             'image_url' => $this->input('image_url') ?: null,

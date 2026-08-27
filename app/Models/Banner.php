@@ -11,6 +11,7 @@ class Banner extends Model
 {
     protected $fillable = [
         'title',
+        'show_title',
         'subtitle',
         'image_url',
         'link_type',
@@ -26,6 +27,7 @@ class Banner extends Model
     {
         return [
             'link_type' => BannerLinkType::class,
+            'show_title' => 'boolean',
             'starts_at' => 'datetime',
             'ends_at' => 'datetime',
             'is_active' => 'boolean',

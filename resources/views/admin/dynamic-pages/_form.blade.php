@@ -17,6 +17,11 @@
     <label class="form-label">العنوان</label>
     <input type="text" name="title" value="{{ old('title', $page->title) }}" class="form-control @error('title') is-invalid @enderror" required>
     @error('title') <div class="invalid-feedback">{{ $message }}</div> @enderror
+    <div class="form-check mt-2">
+        <input class="form-check-input" type="checkbox" name="show_title" value="1" id="show_title" @checked(old('show_title', $page->show_title ?? false))>
+        <label class="form-check-label" for="show_title">إظهار العنوان على البنر في التطبيق</label>
+    </div>
+    <div class="form-hint">إن كان الإعلان مربوطاً بهذه الصفحة، يظهر العنوان على البنر فقط عند تفعيل هذا الخيار.</div>
 </div>
 
 <div class="row">

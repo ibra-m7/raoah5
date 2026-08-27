@@ -90,6 +90,7 @@ class BannerService
 
         return [
             'title' => $data['title'],
+            'show_title' => (bool) ($data['show_title'] ?? false),
             'subtitle' => $data['subtitle'] ?? null,
             'image_url' => $stored,
             'link_type' => $type,

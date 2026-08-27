@@ -14,6 +14,7 @@ class DynamicPageResource extends JsonResource
         return [
             'id' => (string) $this->id,
             'title' => $this->title,
+            'show_title' => (bool) $this->show_title,
             'banner_image_url' => Media::url($this->banner_image_url) ?? '',
             'appbar_image_url' => Media::url($this->appbar_image_url) ?? '',
             'placement' => $this->placement?->value ?? 'none',

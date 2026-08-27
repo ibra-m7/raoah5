@@ -65,6 +65,7 @@ class DynamicPageService
     {
         return [
             'title' => $data['title'],
+            'show_title' => (bool) ($data['show_title'] ?? false),
             'banner_image_url' => $this->storeImage(
                 $data['banner_image'] ?? null,
                 $data['banner_image_url'] ?? '',

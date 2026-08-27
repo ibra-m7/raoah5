@@ -17,6 +17,7 @@ class DynamicPageRequest extends FormRequest
     {
         return [
             'title' => ['required', 'string', 'max:255'],
+            'show_title' => ['nullable', 'boolean'],
             'banner_image' => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp,gif', 'max:4096'],
             'banner_image_url' => ['nullable', 'url', 'max:2048'],
             'appbar_image' => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp,gif', 'max:4096'],
@@ -46,6 +47,7 @@ class DynamicPageRequest extends FormRequest
     {
         $this->merge([
             'is_active' => $this->boolean('is_active'),
+            'show_title' => $this->boolean('show_title'),
             'banner_image_url' => $this->input('banner_image_url') ?: null,
             'appbar_image_url' => $this->input('appbar_image_url') ?: null,
         ]);

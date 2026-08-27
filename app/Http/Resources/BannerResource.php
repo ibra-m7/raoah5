@@ -14,6 +14,7 @@ class BannerResource extends JsonResource
         return [
             'id' => (string) $this->id,
             'title' => $this->title,
+            'show_title' => (bool) $this->show_title,
             'subtitle' => $this->subtitle,
             'image_url' => Media::url($this->image_url) ?? '',
             'link_type' => $this->link_type?->value ?? 'none',

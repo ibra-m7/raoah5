@@ -11,6 +11,7 @@ class DynamicPage extends Model
 {
     protected $fillable = [
         'title',
+        'show_title',
         'banner_image_url',
         'appbar_image_url',
         'sort_order',
@@ -22,6 +23,7 @@ class DynamicPage extends Model
     {
         return [
             'is_active' => 'boolean',
+            'show_title' => 'boolean',
             'sort_order' => 'integer',
             'placement' => DynamicPagePlacement::class,
         ];

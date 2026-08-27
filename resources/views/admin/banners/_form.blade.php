@@ -15,6 +15,10 @@
     <label class="form-label">العنوان</label>
     <input type="text" name="title" value="{{ old('title', $banner->title) }}" class="form-control @error('title') is-invalid @enderror" required>
     @error('title') <div class="invalid-feedback">{{ $message }}</div> @enderror
+    <div class="form-check mt-2">
+        <input class="form-check-input" type="checkbox" name="show_title" value="1" id="banner_show_title" @checked(old('show_title', $banner->show_title ?? false))>
+        <label class="form-check-label" for="banner_show_title">إظهار العنوان على البنر في التطبيق</label>
+    </div>
 </div>
 
 <div class="mb-3">
