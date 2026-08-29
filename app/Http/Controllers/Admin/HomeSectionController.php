@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\HomeSectionRequest;
 use App\Models\HomeSection;
 use App\Services\Admin\HomeSectionService;
+use App\Services\Admin\ProductService;
 use App\Support\AppStrings;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -13,7 +14,10 @@ use Illuminate\View\View;
 
 class HomeSectionController extends Controller
 {
-    public function __construct(private readonly HomeSectionService $sections) {}
+    public function __construct(
+        private readonly HomeSectionService $sections,
+        private readonly ProductService $products,
+    ) {}
 
     public function index(Request $request): View
     {
@@ -31,8 +35,7 @@ class HomeSectionController extends Controller
         return view('admin.home-sections.create', [
             'title' => AppStrings::ADD_HOME_SECTION,
             'section' => new HomeSection(['is_active' => true, 'sort_order' => 0]),
-            'products' => $this->sections->productOptions(),
-            'selectedIds' => [],
+            'selectedProducts' => $this->products->pickerItems(old('product_ids', [])),
         ]);
     }
 
@@ -47,13 +50,12 @@ class HomeSectionController extends Controller
 
     public function edit(HomeSection $home_section): View
     {
-        $home_section->load('products');
-
         return view('admin.home-sections.edit', [
             'title' => AppStrings::EDIT_HOME_SECTION,
             'section' => $home_section,
-            'products' => $this->sections->productOptions(),
-            'selectedIds' => $home_section->products->pluck('id')->all(),
+            'selectedProducts' => $this->products->pickerItems(
+                old('product_ids', $home_section->products()->allRelatedIds()),
+            ),
         ]);
     }
 

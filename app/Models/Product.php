@@ -38,6 +38,7 @@ class Product extends Model
         'usage_instructions',
         'is_active',
         'is_featured',
+        'is_gift',
         'sort_order',
     ];
 
@@ -55,6 +56,7 @@ class Product extends Model
             'keywords' => 'array',
             'is_active' => 'boolean',
             'is_featured' => 'boolean',
+            'is_gift' => 'boolean',
             'sort_order' => 'integer',
         ];
     }
@@ -95,6 +97,16 @@ class Product extends Model
             ->wherePivot('type', ProductRelationType::Upsell->value)
             ->withTimestamps()
             ->orderByPivot('sort_order');
+    }
+
+    public function giftProducts(): BelongsToMany
+    {
+        return $this->belongsToMany(self::class, 'product_relations', 'product_id', 'related_product_id')
+            ->withPivot('type', 'sort_order')
+            ->wherePivot('type', ProductRelationType::Gift->value)
+            ->withTimestamps()
+            ->orderByPivot('sort_order')
+            ->limit(1);
     }
 
     public function reviews(): HasMany
@@ -139,6 +151,16 @@ class Product extends Model
         return $query->where('is_featured', true);
     }
 
+    public function scopeGift(Builder $query): Builder
+    {
+        return $query->where('is_gift', true);
+    }
+
+    public function scopeSellable(Builder $query): Builder
+    {
+        return $query->where('is_gift', false);
+    }
+
     public function scopeSearch(Builder $query, ?string $term): Builder
     {
         $term = trim((string) $term);
@@ -148,12 +170,17 @@ class Product extends Model
 
         $like = '%'.$term.'%';
 
-        return $query->where(function (Builder $nested) use ($like) {
+        return $query->where(function (Builder $nested) use ($like, $term) {
             $nested->where('name', 'like', $like)
                 ->orWhere('description', 'like', $like)
                 ->orWhere('sku', 'like', $like)
+                ->orWhere('barcode', 'like', $like)
                 ->orWhere('keywords', 'like', $like)
                 ->orWhere('benefits', 'like', $like);
+
+            if (preg_match('/^\d+$/', $term) === 1) {
+                $nested->orWhere('id', (int) $term);
+            }
         });
     }
 

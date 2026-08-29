@@ -18,6 +18,10 @@ class OrderItemResource extends JsonResource
             'unit_price' => (float) $this->unit_price,
             'quantity' => (int) $this->quantity,
             'line_total' => (float) $this->line_total,
+            'is_gift' => (bool) $this->is_gift,
+            'gift_for_product_id' => $this->gift_for_product_id
+                ? (string) $this->gift_for_product_id
+                : null,
         ];
     }
 }

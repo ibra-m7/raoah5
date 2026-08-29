@@ -5,7 +5,9 @@ namespace App\Support;
 use App\Enums\PaymentMethod;
 use App\Models\Setting;
 use App\Models\StorePaymentMethod;
+use App\Services\Admin\SearchDiscoveryService;
 use App\Services\Admin\SearchPlaceholderService;
+use App\Services\Admin\SearchSmartSuggestionService;
 use App\Support\Media;
 
 final class StoreSettings
@@ -120,6 +122,8 @@ final class StoreSettings
             'fallback_product_image_url' => self::fallbackProductImageUrl(),
             'payment_methods' => self::checkoutPaymentMethods(),
             'search_placeholders' => SearchPlaceholderService::activePhrases(),
+            'search_smart_suggestions' => SearchSmartSuggestionService::activePhrases(),
+            'search_trending' => app(SearchDiscoveryService::class)->trendingTerms(),
         ];
     }
 

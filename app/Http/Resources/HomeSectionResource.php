@@ -15,6 +15,7 @@ class HomeSectionResource extends JsonResource
             'key' => $this->key,
             'title' => $this->title,
             'subtitle' => $this->subtitle,
+            'background_color' => $this->background_color,
             'products' => ProductResource::collection($this->whenLoaded('products')),
         ];
     }

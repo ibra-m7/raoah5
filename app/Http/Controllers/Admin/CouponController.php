@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\CouponRequest;
 use App\Models\Coupon;
 use App\Services\Admin\CouponAdminService;
+use App\Services\Admin\ProductService;
 use App\Support\AppStrings;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -16,7 +17,10 @@ use Illuminate\View\View;
 
 class CouponController extends Controller
 {
-    public function __construct(private readonly CouponAdminService $coupons) {}
+    public function __construct(
+        private readonly CouponAdminService $coupons,
+        private readonly ProductService $products,
+    ) {}
 
     public function index(Request $request): View
     {
@@ -42,7 +46,7 @@ class CouponController extends Controller
             ]),
             'types' => CouponType::cases(),
             'scopes' => CouponAppliesTo::cases(),
-            'products' => $this->coupons->productOptions(),
+            'selectedProducts' => $this->products->pickerItems(old('product_ids', [])),
             'categories' => $this->coupons->categoryOptions(),
         ]);
     }
@@ -58,14 +62,16 @@ class CouponController extends Controller
 
     public function edit(Coupon $coupon): View
     {
-        $coupon->load(['products:id', 'categories:id']);
+        $coupon->load(['categories:id']);
 
         return view('admin.coupons.edit', [
             'title' => AppStrings::EDIT_COUPON,
             'coupon' => $coupon,
             'types' => CouponType::cases(),
             'scopes' => CouponAppliesTo::cases(),
-            'products' => $this->coupons->productOptions(),
+            'selectedProducts' => $this->products->pickerItems(
+                old('product_ids', $coupon->products()->allRelatedIds()),
+            ),
             'categories' => $this->coupons->categoryOptions(),
         ]);
     }

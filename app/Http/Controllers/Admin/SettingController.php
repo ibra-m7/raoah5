@@ -21,6 +21,8 @@ class SettingController extends Controller
     /** @var list<string> */
     private const TABS = ['app', 'store', 'marketing'];
 
+    public function __construct(private readonly ProductService $products) {}
+
     public function index(Request $request): View
     {
         $tab = $this->tab($request->query('tab'));
@@ -43,10 +45,9 @@ class SettingController extends Controller
                 'marketing_sold_scope' => StoreSettings::marketingSoldScope(),
                 'fallback_product_image' => Setting::getValue(Constants::SETTING_FALLBACK_PRODUCT_IMAGE, ''),
             ],
-            'products' => Product::query()
-                ->with('category:id,name')
-                ->orderBy('name')
-                ->get(['id', 'name', 'sku', 'category_id', 'is_active']),
+            'products' => $this->products->pickerItems(
+                old('marketing_sold_product_ids', $selectedIds),
+            ),
             'selectedProductIds' => $selectedIds,
             'productCount' => Product::withTrashed()->count(),
         ]);

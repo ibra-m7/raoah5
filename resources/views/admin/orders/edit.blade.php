@@ -55,6 +55,9 @@
                                 <tr data-product-id="{{ $pid }}" data-price="{{ $item->unit_price }}">
                                     <td>
                                         <strong>{{ $item->product_name }}</strong>
+                                        @if ($item->is_gift)
+                                            <span class="badge bg-warning text-dark ms-1">هدية</span>
+                                        @endif
                                         <input type="hidden" name="items[{{ $pid }}][product_id]" value="{{ $pid }}">
                                     </td>
                                     <td data-unit>{{ number_format((float) $item->unit_price, 2) }} {{ $strings::CURRENCY }}</td>

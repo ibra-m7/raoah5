@@ -15,6 +15,8 @@ class OrderItem extends Model
         'unit_price',
         'quantity',
         'line_total',
+        'is_gift',
+        'gift_for_product_id',
     ];
 
     protected function casts(): array
@@ -23,6 +25,7 @@ class OrderItem extends Model
             'unit_price' => 'decimal:2',
             'quantity' => 'integer',
             'line_total' => 'decimal:2',
+            'is_gift' => 'boolean',
         ];
     }
 

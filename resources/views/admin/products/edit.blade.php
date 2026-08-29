@@ -9,5 +9,6 @@
                 <a href="{{ route('admin.products.index') }}" class="btn btn-outline-secondary rounded-pill">{{ $strings::CANCEL }}</a>
             </div>
         </form>
+        @include('admin.products._gift-modal')
     </div>
 </x-layouts.admin>

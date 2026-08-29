@@ -13,6 +13,7 @@ class HomeSection extends Model
         'key',
         'title',
         'subtitle',
+        'background_color',
         'sort_order',
         'is_active',
     ];

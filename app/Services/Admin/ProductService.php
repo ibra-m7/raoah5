@@ -5,13 +5,15 @@ namespace App\Services\Admin;
 use App\Enums\BannerLinkType;
 use App\Enums\ProductRelationType;
 use App\Enums\PromoType;
+use App\Jobs\GenerateProductCopyJob;
 use App\Jobs\RefreshProductRecommendations;
 use App\Models\Banner;
+use App\Models\Category;
 use App\Models\Product;
 use App\Models\ProductImage;
 use App\Models\ProductRelation;
 use App\Models\Setting;
-use App\Services\Ai\ProductCopyGenerator;
+use App\Support\AppStrings;
 use App\Support\Constants;
 use App\Support\Media;
 use App\Support\Slug;
@@ -20,13 +22,13 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
-use Throwable;
 
 class ProductService
 {
     public function paginate(array $filters = []): LengthAwarePaginator
     {
         return Product::query()
+            ->sellable()
             ->with(['category', 'primaryImage'])
             ->when($filters['q'] ?? null, fn ($query, $search) => $query->search($search))
             ->when(is_numeric($filters['category_id'] ?? null), fn ($query) => $query->forCategory($filters['category_id']))
@@ -47,51 +49,106 @@ class ProductService
         return app(CategoryService::class)->productCategoryOptions($currentId);
     }
 
-    public function complementaryOptions(?int $exceptId = null): Collection
+    /**
+     * منتجات محددة فقط — لا تحميل الكتالوج كاملاً في النماذج.
+     *
+     * @param  list<int|string>|int|string|null  $ids
+     * @return Collection<int, Product>
+     */
+    public function pickerItems(mixed $ids): Collection
     {
+        if ($ids instanceof \Illuminate\Support\Enumerable) {
+            $ids = $ids->all();
+        }
+
+        $ordered = collect(is_array($ids) ? $ids : [$ids])
+            ->map(fn ($id) => (int) $id)
+            ->filter(fn (int $id) => $id > 0)
+            ->unique()
+            ->values();
+
+        if ($ordered->isEmpty()) {
+            return collect();
+        }
+
+        $products = Product::query()
+            ->whereIn('id', $ordered)
+            ->get(['id', 'name', 'sku', 'barcode', 'price'])
+            ->keyBy('id');
+
+        return $ordered
+            ->map(fn (int $id) => $products->get($id))
+            ->filter()
+            ->values();
+    }
+
+    /**
+     * @param  list<int>  $excludeIds
+     * @return list<array{id: int, name: string, sku: string, barcode: string, price: float, price_label: string}>
+     */
+    public function searchPicker(
+        string $term,
+        ?int $exceptId = null,
+        array $excludeIds = [],
+        int $limit = 20,
+        ?bool $giftOnly = null,
+        bool $excludeGifts = false,
+    ): array {
+        $term = trim($term);
+        if ($term === '') {
+            return [];
+        }
+
+        $exclude = collect($excludeIds)
+            ->map(fn ($id) => (int) $id)
+            ->when($exceptId, fn ($ids) => $ids->push((int) $exceptId))
+            ->filter(fn (int $id) => $id > 0)
+            ->unique()
+            ->all();
+
         return Product::query()
-            ->when($exceptId, fn ($query) => $query->whereKeyNot($exceptId))
+            ->search($term)
+            ->when($giftOnly === true, fn ($query) => $query->gift())
+            ->when($giftOnly !== true && $excludeGifts, fn ($query) => $query->sellable())
+            ->when($exclude !== [], fn ($query) => $query->whereNotIn('id', $exclude))
             ->orderBy('name')
-            ->get(['id', 'name', 'sku', 'price']);
+            ->limit(max(1, min($limit, 40)))
+            ->get(['id', 'name', 'sku', 'barcode', 'price'])
+            ->map(fn (Product $product) => $this->formatPickerItem($product))
+            ->all();
+    }
+
+    /**
+     * @return array{id: int, name: string, sku: string, barcode: string, price: float, price_label: string}
+     */
+    public function formatPickerItem(Product $product): array
+    {
+        return [
+            'id' => (int) $product->id,
+            'name' => (string) $product->name,
+            'sku' => (string) ($product->sku ?? ''),
+            'barcode' => (string) ($product->barcode ?? ''),
+            'price' => (float) $product->price,
+            'price_label' => number_format((float) $product->price, 2).' '.AppStrings::CURRENCY,
+        ];
     }
 
     public function create(array $data): Product
     {
-        $image = $data['image'] ?? null;
-        $imageUrl = trim((string) ($data['image_url'] ?? ''));
-        $gallery = $data['gallery'] ?? [];
-        $galleryUrls = $data['gallery_urls'] ?? '';
-        $skipAiCopy = (bool) ($data['skip_ai_copy'] ?? false);
-        $complementaryIds = $data['complementary_product_ids'] ?? [];
-        unset(
-            $data['image'],
-            $data['image_url'],
-            $data['gallery'],
-            $data['gallery_urls'],
-            $data['delete_image_ids'],
-            $data['skip_ai_copy'],
-            $data['complementary_product_ids'],
-        );
-
-        $data['sku'] = $this->sku($data['sku'] ?? null);
-        $data['slug'] = Slug::unique($data['name'], 'products');
-        if (! $skipAiCopy) {
-            $data = $this->fillGeneratedCopy($data);
-        }
-        $data = $this->normalize($data);
-
-        $product = Product::query()->create($data);
-        $this->syncPrimaryImage($product, $image, $imageUrl);
-        $this->syncGallery($product, $gallery, $galleryUrls);
-        $this->syncComplementary($product, $complementaryIds);
-        if (! $skipAiCopy) {
-            RefreshProductRecommendations::dispatch($product->id)->afterResponse();
-        }
-
-        return $product;
+        return $this->persist(new Product, $data, creating: true);
     }
 
     public function update(Product $product, array $data): Product
+    {
+        $data['skip_ai_copy'] = true;
+
+        return $this->persist($product, $data, creating: false);
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     */
+    private function persist(Product $product, array $data, bool $creating): Product
     {
         $image = $data['image'] ?? null;
         $imageUrl = trim((string) ($data['image_url'] ?? ''));
@@ -100,6 +157,7 @@ class ProductService
         $deleteIds = $data['delete_image_ids'] ?? [];
         $skipAiCopy = (bool) ($data['skip_ai_copy'] ?? false);
         $complementaryIds = $data['complementary_product_ids'] ?? [];
+        $giftProductId = $data['gift_product_id'] ?? null;
         unset(
             $data['image'],
             $data['image_url'],
@@ -108,20 +166,30 @@ class ProductService
             $data['delete_image_ids'],
             $data['skip_ai_copy'],
             $data['complementary_product_ids'],
+            $data['gift_product_id'],
         );
 
-        $data['sku'] = $this->sku($data['sku'] ?? $product->sku, $product->id);
-        $data['slug'] = Slug::unique($data['name'], 'products', 'slug', $product->id);
-        if (! $skipAiCopy) {
-            $data = $this->fillGeneratedCopy($data);
-        }
+        $data['sku'] = $this->sku($data['sku'] ?? ($creating ? null : $product->sku), $creating ? null : $product->id);
+        $data['slug'] = Slug::unique($data['name'], 'products', 'slug', $creating ? null : $product->id);
+        $needsCopy = $creating && ! $skipAiCopy && $this->needsGeneratedCopy($data);
         $data = $this->normalize($data);
 
-        $product->update($data);
-        $this->deleteGalleryImages($product, $deleteIds);
+        if ($creating) {
+            $product = Product::query()->create($data);
+        } else {
+            $product->update($data);
+            $this->deleteGalleryImages($product, $deleteIds);
+        }
+
         $this->syncPrimaryImage($product, $image, $imageUrl ?: $product->primaryImage?->url);
         $this->syncGallery($product, $gallery, $galleryUrls);
         $this->syncComplementary($product, $complementaryIds);
+        $this->syncGift($product, $giftProductId);
+
+        if ($needsCopy) {
+            GenerateProductCopyJob::dispatch($product->id)->afterResponse();
+        }
+
         if (! $skipAiCopy) {
             RefreshProductRecommendations::dispatch($product->id)->afterResponse();
         }
@@ -161,6 +229,120 @@ class ProductService
                 ],
             );
         }
+    }
+
+    public function syncGift(Product $product, mixed $giftProductId): void
+    {
+        $giftId = (int) $giftProductId;
+        if ($giftId <= 0 || $giftId === (int) $product->id) {
+            ProductRelation::query()
+                ->where('product_id', $product->id)
+                ->where('type', ProductRelationType::Gift)
+                ->delete();
+
+            return;
+        }
+
+        ProductRelation::query()
+            ->where('product_id', $product->id)
+            ->where('type', ProductRelationType::Gift)
+            ->where('related_product_id', '!=', $giftId)
+            ->delete();
+
+        ProductRelation::query()->updateOrCreate(
+            [
+                'product_id' => $product->id,
+                'related_product_id' => $giftId,
+                'type' => ProductRelationType::Gift,
+            ],
+            [
+                'sort_order' => 0,
+                'source' => 'manual',
+            ],
+        );
+    }
+
+    /**
+     * @param  array{name: string, category_id?: int|null, price?: float|int|string|null, stock: int, image?: mixed}  $data
+     */
+    public function createQuickGift(array $data): Product
+    {
+        return $this->create([
+            'name' => $data['name'],
+            'category_id' => $this->resolveGiftCategoryId($data['category_id'] ?? null),
+            'price' => (float) ($data['price'] ?? 0),
+            'stock' => (int) $data['stock'],
+            'image' => $data['image'] ?? null,
+            'is_gift' => true,
+            'skip_ai_copy' => true,
+            'is_active' => true,
+            'sort_order' => 0,
+        ]);
+    }
+
+    private function resolveGiftCategoryId(?int $categoryId): int
+    {
+        if ($categoryId && $categoryId > 0) {
+            return $categoryId;
+        }
+
+        $existing = Category::query()
+            ->where('name', 'هدايا')
+            ->value('id');
+
+        if ($existing) {
+            return (int) $existing;
+        }
+
+        $parentId = Category::query()
+            ->whereNull('parent_id')
+            ->where('name', 'المقاضي')
+            ->value('id');
+
+        if (! $parentId) {
+            $parent = app(CategoryService::class)->create([
+                'name' => 'المقاضي',
+                'parent_id' => null,
+                'is_active' => true,
+                'sort_order' => 0,
+            ]);
+            $parentId = $parent->id;
+        }
+
+        $category = app(CategoryService::class)->create([
+            'name' => 'هدايا',
+            'parent_id' => $parentId,
+            'is_active' => true,
+            'sort_order' => 999,
+        ]);
+
+        return (int) $category->id;
+    }
+
+    /**
+     * @param  list<int>  $mainIds
+     * @return list<int>
+     */
+    public function linkGiftToMainProducts(int $giftId, array $mainIds): array
+    {
+        $linked = [];
+
+        foreach ($mainIds as $mainId) {
+            $mainId = (int) $mainId;
+            if ($mainId <= 0 || $mainId === $giftId) {
+                continue;
+            }
+
+            $main = Product::query()->find($mainId);
+            if ($main === null) {
+                continue;
+            }
+
+            $this->syncGift($main, $giftId);
+            $linked[] = $mainId;
+        }
+
+        return $linked;
     }
 
     public function delete(Product $product): void
@@ -209,43 +391,46 @@ class ProductService
     }
 
     /**
-     * @param  array<string, mixed>  $data
-     * @return array<string, mixed>
+     * @param  array{
+     *     benefits: list<string>,
+     *     keywords: list<string>,
+     *     usage_instructions: string,
+     *     description: string,
+     *     category_id: int|null,
+     *     price: float|null,
+     *     stock: int|null,
+     *     piece_count: int|null,
+     *     weight_label: string,
+     *     quantity_label: string
+     * }  $copy
      */
-    private function fillGeneratedCopy(array $data): array
+    public function applyGeneratedCopy(Product $product, array $copy): void
     {
-        $needsBenefits = $this->lines($data['benefits'] ?? []) === [];
-        $needsKeywords = $this->csv($data['keywords'] ?? []) === [];
-        $needsUsage = trim((string) ($data['usage_instructions'] ?? '')) === '';
+        $product->update([
+            'description' => $copy['description'] !== ''
+                ? $copy['description']
+                : $product->description,
+            'category_id' => $copy['category_id'] ?? $product->category_id,
+            'benefits' => $copy['benefits'] !== []
+                ? $copy['benefits']
+                : $product->benefits,
+            'keywords' => $copy['keywords'] !== []
+                ? $copy['keywords']
+                : $product->keywords,
+            'usage_instructions' => $copy['usage_instructions'] !== ''
+                ? $copy['usage_instructions']
+                : $product->usage_instructions,
+        ]);
+    }
 
-        if (! $needsBenefits && ! $needsKeywords && ! $needsUsage) {
-            return $data;
-        }
-
-        try {
-            $copy = app(ProductCopyGenerator::class)->generate([
-                'name' => $data['name'] ?? '',
-                'category_id' => $data['category_id'] ?? null,
-                'description' => $data['description'] ?? null,
-                'weight_label' => $data['weight_label'] ?? null,
-                'quantity_label' => $data['quantity_label'] ?? null,
-                'piece_count' => $data['piece_count'] ?? null,
-            ]);
-        } catch (Throwable) {
-            return $data;
-        }
-
-        if ($needsBenefits) {
-            $data['benefits'] = implode("\n", $copy['benefits']);
-        }
-        if ($needsKeywords) {
-            $data['keywords'] = implode(', ', $copy['keywords']);
-        }
-        if ($needsUsage) {
-            $data['usage_instructions'] = $copy['usage_instructions'];
-        }
-
-        return $data;
+    /**
+     * @param  array<string, mixed>  $data
+     */
+    private function needsGeneratedCopy(array $data): bool
+    {
+        return $this->lines($data['benefits'] ?? []) === []
+            || $this->csv($data['keywords'] ?? []) === []
+            || trim((string) ($data['usage_instructions'] ?? '')) === '';
     }
 
     private function normalize(array $data): array
@@ -259,6 +444,7 @@ class ProductService
         $data['quantity_label'] = trim((string) ($data['quantity_label'] ?? '')) ?: null;
         $data['is_active'] = (bool) ($data['is_active'] ?? false);
         $data['is_featured'] = (bool) ($data['is_featured'] ?? false);
+        $data['is_gift'] = (bool) ($data['is_gift'] ?? false);
         $discount = $data['discount_price'] ?? null;
         $data['discount_price'] = $discount !== null && $discount !== '' && (float) $discount > 0
             ? $discount

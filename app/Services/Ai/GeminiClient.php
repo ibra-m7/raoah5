@@ -16,11 +16,23 @@ class GeminiClient
      */
     public function generateJson(string $system, string $userPrompt, array $history = []): string
     {
-        $apiKey = trim((string) config('services.gemini.key'));
-        if ($apiKey === '') {
-            throw new RuntimeException('missing_key');
-        }
+        return $this->requestJson($system, $this->buildContents($userPrompt, $history), fast: false);
+    }
 
+    /**
+     * @param  list<array{role: string, content: string}>  $history
+     */
+    public function generateJsonFast(string $system, string $userPrompt, array $history = []): string
+    {
+        return $this->requestJson($system, $this->buildContents($userPrompt, $history), fast: true);
+    }
+
+    /**
+     * @param  list<array{role: string, content: string}>  $history
+     * @return list<array<string, mixed>>
+     */
+    private function buildContents(string $userPrompt, array $history): array
+    {
         $contents = [];
         foreach ($history as $turn) {
             $contents[] = [
@@ -33,12 +45,27 @@ class GeminiClient
             'parts' => [['text' => $userPrompt]],
         ];
 
-        $lastError = '';
+        return $contents;
+    }
 
-        foreach ($this->modelsToTry() as $model) {
-            foreach ($this->payloads($system, $contents) as $payload) {
+    /**
+     * @param  list<array<string, mixed>>  $contents
+     */
+    private function requestJson(string $system, array $contents, bool $fast): string
+    {
+        $apiKey = trim((string) config('services.gemini.key'));
+        if ($apiKey === '') {
+            throw new RuntimeException('missing_key');
+        }
+
+        $lastError = '';
+        $models = $this->modelsToTry();
+        $timeout = $fast ? 25 : 45;
+
+        foreach ($models as $model) {
+            foreach ($this->payloads($system, $contents, $fast) as $payload) {
                 try {
-                    $response = Http::timeout(45)
+                    $response = Http::timeout($timeout)
                         ->withHeaders(['x-goog-api-key' => $apiKey])
                         ->acceptJson()
                         ->asJson()
@@ -86,6 +113,10 @@ class GeminiClient
                     'model' => $model,
                     'error' => mb_substr($lastError, 0, 180),
                 ]);
+
+                if (in_array($status, [404, 429], true)) {
+                    break;
+                }
             }
         }
 
@@ -96,7 +127,7 @@ class GeminiClient
      * @param  list<array<string, mixed>>  $contents
      * @return list<array<string, mixed>>
      */
-    private function payloads(string $system, array $contents): array
+    private function payloads(string $system, array $contents, bool $fast = false): array
     {
         $base = [
             'systemInstruction' => [
@@ -105,16 +136,30 @@ class GeminiClient
             'contents' => $contents,
         ];
 
-        return [
-            $base + [
-                'generationConfig' => [
-                    'maxOutputTokens' => 4096,
-                    'responseMimeType' => 'application/json',
-                    'thinkingConfig' => [
-                        'thinkingBudget' => 0,
-                    ],
+        $plain = $base + [
+            'generationConfig' => [
+                'maxOutputTokens' => 4096,
+                'responseMimeType' => 'application/json',
+            ],
+        ];
+
+        $primary = $base + [
+            'generationConfig' => [
+                'maxOutputTokens' => 4096,
+                'responseMimeType' => 'application/json',
+                'thinkingConfig' => [
+                    'thinkingBudget' => 0,
                 ],
             ],
+        ];
+
+        if ($fast) {
+            return [$plain, $primary];
+        }
+
+        return [
+            $plain,
+            $primary,
             $base + [
                 'generationConfig' => [
                     'maxOutputTokens' => 4096,
@@ -122,12 +167,6 @@ class GeminiClient
                     'thinkingConfig' => [
                         'thinkingLevel' => 'minimal',
                     ],
-                ],
-            ],
-            $base + [
-                'generationConfig' => [
-                    'maxOutputTokens' => 4096,
-                    'responseMimeType' => 'application/json',
                 ],
             ],
         ];
@@ -141,8 +180,6 @@ class GeminiClient
         return array_values(array_unique([
             AiSettings::model(),
             ...AiSettings::fallbacks(),
-            'gemini-2.5-flash',
-            'gemini-2.0-flash',
             'gemini-flash-lite-latest',
         ]));
     }

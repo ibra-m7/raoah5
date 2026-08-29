@@ -1,8 +1,6 @@
 @php
     $tab = old('active_tab', $tab ?? 'app');
     $scope = old('marketing_sold_scope', $settings['marketing_sold_scope']);
-    $selected = collect(old('marketing_sold_product_ids', $selectedProductIds ?? []))->map(fn ($id) => (int) $id);
-    $selectAllByDefault = $selectedProductIds === null && ! old('marketing_sold_product_ids');
 @endphp
 
 <x-layouts.admin :title="$title">
@@ -154,38 +152,11 @@
                     </div>
 
                     <div class="product-picker" data-product-picker data-scope="{{ $scope === 'selected' ? 'selected' : 'all' }}">
-                        <div class="product-picker-toolbar">
-                            <div class="product-picker-search">
-                                <i class="bi bi-search"></i>
-                                <input type="search" data-product-picker-search placeholder="ابحث عن منتج..." aria-label="بحث المنتجات">
-                            </div>
-                            <div class="product-picker-actions">
-                                <button type="button" class="btn btn-sm btn-outline-success rounded-pill" data-product-picker-all>تحديد الكل</button>
-                                <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill" data-product-picker-none>إلغاء الكل</button>
-                            </div>
-                        </div>
-                        <div class="product-picker-meta">
-                            محدد: <strong data-product-picker-count>0</strong> من {{ $products->count() }}
-                        </div>
-                        <div class="product-picker-list">
-                            @forelse ($products as $product)
-                                @php
-                                    $checked = $selectAllByDefault || $selected->contains((int) $product->id);
-                                @endphp
-                                <label class="product-picker-item" data-product-picker-item data-name="{{ $product->name }} {{ $product->sku }}">
-                                    <input type="checkbox" name="marketing_sold_product_ids[]" value="{{ $product->id }}" @checked($checked)>
-                                    <span class="product-picker-copy">
-                                        <strong>{{ $product->name }}</strong>
-                                        <small>{{ $product->category?->name ?: 'بدون قسم' }}@if($product->sku) · {{ $product->sku }}@endif</small>
-                                    </span>
-                                    @unless ($product->is_active)
-                                        <span class="badge badge-soft">مخفي</span>
-                                    @endunless
-                                </label>
-                            @empty
-                                <div class="form-hint mb-0">لا توجد منتجات بعد. أضف منتجات من الكتالوج أولاً.</div>
-                            @endforelse
-                        </div>
+                        <x-admin.product-picker
+                            name="marketing_sold_product_ids[]"
+                            :selected="$products"
+                            hint="ابحث وأضف المنتجات التي يظهر عليها عداد المبيعات التسويقي."
+                        />
                     </div>
 
                     <div class="settings-links mt-4">

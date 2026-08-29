@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\BannerRequest;
 use App\Models\Banner;
 use App\Services\Admin\BannerService;
+use App\Services\Admin\ProductService;
 use App\Support\AppStrings;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -14,7 +15,10 @@ use Illuminate\View\View;
 
 class BannerController extends Controller
 {
-    public function __construct(private readonly BannerService $banners) {}
+    public function __construct(
+        private readonly BannerService $banners,
+        private readonly ProductService $products,
+    ) {}
 
     public function index(Request $request): View
     {
@@ -32,7 +36,7 @@ class BannerController extends Controller
         return view('admin.banners.create', [
             'title' => AppStrings::ADD_BANNER,
             'banner' => new Banner(['is_active' => true, 'sort_order' => 0, 'link_type' => BannerLinkType::None]),
-            'products' => $this->banners->productOptions(),
+            'selectedProduct' => $this->products->pickerItems(old('link_product_id')),
             'categories' => $this->banners->categoryOptions(),
             'pages' => $this->banners->pageOptions(),
         ]);
@@ -52,7 +56,10 @@ class BannerController extends Controller
         return view('admin.banners.edit', [
             'title' => AppStrings::EDIT_BANNER,
             'banner' => $banner,
-            'products' => $this->banners->productOptions(),
+            'selectedProduct' => $this->products->pickerItems(old(
+                'link_product_id',
+                $banner->link_type === BannerLinkType::Product ? $banner->link_id : null,
+            )),
             'categories' => $this->banners->categoryOptions(),
             'pages' => $this->banners->pageOptions(),
         ]);

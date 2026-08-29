@@ -17,7 +17,15 @@ class ProductImportService
 {
     private const IMAGE_EXTENSIONS = ['png', 'jpg', 'jpeg', 'webp', 'gif'];
 
-    public function __construct(private readonly ProductService $products) {}
+    private const GROCERIES_ROOT = 'المقاضي';
+
+    /** @var array<string, Category> */
+    private array $categoryCache = [];
+
+    public function __construct(
+        private readonly ProductService $products,
+        private readonly CategoryService $categories,
+    ) {}
 
     /**
      * @return list<array{key: string, header: string, required: bool, hint: string, example: string}>
@@ -26,7 +34,7 @@ class ProductImportService
     {
         return [
             ['key' => 'name', 'header' => 'الاسم', 'required' => true, 'hint' => 'اسم المنتج كما سيظهر في التطبيق', 'example' => 'سماعات بلوتوث لاسلكية'],
-            ['key' => 'category', 'header' => 'القسم', 'required' => true, 'hint' => 'انسخ الاسم حرفياً من ورقة الأقسام', 'example' => 'مواد غذائية'],
+            ['key' => 'category', 'header' => 'القسم', 'required' => true, 'hint' => 'اسم القسم يكفي — يُنشأ تلقائياً تحت «المقاضي» إن لم يكن موجوداً. يمكنك كتابة مسار مثل: المقاضي > بسكويت', 'example' => 'بسكويت'],
             ['key' => 'price', 'header' => 'السعر', 'required' => true, 'hint' => 'السعر الأصلي بالريال، أرقام فقط', 'example' => '10'],
             ['key' => 'stock', 'header' => 'المخزون', 'required' => true, 'hint' => 'الكمية المتوفرة', 'example' => '50'],
             ['key' => 'barcode', 'header' => 'الباركود', 'required' => false, 'hint' => 'رقم يطابق اسم الصورة في ZIP مثل 3.png للمنتج ذي الباركود 3', 'example' => '1'],
@@ -61,12 +69,12 @@ class ProductImportService
             $widths[] = $i < 5 ? 120 : 150;
         }
 
-        $defaultCategory = Category::query()->orderBy('name')->value('name') ?: 'مواد غذائية';
+        $imageCount = $this->templateImageCount();
         $productRows = [$header];
-        for ($n = 1; $n <= 50; $n++) {
+        for ($n = 1; $n <= $imageCount; $n++) {
             $row = [];
             foreach ($columns as $col) {
-                $row[] = ['value' => $this->templateCell($col['key'], $n, $defaultCategory)];
+                $row[] = ['value' => $this->templateCell($col['key'], $n)];
             }
             $productRows[] = $row;
         }
@@ -75,10 +83,10 @@ class ProductImportService
             [['value' => 'كيف تستخدم القالب', 'style' => 'Title']],
             [['value' => '1) لا تحذف صف العناوين الأول ولا تغيّر أسماء الأعمدة.']],
             [['value' => '2) الأعمدة الحمراء إلزامية في كل صف. الخضراء اختيارية.']],
-            [['value' => '3) القالب يحتوي 50 منتجاً بأسماء حقيقية (إلكترونيات وإكسسوارات). الباركود من 1 إلى 50 — عدّل الأسماء والأسعار حسب متجرك.']],
+            [['value' => '3) القالب يحتوي '.$imageCount.' منتجاً بقالة مطابقاً لصور public/img. الباركود من 1 إلى '.$imageCount.' — عدّل الأسماء والأسعار حسب متجرك.']],
             [['value' => '4) سمِّ صور المنتجات برقم الباركود مثل 3.png أو 3.jpg وضعها في ملف ZIP.']],
             [['value' => '5) ارفع ملف Excel مع ملف ZIP من صفحة الاستيراد لربط كل صورة بمنتجها تلقائياً.']],
-            [['value' => '6) انسخ اسم القسم من ورقة «الأقسام» كما هو بدون زيادة مسافات.']],
+            [['value' => '6) عمود القسم مملوء مسبقاً — إن كتبت قسماً جديداً يُنشأ تلقائياً تحت «المقاضي» دون الحاجة لنسخه من ورقة الأقسام.']],
             [['value' => '7) إذا وضعت «رمز المنتج» أو «الباركود» لمنتج موجود مسبقاً سيتم تحديثه بدل إنشاء صف جديد.']],
             [['value' => '']],
             [['value' => 'الأعمدة', 'style' => 'Title']],
@@ -174,6 +182,7 @@ class ProductImportService
         $images = 0;
         $errors = [];
         $usedBarcodes = [];
+        $this->categoryCache = [];
 
         DB::beginTransaction();
         try {
@@ -393,10 +402,7 @@ class ProductImportService
             throw new RuntimeException('المخزون مطلوب ويجب أن يكون رقماً صحيحاً.');
         }
 
-        $category = $this->findCategory($categoryName);
-        if ($category === null) {
-            throw new RuntimeException('القسم «'.$categoryName.'» غير موجود. انسخه من ورقة الأقسام.');
-        }
+        $category = $this->findOrCreateCategory($categoryName);
 
         $priceNum = (float) str_replace(',', '.', $price);
         $discount = $get('discount_price');
@@ -494,10 +500,131 @@ class ProductImportService
     private function findCategory(string $name): ?Category
     {
         $name = trim($name);
+        if ($name === '') {
+            return null;
+        }
 
         return Category::query()
-            ->get(['id', 'name'])
+            ->get(['id', 'name', 'parent_id'])
             ->first(fn (Category $category) => mb_strtolower(trim($category->name)) === mb_strtolower($name));
+    }
+
+    private function findOrCreateCategory(string $name): Category
+    {
+        $name = trim($name);
+        if ($name === '') {
+            throw new RuntimeException('القسم مطلوب.');
+        }
+
+        $cacheKey = mb_strtolower($name);
+        if (isset($this->categoryCache[$cacheKey])) {
+            return $this->categoryCache[$cacheKey];
+        }
+
+        if (str_contains($name, '>')) {
+            $parts = array_values(array_filter(array_map('trim', preg_split('/\s*>\s*/u', $name) ?: [])));
+            if ($parts === []) {
+                throw new RuntimeException('مسار القسم غير صالح.');
+            }
+
+            $parent = null;
+            $leaf = array_pop($parts);
+            foreach ($parts as $part) {
+                $parent = $this->resolveCategoryNode($part, $parent?->id);
+            }
+
+            $category = $this->resolveCategoryNode($leaf, $parent?->id);
+            $this->categoryCache[$cacheKey] = $category;
+
+            return $category;
+        }
+
+        $existing = $this->findCategory($name);
+        if ($existing !== null) {
+            $this->categoryCache[$cacheKey] = $existing;
+
+            return $existing;
+        }
+
+        $groceriesRoot = $this->findOrCreateGroceriesRoot();
+        $category = $this->categories->create([
+            'name' => $name,
+            'parent_id' => $groceriesRoot->id,
+            'is_active' => true,
+            'sort_order' => 0,
+        ]);
+        $this->categoryCache[$cacheKey] = $category;
+
+        return $category;
+    }
+
+    private function resolveCategoryNode(string $name, ?int $parentId): Category
+    {
+        $existing = Category::query()
+            ->where('parent_id', $parentId)
+            ->get(['id', 'name', 'parent_id'])
+            ->first(fn (Category $category) => mb_strtolower(trim($category->name)) === mb_strtolower($name));
+
+        if ($existing !== null) {
+            return $existing;
+        }
+
+        if ($parentId === null && mb_strtolower($name) === mb_strtolower(self::GROCERIES_ROOT)) {
+            return $this->findOrCreateGroceriesRoot();
+        }
+
+        if ($parentId === null) {
+            $groceriesRoot = $this->findOrCreateGroceriesRoot();
+
+            return $this->categories->create([
+                'name' => $name,
+                'parent_id' => $groceriesRoot->id,
+                'is_active' => true,
+                'sort_order' => 0,
+            ]);
+        }
+
+        return $this->categories->create([
+            'name' => $name,
+            'parent_id' => $parentId,
+            'is_active' => true,
+            'sort_order' => 0,
+        ]);
+    }
+
+    private function findOrCreateGroceriesRoot(): Category
+    {
+        $cacheKey = mb_strtolower(self::GROCERIES_ROOT);
+        if (isset($this->categoryCache[$cacheKey])) {
+            return $this->categoryCache[$cacheKey];
+        }
+
+        $existing = Category::query()
+            ->whereNull('parent_id')
+            ->get(['id', 'name', 'parent_id'])
+            ->first(fn (Category $category) => mb_strtolower(trim($category->name)) === mb_strtolower(self::GROCERIES_ROOT));
+
+        if ($existing === null) {
+            $existing = Category::query()
+                ->get(['id', 'name', 'parent_id'])
+                ->first(fn (Category $category) => mb_strtolower(trim($category->name)) === mb_strtolower(self::GROCERIES_ROOT));
+        }
+
+        if ($existing !== null) {
+            $this->categoryCache[$cacheKey] = $existing;
+
+            return $existing;
+        }
+
+        $root = $this->categories->create([
+            'name' => self::GROCERIES_ROOT,
+            'parent_id' => null,
+            'is_active' => true,
+            'sort_order' => 0,
+        ]);
+        $this->categoryCache[$cacheKey] = $root;
+
+        return $root;
     }
 
     private function toBool(string $value, bool $default): bool
@@ -544,13 +671,15 @@ class ProductImportService
         return $key;
     }
 
-    private function templateCell(string $key, int $n, string $defaultCategory): string
+    private function templateCell(string $key, int $n): string
     {
+        $product = $this->templateProduct($n);
+
         return match ($key) {
-            'name' => $this->templateProductName($n),
-            'category' => $defaultCategory,
-            'price' => (string) (10 + ($n % 40)),
-            'stock' => (string) (20 + ($n % 80)),
+            'name' => $product['name'],
+            'category' => $product['category'],
+            'price' => (string) (5 + ($n % 25)),
+            'stock' => (string) (10 + ($n % 90)),
             'barcode' => (string) $n,
             'sku' => 'SKU-'.str_pad((string) $n, 3, '0', STR_PAD_LEFT),
             'is_featured' => 'لا',
@@ -560,70 +689,101 @@ class ProductImportService
         };
     }
 
-    /**
-     * @return list<string>
-     */
-    private function templateProductNames(): array
+    public function templateImageCount(): int
     {
-        return [
-            'سماعات بلوتوث لاسلكية',
-            'شاحن سريع USB-C 65 واط',
-            'كابل شحن Type-C بطول 2 متر',
-            'باور بانك 20000 مللي أمبير',
-            'حافظة سيليكون لهاتف آيفون 15',
-            'واقي شاشة زجاجي مقوّى',
-            'حامل هاتف مغناطيسي للسيارة',
-            'ساعة ذكية رياضية',
-            'ماوس لاسلكي صامت',
-            'لوحة مفاتيح بلوتوث قابلة للطي',
-            'فلاش ميموري USB 64 جيجا',
-            'كارت ذاكرة microSD 128 جيجا',
-            'محول HDMI إلى VGA',
-            'سماعة رأس للألعاب مع مايك',
-            'مكبر صوت بلوتوث محمول',
-            'كاميرا ويب Full HD',
-            'إضاءة LED للمكتب قابلة للتعديل',
-            'مروحة تبريد للابتوب',
-            'حقيبة لابتوب مقاومة للماء 15.6 إنش',
-            'قاعدة تبريد للابتوب بمروحتين',
-            'قلم ستايلس للتابلت',
-            'حافظة آيباد مع حامل',
-            'نظارة واقع افتراضي VR',
-            'ريموت تحكم للتلفاز الذكي',
-            'محول طاقة متعدد المنافذ',
-            'شاحن سيارة مزدوج USB',
-            'كابل Lightning أصلي الطول 1 متر',
-            'سماعة أذن سلكية مع مايك',
-            'مايكروفون Condenser للكمبيوتر',
-            'ذراع تحكم لاسلكي للألعاب',
-            'قاعدة شحن لاسلكي 15 واط',
-            'حلقة MagSafe مغناطيسية',
-            'غطاء حماية لكاميرا الهاتف',
-            'حامل تابلت مكتبي قابل للطي',
-            'محول OTG من USB-C إلى USB',
-            'كابل شبكة Ethernet Cat6 بطول 5 متر',
-            'راوتر لاسلكي ثنائي النطاق',
-            'موسع مدى واي فاي',
-            'طابعة صور محمولة',
-            'ماسح ضوئي محمول للمستندات',
-            'قرص صلب خارجي 1 تيرابايت',
-            'SSD خارجي 500 جيجا',
-            'مشغل MP3 مع سماعات',
-            'راديو بلوتوث مع ساعة منبّه',
-            'مصباح ليزر للمؤتمرات',
-            'قلم ليزر أحمر للعرض',
-            'حقيبة منظمة لكابلات الشحن',
-            'مجموعة مفكات للإلكترونيات',
-            'منظف شاشات مع قماش ميكروفايبر',
-            'شريط LED RGB بطول 5 متر مع جهاز تحكم',
+        $dir = public_path('img');
+        if (! is_dir($dir)) {
+            return count($this->templateProducts());
+        }
+
+        $count = 0;
+        foreach (scandir($dir) ?: [] as $file) {
+            if (preg_match('/^\d+\.(?:'.implode('|', self::IMAGE_EXTENSIONS).')$/i', $file) === 1) {
+                $count++;
+            }
+        }
+
+        return $count > 0 ? $count : count($this->templateProducts());
+    }
+
+    /**
+     * @return array{name: string, category: string}
+     */
+    private function templateProduct(int $n): array
+    {
+        $products = $this->templateProducts();
+        $index = max(1, $n) - 1;
+
+        return $products[$index] ?? [
+            'name' => 'منتج '.$n,
+            'category' => 'بسكويت',
         ];
     }
 
-    private function templateProductName(int $n): string
+    /**
+     * @return list<array{name: string, category: string}>
+     */
+    private function templateProducts(): array
     {
-        $names = $this->templateProductNames();
-        $index = max(1, $n) - 1;
-
-        return $names[$index % count($names)];
+        return [
+            ['name' => 'بسكويت أبو ولد بكريمة الشوكولاتة', 'category' => 'بسكويت'],
+            ['name' => 'بسكويت أبو ولد بكريمة الشوكولاتة', 'category' => 'بسكويت'],
+            ['name' => 'بسكويت أبو ولد بكريمة الفراولة', 'category' => 'بسكويت'],
+            ['name' => 'بسكويت أبو ولد بكريمة الفراولة', 'category' => 'بسكويت'],
+            ['name' => 'بسكويت أبو ولد بكريمة الفراولة', 'category' => 'بسكويت'],
+            ['name' => 'بسكويت أبو ولد بكريمة الفراولة', 'category' => 'بسكويت'],
+            ['name' => 'زيت كريم نباتي للقلي والطبخ', 'category' => 'الزيوت والصلصات'],
+            ['name' => 'زيت كريم نباتي للقلي والطبخ', 'category' => 'الزيوت والصلصات'],
+            ['name' => 'بسكويت ماري', 'category' => 'بسكويت'],
+            ['name' => 'مسحوق غسيل كريستال', 'category' => 'غسيل الملابس'],
+            ['name' => 'حلاوة طحينية الفنار', 'category' => 'حلويات'],
+            ['name' => 'بسكويت ماري', 'category' => 'بسكويت'],
+            ['name' => 'ويفر مغطى بالشوكولاتة', 'category' => 'بسكويت'],
+            ['name' => 'فاصوليا حمراء الهناء', 'category' => 'المعكرونة والمعلبات'],
+            ['name' => 'زيت القمرية أولين النخيل', 'category' => 'الزيوت والصلصات'],
+            ['name' => 'نودلز نوودي بنكهة الدجاج الخاصة', 'category' => 'المعكرونة والمعلبات'],
+            ['name' => 'زيت نباتي القمرية 15 كجم', 'category' => 'الزيوت والصلصات'],
+            ['name' => 'مسحوق غسيل كريستال برائحة الورد 2.5 كجم', 'category' => 'غسيل الملابس'],
+            ['name' => 'مناديل سوفلي 800 منديل', 'category' => 'ورق ومناديل'],
+            ['name' => 'ثوم', 'category' => 'الخضروات والفواكه'],
+            ['name' => 'سمن نباتي البنت بنكهة الحلبة', 'category' => 'الزيوت والصلصات'],
+            ['name' => 'بسكويت ويفر تيشوب بالشوكولاتة', 'category' => 'بسكويت'],
+            ['name' => 'سمن نباتي البنت 14 كجم', 'category' => 'الزيوت والصلصات'],
+            ['name' => 'حليب مبخر الممتاز', 'category' => 'الحليب والألبان'],
+            ['name' => 'زيت نباتي القمرية', 'category' => 'الزيوت والصلصات'],
+            ['name' => 'سائل غسيل صحون ليجا بالليمون 500 مل', 'category' => 'منظفات المطبخ'],
+            ['name' => 'زيت كريم نباتي نقي', 'category' => 'الزيوت والصلصات'],
+            ['name' => 'زيت كريم نباتي', 'category' => 'الزيوت والصلصات'],
+            ['name' => 'زيت كريم نباتي', 'category' => 'الزيوت والصلصات'],
+            ['name' => 'زيت كريم نباتي للقلي والطبخ', 'category' => 'الزيوت والصلصات'],
+            ['name' => 'مسحوق غسيل كريستال', 'category' => 'غسيل الملابس'],
+            ['name' => 'مسحوق غسيل كريستال', 'category' => 'غسيل الملابس'],
+            ['name' => 'حلاوة طحينية الفنار', 'category' => 'حلويات'],
+            ['name' => 'بسكويت ماري', 'category' => 'بسكويت'],
+            ['name' => 'ويفر مغطى بالشوكولاتة', 'category' => 'بسكويت'],
+            ['name' => 'فاصوليا حمراء الهناء', 'category' => 'المعكرونة والمعلبات'],
+            ['name' => 'زيت القمرية أولين النخيل', 'category' => 'الزيوت والصلصات'],
+            ['name' => 'نودلز نوودي بنكهة الدجاج الخاصة', 'category' => 'المعكرونة والمعلبات'],
+            ['name' => 'نودلز نوودي بنكهة الدجاج الخاصة', 'category' => 'المعكرونة والمعلبات'],
+            ['name' => 'زيت نباتي القمرية 15 كجم', 'category' => 'الزيوت والصلصات'],
+            ['name' => 'زيت نباتي القمرية 15 كجم', 'category' => 'الزيوت والصلصات'],
+            ['name' => 'مسحوق غسيل كريستال برائحة الورد', 'category' => 'غسيل الملابس'],
+            ['name' => 'مسحوق غسيل كريستال برائحة الورد 2.5 كجم', 'category' => 'غسيل الملابس'],
+            ['name' => 'مناديل سوفلي 800 منديل', 'category' => 'ورق ومناديل'],
+            ['name' => 'ثوم', 'category' => 'الخضروات والفواكه'],
+            ['name' => 'سمن نباتي البنت بنكهة الزبدة', 'category' => 'الزيوت والصلصات'],
+            ['name' => 'سمن نباتي البنت 14 كجم', 'category' => 'الزيوت والصلصات'],
+            ['name' => 'حليب مبخر الممتاز', 'category' => 'الحليب والألبان'],
+            ['name' => 'زيت نباتي القمرية', 'category' => 'الزيوت والصلصات'],
+            ['name' => 'سائل غسيل صحون ليجا بالليمون 500 مل', 'category' => 'منظفات المطبخ'],
+            ['name' => 'زيت كريم نباتي', 'category' => 'الزيوت والصلصات'],
+            ['name' => 'زيت كريم نباتي', 'category' => 'الزيوت والصلصات'],
+            ['name' => 'مسحوق غسيل كريستال', 'category' => 'غسيل الملابس'],
+            ['name' => 'نودلز نوودي بنكهة الدجاج الخاصة', 'category' => 'المعكرونة والمعلبات'],
+            ['name' => 'زيت نباتي القمرية 15 كجم', 'category' => 'الزيوت والصلصات'],
+            ['name' => 'زيت نباتي القمرية 15 كجم', 'category' => 'الزيوت والصلصات'],
+            ['name' => 'مسحوق غسيل كريستال برائحة الورد 2.5 كجم', 'category' => 'غسيل الملابس'],
+            ['name' => 'زيت نباتي القمرية 1.5 كجم', 'category' => 'الزيوت والصلصات'],
+        ];
     }
 }

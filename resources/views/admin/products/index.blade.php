@@ -13,18 +13,46 @@
             <i class="bi bi-file-earmark-excel ms-1"></i>
             {{ $strings::IMPORT_PRODUCTS }}
         </a>
-        <form method="POST" action="{{ route('admin.products.generate-all-copy') }}" class="d-inline">
+        <form method="POST" action="{{ route('admin.products.generate-all-copy') }}" class="d-inline" data-product-copy-bulk-form>
             @csrf
             <button
                 type="submit"
                 class="btn btn-success rounded-pill"
                 title="توليد الوصف والتصنيف والفوائد وكلمات البحث وطريقة الاستخدام لجميع المنتجات"
-                onclick="if (!confirm(@json($strings::CONFIRM_GENERATE_ALL_PRODUCT_COPY))) return false; this.disabled = true; this.innerHTML = '<span class=&quot;spinner-border spinner-border-sm ms-1&quot;></span> جاري التوليد...'; this.form.submit();"
+                data-product-copy-bulk-submit
+                onclick="if (!confirm(@json($strings::CONFIRM_GENERATE_ALL_PRODUCT_COPY))) return false;"
             >
                 <i class="bi bi-stars ms-1"></i>
                 {{ $strings::GENERATE_PRODUCT_COPY }}
             </button>
         </form>
+    </div>
+    <div
+        class="page-card p-3 mb-3 border border-success-subtle"
+        data-product-copy-bulk
+        data-status-url="{{ route('admin.products.copy-generation-status') }}"
+        data-cancel-url="{{ route('admin.products.cancel-copy-generation') }}"
+        hidden
+    >
+        <div class="d-flex justify-content-between align-items-center gap-3 mb-2">
+            <strong data-bulk-title>جاري توليد المحتوى في الخلفية...</strong>
+            <div class="d-flex align-items-center gap-2">
+                <span class="text-muted small text-nowrap" data-bulk-count></span>
+                <button
+                    type="button"
+                    class="btn btn-sm btn-outline-danger rounded-pill"
+                    data-bulk-cancel
+                    hidden
+                >
+                    <i class="bi bi-x-circle ms-1"></i>
+                    إلغاء التوليد
+                </button>
+            </div>
+        </div>
+        <div class="progress" style="height: 8px">
+            <div class="progress-bar bg-success" role="progressbar" data-bulk-bar style="width: 0%"></div>
+        </div>
+        <div class="text-muted small mt-2" data-bulk-detail>يمكنك متابعة استخدام لوحة التحكم أثناء التوليد.</div>
     </div>
     @if (session('import_errors'))
         <div class="page-card p-3 mb-3 border border-danger-subtle">

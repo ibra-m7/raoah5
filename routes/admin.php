@@ -22,6 +22,8 @@ use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\Admin\ReviewController;
 use App\Http\Controllers\Admin\SearchController;
 use App\Http\Controllers\Admin\SearchPlaceholderController;
+use App\Http\Controllers\Admin\SearchSmartSuggestionController;
+use App\Http\Controllers\Admin\SearchTrendingPinController;
 use App\Http\Controllers\Admin\SettingController;
 use App\Http\Controllers\Admin\SplashScreenController;
 use App\Http\Controllers\Admin\StorePaymentMethodController;
@@ -39,8 +41,14 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::post('live/read', [AdminLiveController::class, 'markRead'])->name('live.read');
     Route::get('search', SearchController::class)->name('search');
 
-    Route::post('products/generate-copy', [ProductController::class, 'generateCopy'])->name('products.generate-copy');
+    Route::get('products/lookup', [ProductController::class, 'lookup'])->name('products.lookup');
+    Route::post('products/generate-copy', [ProductController::class, 'generateCopy'])
+        ->middleware('throttle:admin-ai-copy')
+        ->name('products.generate-copy');
     Route::post('products/generate-all-copy', [ProductController::class, 'generateAllContent'])->name('products.generate-all-copy');
+    Route::get('products/copy-generation-status', [ProductController::class, 'copyGenerationStatus'])->name('products.copy-generation-status');
+    Route::post('products/cancel-copy-generation', [ProductController::class, 'cancelContentGeneration'])->name('products.cancel-copy-generation');
+    Route::post('products/gift-quick', [ProductController::class, 'storeGiftQuick'])->name('products.gift-quick');
     Route::get('products/import', [ProductController::class, 'importForm'])->name('products.import');
     Route::post('products/import', [ProductController::class, 'import'])->name('products.import.store');
     Route::get('products/import/template', [ProductController::class, 'template'])->name('products.import.template');
@@ -66,6 +74,12 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::resource('splash-screens', SplashScreenController::class)->except(['show']);
     Route::resource('onboarding', OnboardingController::class)->except(['show']);
     Route::resource('search-placeholders', SearchPlaceholderController::class)->except(['show', 'create', 'edit']);
+    Route::post('search-smart-suggestions', [SearchSmartSuggestionController::class, 'store'])->name('search-smart-suggestions.store');
+    Route::put('search-smart-suggestions/{search_smart_suggestion}', [SearchSmartSuggestionController::class, 'update'])->name('search-smart-suggestions.update');
+    Route::delete('search-smart-suggestions/{search_smart_suggestion}', [SearchSmartSuggestionController::class, 'destroy'])->name('search-smart-suggestions.destroy');
+    Route::post('search-trending-pins', [SearchTrendingPinController::class, 'store'])->name('search-trending-pins.store');
+    Route::put('search-trending-pins/{search_trending_pin}', [SearchTrendingPinController::class, 'update'])->name('search-trending-pins.update');
+    Route::delete('search-trending-pins/{search_trending_pin}', [SearchTrendingPinController::class, 'destroy'])->name('search-trending-pins.destroy');
     Route::get('notifications', [NotificationController::class, 'index'])->name('notifications.index');
     Route::post('notifications', [NotificationController::class, 'store'])->name('notifications.store');
     Route::delete('notifications/log', [NotificationController::class, 'clearLog'])->name('notifications.log.clear');

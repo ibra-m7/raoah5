@@ -8,7 +8,6 @@
         'placement' => DynamicPagePlacement::None,
     ]);
     $placement = old('placement', $page->placement?->value ?? DynamicPagePlacement::None->value);
-    $selected = old('product_ids', $selectedIds ?? []);
     $bannerSrc = Media::url($page->banner_image_url);
     $appbarSrc = Media::url($page->appbar_image_url);
 @endphp
@@ -69,17 +68,10 @@
 
 <div class="mb-3">
     <label class="form-label">منتجات هذه الصفحة</label>
-    <input type="search" class="form-control mb-2" placeholder="ابحث داخل المنتجات..." data-picker-search="#dynamic-page-products">
-    <div class="picker-grid" id="dynamic-page-products">
-        @foreach ($products as $product)
-            <label class="picker-item" data-picker-text="{{ $product->name }}">
-                <input type="checkbox" name="product_ids[]" value="{{ $product->id }}" @checked(in_array($product->id, $selected, false) || in_array((string) $product->id, $selected, true))>
-                <span>
-                    <strong>{{ $product->name }}</strong>
-                    <small class="d-block text-muted">{{ number_format((float) $product->price, 2) }} {{ $strings::CURRENCY }}</small>
-                </span>
-            </label>
-        @endforeach
-    </div>
+    <x-admin.product-picker
+        name="product_ids[]"
+        :selected="$selectedProducts ?? []"
+        hint="ابحث وأضف منتجات الصفحة دون تحميل الكتالوج كاملاً."
+    />
     @error('product_ids') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
 </div>

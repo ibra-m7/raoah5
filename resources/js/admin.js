@@ -118,6 +118,30 @@ document.addEventListener("input", (event) => {
     }
 });
 
+const syncHomeSectionBackgroundToggle = (checkbox) => {
+    const target = document.querySelector(checkbox.dataset.homeSectionBgToggle);
+    if (!target) {
+        return;
+    }
+    const useDefault = checkbox.checked;
+    target.disabled = useDefault;
+    target.classList.toggle("opacity-50", useDefault);
+};
+
+const bindHomeSectionBackgroundToggle = () => {
+    document.querySelectorAll("[data-home-section-bg-toggle]").forEach((checkbox) => {
+        if (checkbox.dataset.homeSectionBgBound === "1") {
+            return;
+        }
+        checkbox.dataset.homeSectionBgBound = "1";
+        syncHomeSectionBackgroundToggle(checkbox);
+        checkbox.addEventListener("change", () => syncHomeSectionBackgroundToggle(checkbox));
+    });
+};
+
+bindHomeSectionBackgroundToggle();
+window.addEventListener("admin:content-ready", bindHomeSectionBackgroundToggle);
+
 const syncLinkPanels = (select) => {
     const value = select.value;
     document.querySelectorAll("[data-link-panel]").forEach((panel) => {
@@ -420,6 +444,7 @@ const applyAdminDocument = (doc, url, { historyMode = "none" } = {}) => {
 
     document.querySelectorAll("[data-color-sync]").forEach(syncColorLabel);
     document.querySelectorAll("[data-link-type]").forEach(syncLinkPanels);
+    bindHomeSectionBackgroundToggle();
     document.querySelectorAll(".modal-backdrop").forEach((el) => el.remove());
     document.body.classList.remove("modal-open");
     document.body.style.removeProperty("overflow");
@@ -1019,7 +1044,7 @@ const setDeliveryFormMode = (form, id) => {
     const method = form.querySelector("[data-http-method]");
     const editing = form.querySelector("[data-editing-id]");
     const scope = form.closest(".modal") || form;
-    const title = scope.querySelector("[data-rule-title], [data-perk-title], [data-phrase-title]");
+    const title = scope.querySelector("[data-rule-title], [data-perk-title], [data-phrase-title], [data-smart-title], [data-trending-title]");
     if (id) {
         form.action = `${String(form.dataset.updateBase || "").replace(/\/$/, "")}/${id}`;
         if (method) {
@@ -1599,6 +1624,9 @@ const bindProductAiCopy = (root = document) => {
         };
 
         const schedule = () => {
+            if (box.dataset.aiAuto === "0") {
+                return;
+            }
             const name = payload().name;
             if (name.length < 3 || name === lastName) {
                 return;
@@ -1608,11 +1636,13 @@ const bindProductAiCopy = (root = document) => {
             timer = setTimeout(() => generate(false), 700);
         };
 
-        field("name")?.addEventListener("blur", schedule);
-        field("category_id")?.addEventListener("change", () => {
-            lastName = "";
-            schedule();
-        });
+        if (box.dataset.aiAuto !== "0") {
+            field("name")?.addEventListener("blur", schedule);
+            field("category_id")?.addEventListener("change", () => {
+                lastName = "";
+                schedule();
+            });
+        }
         button?.addEventListener("click", () => generate(true));
     });
 };
@@ -1620,7 +1650,510 @@ const bindProductAiCopy = (root = document) => {
 bindProductAiCopy();
 window.addEventListener("admin:content-ready", () => bindProductAiCopy());
 
-const resetSearchPhraseForm = (form) => {
+const bindProductCopyBulk = (root = document) => {
+    const panel = root.querySelector("[data-product-copy-bulk]");
+    if (!(panel instanceof HTMLElement) || panel.dataset.bound === "1") {
+        return;
+    }
+    panel.dataset.bound = "1";
+
+    const statusUrl = panel.dataset.statusUrl;
+    const cancelUrl = panel.dataset.cancelUrl;
+    const title = panel.querySelector("[data-bulk-title]");
+    const count = panel.querySelector("[data-bulk-count]");
+    const bar = panel.querySelector("[data-bulk-bar]");
+    const detail = panel.querySelector("[data-bulk-detail]");
+    const cancelBtn = panel.querySelector("[data-bulk-cancel]");
+    const submit = root.querySelector("[data-product-copy-bulk-submit]");
+    let timer = null;
+
+    const setSubmitBusy = (busy) => {
+        if (!(submit instanceof HTMLButtonElement)) {
+            return;
+        }
+        if (!submit.dataset.originalLabel) {
+            submit.dataset.originalLabel = submit.innerHTML;
+        }
+        submit.disabled = busy;
+        submit.innerHTML = busy
+            ? '<span class="spinner-border spinner-border-sm ms-1"></span> جاري البدء...'
+            : submit.dataset.originalLabel;
+    };
+
+    const render = (data) => {
+        const total = Number(data.total || 0);
+        const processed = Number(data.processed || 0);
+        const ok = Number(data.ok || 0);
+        const failed = Number(data.failed || 0);
+        const percent = Number(data.percent || 0);
+        const running = Boolean(data.running);
+        const finished = Boolean(data.finished_at);
+        const cancelled = Boolean(data.cancelled);
+
+        if (cancelled || (total === 0 && !running)) {
+            panel.hidden = true;
+            setSubmitBusy(false);
+            if (cancelBtn instanceof HTMLButtonElement) {
+                cancelBtn.hidden = true;
+            }
+            if (cancelled) {
+                return;
+            }
+        }
+
+        if (total > 0 && (running || finished)) {
+            panel.hidden = false;
+        } else if (!running) {
+            panel.hidden = true;
+        }
+
+        if (count) {
+            count.textContent = total > 0 ? `${processed} / ${total}` : "";
+        }
+        if (bar instanceof HTMLElement) {
+            bar.style.width = `${Math.max(0, Math.min(100, percent))}%`;
+            bar.setAttribute("aria-valuenow", String(percent));
+        }
+
+        if (cancelBtn instanceof HTMLButtonElement) {
+            cancelBtn.hidden = !running;
+            cancelBtn.disabled = false;
+        }
+
+        if (running) {
+            if (title) {
+                title.textContent = "جاري توليد المحتوى في الخلفية...";
+            }
+            if (detail) {
+                detail.textContent =
+                    "يمكنك متابعة استخدام لوحة التحكم. سيتم تحديث التقدم تلقائياً.";
+            }
+            setSubmitBusy(true);
+            return;
+        }
+
+        setSubmitBusy(false);
+
+        if (total === 0) {
+            panel.hidden = true;
+            return;
+        }
+
+        if (title) {
+            title.textContent = failed > 0 ? "اكتمل التوليد مع بعض الأخطاء" : "اكتمل توليد المحتوى";
+        }
+        if (detail) {
+            detail.textContent =
+                failed > 0
+                    ? `تم توليد المحتوى لـ ${ok} منتج، وفشل ${failed}.`
+                    : `تم توليد المحتوى لجميع المنتجات (${ok}).`;
+        }
+    };
+
+    const poll = async () => {
+        if (!statusUrl) {
+            return;
+        }
+
+        try {
+            const { data } = await window.axios.get(statusUrl);
+            render(data);
+            if (data.running) {
+                timer = window.setTimeout(poll, 4000);
+            }
+        } catch {
+            timer = window.setTimeout(poll, 6000);
+        }
+    };
+
+    const form = root.querySelector("[data-product-copy-bulk-form]");
+    form?.addEventListener("submit", () => {
+        setSubmitBusy(true);
+        window.setTimeout(poll, 1500);
+    });
+
+    cancelBtn?.addEventListener("click", async () => {
+        if (!cancelUrl) {
+            return;
+        }
+        if (!window.confirm("هل تريد إلغاء توليد المحتوى المتبقي في الخلفية؟")) {
+            return;
+        }
+
+        if (cancelBtn instanceof HTMLButtonElement) {
+            cancelBtn.disabled = true;
+        }
+
+        try {
+            const { data } = await window.axios.post(cancelUrl);
+            if (timer) {
+                window.clearTimeout(timer);
+                timer = null;
+            }
+            render(data);
+        } catch {
+            if (cancelBtn instanceof HTMLButtonElement) {
+                cancelBtn.disabled = false;
+            }
+        }
+    });
+
+    poll();
+};
+
+bindProductCopyBulk();
+window.addEventListener("admin:content-ready", () => bindProductCopyBulk());
+
+const selectedLookupIds = (root) =>
+    [...root.querySelectorAll("[data-product-lookup-selected] [data-id]")]
+        .map((chip) => Number(chip.dataset.id))
+        .filter((id) => id > 0);
+
+const lookupEmptyState = (root) => {
+    const selected = root.querySelector("[data-product-lookup-selected]");
+    if (!selected) {
+        return;
+    }
+    selected.querySelector(".product-lookup-empty-state")?.remove();
+    const hasChip = selected.querySelector("[data-id]");
+    const allowEmpty = root.dataset.allowEmpty === "1";
+    const multiple = root.dataset.multiple === "1";
+    if (hasChip) {
+        selected.querySelectorAll(`input[name="${root.dataset.name}"][value=""]`).forEach((input) => input.remove());
+        return;
+    }
+    if (allowEmpty && !multiple) {
+        const input = document.createElement("input");
+        input.type = "hidden";
+        input.name = root.dataset.name;
+        input.value = "";
+        selected.append(input);
+        const hint = document.createElement("div");
+        hint.className = "product-lookup-empty-state";
+        hint.textContent = root.dataset.emptyLabel || "بدون اختيار";
+        selected.append(hint);
+    }
+};
+
+const lookupChip = (root, item) => {
+    const chip = document.createElement("div");
+    chip.className = "product-lookup-chip";
+    chip.dataset.id = String(item.id);
+
+    const input = document.createElement("input");
+    input.type = "hidden";
+    input.name = root.dataset.name;
+    input.value = String(item.id);
+
+    const copy = document.createElement("span");
+    const title = document.createElement("strong");
+    title.textContent = item.name || "";
+    const meta = document.createElement("small");
+    meta.textContent = [item.sku, item.price_label].filter(Boolean).join(" · ");
+    copy.append(title, meta);
+
+    const remove = document.createElement("button");
+    remove.type = "button";
+    remove.className = "product-lookup-remove";
+    remove.setAttribute("data-product-lookup-remove", "");
+    remove.setAttribute("aria-label", "إزالة");
+    remove.innerHTML = '<i class="bi bi-x-lg"></i>';
+
+    chip.append(input, copy, remove);
+    return chip;
+};
+
+const addLookupItem = (root, item) => {
+    if (!item?.id) {
+        return;
+    }
+    const selected = root.querySelector("[data-product-lookup-selected]");
+    if (!selected) {
+        return;
+    }
+    const multiple = root.dataset.multiple === "1";
+    if (!multiple) {
+        selected.replaceChildren();
+    } else if (selectedLookupIds(root).includes(Number(item.id))) {
+        return;
+    }
+    selected.append(lookupChip(root, item));
+    lookupEmptyState(root);
+};
+
+const renderLookupResults = (root, items) => {
+    const box = root.querySelector("[data-product-lookup-results]");
+    if (!box) {
+        return;
+    }
+    box.replaceChildren();
+    if (!items.length) {
+        const empty = document.createElement("div");
+        empty.className = "product-lookup-empty";
+        empty.textContent = "لا توجد نتائج";
+        box.append(empty);
+        box.hidden = false;
+        return;
+    }
+    items.forEach((item) => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "product-lookup-result";
+        button.dataset.id = String(item.id);
+        const title = document.createElement("strong");
+        title.textContent = item.name || "";
+        const meta = document.createElement("small");
+        meta.textContent = [item.sku, item.barcode, item.price_label].filter(Boolean).join(" · ");
+        button.append(title, meta);
+        button.addEventListener("click", () => {
+            addLookupItem(root, item);
+            const search = root.querySelector("[data-product-lookup-q]");
+            if (search) {
+                search.value = "";
+            }
+            box.hidden = true;
+            box.replaceChildren();
+        });
+        box.append(button);
+    });
+    box.hidden = false;
+};
+
+const searchLookup = async (root) => {
+    const search = root.querySelector("[data-product-lookup-q]");
+    const term = (search?.value || "").trim();
+    const box = root.querySelector("[data-product-lookup-results]");
+    if (term.length < 1) {
+        if (box) {
+            box.hidden = true;
+            box.replaceChildren();
+        }
+        return;
+    }
+
+    const params = new URLSearchParams({
+        q: term,
+        exclude: selectedLookupIds(root).join(","),
+    });
+    if (root.dataset.except) {
+        params.set("except", root.dataset.except);
+    }
+    if (root.dataset.giftOnly === "1") {
+        params.set("gift_only", "1");
+    }
+    if (root.dataset.excludeGifts === "1") {
+        params.set("exclude_gifts", "1");
+    }
+
+    try {
+        const { data } = await window.axios.get(root.dataset.endpoint, { params });
+        renderLookupResults(root, data.items || []);
+    } catch {
+        renderLookupResults(root, []);
+    }
+};
+
+const bindProductLookups = () => {
+    document.querySelectorAll("[data-product-lookup]").forEach((root) => {
+        if (!(root instanceof HTMLElement) || root.dataset.bound === "1") {
+            return;
+        }
+        root.dataset.bound = "1";
+        lookupEmptyState(root);
+
+        let timer = null;
+        root.querySelector("[data-product-lookup-q]")?.addEventListener("input", () => {
+            clearTimeout(timer);
+            timer = setTimeout(() => searchLookup(root), 220);
+        });
+
+        root.addEventListener("click", (event) => {
+            const remove = event.target.closest("[data-product-lookup-remove]");
+            if (!remove) {
+                return;
+            }
+            event.preventDefault();
+            remove.closest("[data-id]")?.remove();
+            lookupEmptyState(root);
+        });
+    });
+};
+
+document.addEventListener("click", (event) => {
+    document.querySelectorAll("[data-product-lookup]").forEach((root) => {
+        if (!root.contains(event.target)) {
+            const box = root.querySelector("[data-product-lookup-results]");
+            if (box) {
+                box.hidden = true;
+            }
+        }
+    });
+});
+
+bindProductLookups();
+window.addEventListener("admin:content-ready", bindProductLookups);
+
+window.adminAddProductLookup = (root, item) => {
+    const target = typeof root === "string" ? document.querySelector(root) : root;
+    if (target instanceof HTMLElement) {
+        addLookupItem(target, item);
+    }
+};
+
+const clearGiftModalErrors = (form) => {
+    if (!form) {
+        return;
+    }
+    form.querySelectorAll("[data-gift-error]").forEach((node) => {
+        node.textContent = "";
+    });
+    form.querySelectorAll("[data-gift-field]").forEach((field) => {
+        field.classList.remove("is-invalid");
+    });
+    const alert = form.querySelector("[data-gift-form-error]");
+    if (alert) {
+        alert.hidden = true;
+        alert.textContent = "";
+    }
+};
+
+const resetGiftModal = (modal) => {
+    const form = modal?.querySelector("#giftProductForm");
+    if (!form) {
+        return;
+    }
+    form.reset();
+    clearGiftModalErrors(form);
+    const stock = form.querySelector('[name="stock"]');
+    if (stock) {
+        stock.value = "10";
+    }
+    const price = form.querySelector('[name="price"]');
+    if (price) {
+        price.value = "0";
+    }
+    const mainPicker = modal.querySelector("[data-gift-main-picker] [data-product-lookup]");
+    if (mainPicker instanceof HTMLElement) {
+        const selected = mainPicker.querySelector("[data-product-lookup-selected]");
+        selected?.replaceChildren();
+        lookupEmptyState(mainPicker);
+    }
+};
+
+const showGiftModalErrors = (form, payload) => {
+    clearGiftModalErrors(form);
+    const errors = payload?.errors || {};
+    Object.entries(errors).forEach(([key, messages]) => {
+        const message = Array.isArray(messages) ? messages[0] : String(messages || "");
+        const field = form.querySelector(`[data-gift-field="${key}"]`);
+        if (field) {
+            field.classList.add("is-invalid");
+        }
+        const errorNode = form.querySelector(`[data-gift-error="${key}"]`);
+        if (errorNode) {
+            errorNode.textContent = message;
+        }
+    });
+    const alert = form.querySelector("[data-gift-form-error]");
+    if (alert && payload?.message) {
+        alert.hidden = false;
+        alert.textContent = payload.message;
+    }
+};
+
+const bindGiftProductModal = () => {
+    const modal = document.getElementById("giftProductModal");
+    const form = modal?.querySelector("#giftProductForm");
+    if (!(modal instanceof HTMLElement) || !(form instanceof HTMLFormElement) || form.dataset.bound === "1") {
+        return;
+    }
+    form.dataset.bound = "1";
+
+    modal.addEventListener("show.bs.modal", () => {
+        resetGiftModal(modal);
+        bindProductLookups();
+    });
+
+    form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        clearGiftModalErrors(form);
+
+        const submit = form.querySelector("[data-gift-submit]");
+        if (submit instanceof HTMLButtonElement) {
+            submit.disabled = true;
+        }
+
+        const formData = new FormData(form);
+        const currentId = Number(modal.dataset.currentProductId || 0);
+        if (currentId > 0) {
+            formData.set("current_product_id", String(currentId));
+        }
+
+        try {
+            const { data } = await window.axios.post(modal.dataset.giftQuickEndpoint || "", formData, {
+                headers: { "Content-Type": "multipart/form-data" },
+            });
+
+            const giftPicker = document.querySelector("[data-gift-product-picker] [data-product-lookup]");
+            if (giftPicker instanceof HTMLElement) {
+                addLookupItem(giftPicker, data);
+            }
+
+            window.bootstrap.Modal.getOrCreateInstance(modal).hide();
+            resetGiftModal(modal);
+        } catch (error) {
+            const status = error?.response?.status;
+            const payload = error?.response?.data || {};
+            if (status === 422) {
+                showGiftModalErrors(form, payload);
+            } else {
+                showGiftModalErrors(form, {
+                    message: payload.message || "تعذّر حفظ منتج الهدية. حاول مرة أخرى.",
+                });
+            }
+        } finally {
+            if (submit instanceof HTMLButtonElement) {
+                submit.disabled = false;
+            }
+        }
+    });
+};
+
+bindGiftProductModal();
+window.addEventListener("admin:content-ready", bindGiftProductModal);
+
+const bindCouponForm = () => {
+    const type = document.getElementById("coupon_type");
+    const applies = document.getElementById("applies_to");
+    if (!type || !applies) {
+        return;
+    }
+    const sync = () => {
+        const valueWrap = document.getElementById("value_wrap");
+        const products = document.getElementById("products_wrap");
+        const categories = document.getElementById("categories_wrap");
+        if (valueWrap) {
+            valueWrap.style.display = type.value === "free_shipping" ? "none" : "";
+        }
+        if (products) {
+            products.style.display = applies.value === "products" ? "" : "none";
+        }
+        if (categories) {
+            categories.style.display = applies.value === "categories" ? "" : "none";
+        }
+    };
+    if (type.dataset.bound !== "1") {
+        type.dataset.bound = "1";
+        type.addEventListener("change", sync);
+        applies.addEventListener("change", sync);
+    }
+    sync();
+};
+
+bindCouponForm();
+window.addEventListener("admin:content-ready", bindCouponForm);
+
+const resetDiscoveryForm = (form) => {
     if (!form) {
         return;
     }
@@ -1631,7 +2164,7 @@ const resetSearchPhraseForm = (form) => {
     setFormField(form, "is_active", "1");
 };
 
-const fillSearchPhraseForm = (form, data) => {
+const fillDiscoveryForm = (form, data) => {
     if (!form) {
         return;
     }
@@ -1642,10 +2175,22 @@ const fillSearchPhraseForm = (form, data) => {
     setFormField(form, "is_active", data.isActive);
 };
 
+const resetSearchPhraseForm = (form) => resetDiscoveryForm(form);
+
+const fillSearchPhraseForm = (form, data) => fillDiscoveryForm(form, data);
+
 const bindSearchPlaceholdersPage = () => {
-    const modal = document.getElementById("searchPhraseModal");
-    if (modal?.dataset.open === "1") {
-        window.bootstrap.Modal.getOrCreateInstance(modal).show();
+    const phraseModal = document.getElementById("searchPhraseModal");
+    if (phraseModal?.dataset.open === "1") {
+        window.bootstrap.Modal.getOrCreateInstance(phraseModal).show();
+    }
+    const smartModal = document.getElementById("searchSmartModal");
+    if (smartModal?.dataset.open === "1") {
+        window.bootstrap.Modal.getOrCreateInstance(smartModal).show();
+    }
+    const trendingModal = document.getElementById("searchTrendingModal");
+    if (trendingModal?.dataset.open === "1") {
+        window.bootstrap.Modal.getOrCreateInstance(trendingModal).show();
     }
 };
 
@@ -1687,6 +2232,24 @@ document.addEventListener("show.bs.modal", (event) => {
             fillSearchPhraseForm(form, trigger.dataset);
         } else if (trigger.hasAttribute("data-search-phrase-create")) {
             resetSearchPhraseForm(form);
+        }
+        return;
+    }
+    if (modal.id === "searchSmartModal") {
+        const form = modal.querySelector("#searchSmartForm");
+        if (trigger.hasAttribute("data-search-smart-edit")) {
+            fillDiscoveryForm(form, trigger.dataset);
+        } else if (trigger.hasAttribute("data-search-smart-create")) {
+            resetDiscoveryForm(form);
+        }
+        return;
+    }
+    if (modal.id === "searchTrendingModal") {
+        const form = modal.querySelector("#searchTrendingForm");
+        if (trigger.hasAttribute("data-search-trending-edit")) {
+            fillDiscoveryForm(form, trigger.dataset);
+        } else if (trigger.hasAttribute("data-search-trending-create")) {
+            resetDiscoveryForm(form);
         }
         return;
     }

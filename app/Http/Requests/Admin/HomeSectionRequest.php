@@ -19,6 +19,7 @@ class HomeSectionRequest extends FormRequest
         return [
             'title' => ['required', 'string', 'max:255'],
             'subtitle' => ['nullable', 'string', 'max:255'],
+            'background_color' => ['nullable', 'string', 'max:7', 'regex:/^#?[0-9A-Fa-f]{6}$/'],
             'display_style' => ['required', 'in:best_prices,most_requested,fresh_groceries,general'],
             'key' => [
                 'nullable',
@@ -30,6 +31,7 @@ class HomeSectionRequest extends FormRequest
             'product_ids.*' => ['integer', 'exists:products,id'],
             'sort_order' => ['nullable', 'integer', 'min:0', 'max:9999'],
             'is_active' => ['nullable', 'boolean'],
+            'use_default_background' => ['nullable', 'boolean'],
         ];
     }
 
@@ -38,6 +40,7 @@ class HomeSectionRequest extends FormRequest
         return [
             'title' => 'الاسم التجاري',
             'subtitle' => 'العنوان الفرعي',
+            'background_color' => 'لون خلفية القسم',
             'display_style' => 'شكل العرض',
             'key' => 'شكل العرض',
             'product_ids' => 'المنتجات',
@@ -53,6 +56,9 @@ class HomeSectionRequest extends FormRequest
                 ? null
                 : $this->input('display_style'),
             'subtitle' => $this->input('subtitle') ?: null,
+            'background_color' => $this->boolean('use_default_background')
+                ? null
+                : ($this->input('background_color') ?: null),
             'product_ids' => array_values(array_filter((array) $this->input('product_ids', []))),
         ]);
     }

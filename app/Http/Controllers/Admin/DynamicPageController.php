@@ -7,6 +7,7 @@ use App\Enums\DynamicPagePlacement;
 use App\Http\Requests\Admin\DynamicPageRequest;
 use App\Models\DynamicPage;
 use App\Services\Admin\DynamicPageService;
+use App\Services\Admin\ProductService;
 use App\Support\AppStrings;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -14,7 +15,10 @@ use Illuminate\View\View;
 
 class DynamicPageController extends Controller
 {
-    public function __construct(private readonly DynamicPageService $pages) {}
+    public function __construct(
+        private readonly DynamicPageService $pages,
+        private readonly ProductService $products,
+    ) {}
 
     public function index(Request $request): View
     {
@@ -36,8 +40,7 @@ class DynamicPageController extends Controller
                 'sort_order' => 0,
                 'placement' => DynamicPagePlacement::None,
             ]),
-            'products' => $this->pages->productOptions(),
-            'selectedIds' => [],
+            'selectedProducts' => $this->products->pickerItems(old('product_ids', [])),
         ]);
     }
 
@@ -52,13 +55,12 @@ class DynamicPageController extends Controller
 
     public function edit(DynamicPage $dynamic_page): View
     {
-        $dynamic_page->load('products');
-
         return view('admin.dynamic-pages.edit', [
             'title' => AppStrings::EDIT_DYNAMIC_PAGE,
             'page' => $dynamic_page,
-            'products' => $this->pages->productOptions(),
-            'selectedIds' => $dynamic_page->products->pluck('id')->all(),
+            'selectedProducts' => $this->products->pickerItems(
+                old('product_ids', $dynamic_page->products()->allRelatedIds()),
+            ),
         ]);
     }
 

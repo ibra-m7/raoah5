@@ -3,11 +3,9 @@
 namespace App\Services\Admin;
 
 use App\Models\HomeSection;
-use App\Models\Product;
 use App\Support\Constants;
 use App\Support\Slug;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
-use Illuminate\Support\Collection;
 
 class HomeSectionService
 {
@@ -24,14 +22,6 @@ class HomeSectionService
             ->orderBy('sort_order')
             ->paginate(Constants::DEFAULT_PAGE_SIZE)
             ->withQueryString();
-    }
-
-    public function productOptions(): Collection
-    {
-        return Product::query()
-            ->with('primaryImage')
-            ->orderBy('name')
-            ->get(['id', 'name', 'price', 'discount_price']);
     }
 
     public function create(array $data): HomeSection
@@ -72,6 +62,7 @@ class HomeSectionService
             'key' => $key,
             'title' => $data['title'],
             'subtitle' => $data['subtitle'] ?? null,
+            'background_color' => $this->normalizeBackgroundColor($data['background_color'] ?? null),
             'sort_order' => (int) ($data['sort_order'] ?? 0),
             'is_active' => (bool) ($data['is_active'] ?? false),
         ];
@@ -84,5 +75,20 @@ class HomeSectionService
             $sync[(int) $id] = ['sort_order' => $i];
         }
         $section->products()->sync($sync);
+    }
+
+    private function normalizeBackgroundColor(?string $value): ?string
+    {
+        $value = trim((string) $value);
+        if ($value === '') {
+            return null;
+        }
+
+        $hex = ltrim($value, '#');
+        if (! preg_match('/^[0-9A-Fa-f]{6}$/', $hex)) {
+            return null;
+        }
+
+        return '#'.strtoupper($hex);
     }
 }

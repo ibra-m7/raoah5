@@ -6,7 +6,6 @@ use App\Enums\BannerLinkType;
 use App\Models\Banner;
 use App\Models\Category;
 use App\Models\DynamicPage;
-use App\Models\Product;
 use App\Support\Constants;
 use App\Support\Media;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
@@ -30,11 +29,6 @@ class BannerService
             ->latest('id')
             ->paginate(Constants::DEFAULT_PAGE_SIZE)
             ->withQueryString();
-    }
-
-    public function productOptions(): Collection
-    {
-        return Product::query()->orderBy('name')->get(['id', 'name']);
     }
 
     public function categoryOptions(): Collection

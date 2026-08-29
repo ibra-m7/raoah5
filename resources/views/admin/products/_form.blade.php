@@ -6,7 +6,7 @@
     $keywords = old('keywords', implode(', ', $product->keywords ?? []));
 @endphp
 
-<div class="product-ai-copy" data-product-ai-copy data-endpoint="{{ route('admin.products.generate-copy') }}">
+<div class="product-ai-copy" data-product-ai-copy data-ai-auto="0" data-endpoint="{{ route('admin.products.generate-copy') }}">
 <div class="row">
     <div class="col-md-8 mb-3">
         <label class="form-label">اسم المنتج</label>
@@ -152,38 +152,85 @@
     @error('usage_instructions') <div class="invalid-feedback">{{ $message }}</div> @enderror
 </div>
 
-@php
-    $complementaryOptions = $complementaryOptions ?? collect();
-    $selectedComplementaryIds = collect($selectedComplementaryIds ?? [])->map(fn ($id) => (int) $id)->all();
-@endphp
-@if ($complementaryOptions->isNotEmpty())
-    <div class="mb-3">
-        <label class="form-label">يُشترى معه</label>
-        <div class="form-hint mb-2">اختر منتجات تظهر في قسم «يُشترى معه» داخل تفاصيل المنتج.</div>
-        <input type="search" class="form-control mb-2" placeholder="ابحث داخل المنتجات..." data-picker-search="#complementary-products">
-        <div class="picker-grid" id="complementary-products">
-            @foreach ($complementaryOptions as $option)
-                <label class="picker-item" data-picker-text="{{ $option->name }} {{ $option->sku }}">
-                    <input
-                        type="checkbox"
-                        name="complementary_product_ids[]"
-                        value="{{ $option->id }}"
-                        @checked(in_array((int) $option->id, $selectedComplementaryIds, true))
-                    >
-                    <span>
-                        <strong>{{ $option->name }}</strong>
-                        <small class="d-block text-muted">
-                            @if ($option->sku) {{ $option->sku }} · @endif
-                            {{ number_format((float) $option->price, 2) }} {{ $strings::CURRENCY }}
-                        </small>
-                    </span>
-                </label>
-            @endforeach
-        </div>
-        @error('complementary_product_ids') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
-        @error('complementary_product_ids.*') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
+<div class="product-relations mb-4">
+    <div class="product-relations__intro">
+        <h3 class="product-relations__title">المنتجات المرتبطة</h3>
+        <p class="product-relations__lead">اربط منتجات تظهر للعميل مع هذا المنتج في التطبيق.</p>
     </div>
-@endif
+
+    <div class="row g-3">
+        <div class="col-lg-6">
+            <section class="product-relation-card product-relation-card--gift">
+                <header class="product-relation-card__head">
+                    <div class="product-relation-card__meta">
+                        <span class="product-relation-card__icon" aria-hidden="true">
+                            <i class="bi bi-gift"></i>
+                        </span>
+                        <div>
+                            <h4 class="product-relation-card__title">منتج هدية</h4>
+                            <p class="product-relation-card__desc">يُضاف مجاناً عند الشراء ويظهر على كارد المنتج.</p>
+                        </div>
+                    </div>
+                    <button
+                        type="button"
+                        class="btn btn-sm btn-outline-success rounded-pill product-relation-card__action"
+                        data-bs-toggle="modal"
+                        data-bs-target="#giftProductModal"
+                    >
+                        <i class="bi bi-plus-lg ms-1"></i>
+                        هدية جديدة
+                    </button>
+                </header>
+
+                <div class="product-relation-card__body" data-gift-product-picker>
+                    <x-admin.product-picker
+                        name="gift_product_id"
+                        :selected="$giftProducts ?? []"
+                        :multiple="false"
+                        :except="$product->exists ? $product->id : null"
+                        :allow-empty="true"
+                        :gift-only="true"
+                        :embedded="true"
+                        empty-label="لم تُحدَّد هدية بعد"
+                        placeholder="ابحث عن منتج هدية..."
+                        hint=""
+                    />
+                </div>
+                @error('gift_product_id') <div class="text-danger small px-1 pt-2">{{ $message }}</div> @enderror
+            </section>
+        </div>
+
+        <div class="col-lg-6">
+            <section class="product-relation-card product-relation-card--bundle">
+                <header class="product-relation-card__head">
+                    <div class="product-relation-card__meta">
+                        <span class="product-relation-card__icon" aria-hidden="true">
+                            <i class="bi bi-bag-plus"></i>
+                        </span>
+                        <div>
+                            <h4 class="product-relation-card__title">يُشترى معه</h4>
+                            <p class="product-relation-card__desc">منتجات مقترحة في تفاصيل المنتج لزيادة المبيعات.</p>
+                        </div>
+                    </div>
+                </header>
+
+                <div class="product-relation-card__body">
+                    <x-admin.product-picker
+                        name="complementary_product_ids[]"
+                        :selected="$complementaryProducts ?? []"
+                        :except="$product->exists ? $product->id : null"
+                        :exclude-gifts="true"
+                        :embedded="true"
+                        placeholder="ابحث وأضف منتجات مكمّلة..."
+                        hint=""
+                    />
+                </div>
+                @error('complementary_product_ids') <div class="text-danger small px-1 pt-2">{{ $message }}</div> @enderror
+                @error('complementary_product_ids.*') <div class="text-danger small px-1 pt-2">{{ $message }}</div> @enderror
+            </section>
+        </div>
+    </div>
+</div>
 </div>
 
 <div class="row">

@@ -1,6 +1,5 @@
 @php
     $coupon = $coupon ?? new \App\Models\Coupon();
-    $selectedProducts = old('product_ids', $coupon->products?->pluck('id')->all() ?? []);
     $selectedCategories = old('category_ids', $coupon->categories?->pluck('id')->all() ?? []);
     $applies = old('applies_to', $coupon->applies_to?->value ?? 'all');
     $type = old('type', $coupon->type?->value ?? 'percent');
@@ -89,13 +88,12 @@
 
 <div class="mb-3" id="products_wrap">
     <label class="form-label">المنتجات المشمولة</label>
-    <select name="product_ids[]" class="form-select @error('product_ids') is-invalid @enderror" multiple size="8">
-        @foreach ($products as $product)
-            <option value="{{ $product->id }}" @selected(in_array($product->id, $selectedProducts))>{{ $product->name }}</option>
-        @endforeach
-    </select>
-    @error('product_ids') <div class="invalid-feedback">{{ $message }}</div> @enderror
-    <div class="form-hint">Ctrl أو Cmd لاختيار أكثر من منتج.</div>
+    <x-admin.product-picker
+        name="product_ids[]"
+        :selected="$selectedProducts ?? []"
+        hint="ابحث وأضف المنتجات المشمولة بالكوبون."
+    />
+    @error('product_ids') <div class="invalid-feedback d-block">{{ $message }}</div> @enderror
 </div>
 
 <div class="mb-3" id="categories_wrap">
@@ -123,22 +121,3 @@
         </div>
     </div>
 </div>
-
-<script>
-    (function () {
-        const type = document.getElementById('coupon_type');
-        const valueWrap = document.getElementById('value_wrap');
-        const applies = document.getElementById('applies_to');
-        const products = document.getElementById('products_wrap');
-        const categories = document.getElementById('categories_wrap');
-
-        function sync() {
-            valueWrap.style.display = type.value === 'free_shipping' ? 'none' : '';
-            products.style.display = applies.value === 'products' ? '' : 'none';
-            categories.style.display = applies.value === 'categories' ? '' : 'none';
-        }
-        type.addEventListener('change', sync);
-        applies.addEventListener('change', sync);
-        sync();
-    })();
-</script>

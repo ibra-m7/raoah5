@@ -6,7 +6,6 @@ use App\Enums\CouponAppliesTo;
 use App\Enums\CouponType;
 use App\Models\Category;
 use App\Models\Coupon;
-use App\Models\Product;
 use App\Support\Constants;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
@@ -51,11 +50,6 @@ class CouponAdminService
         }
 
         $coupon->delete();
-    }
-
-    public function productOptions(): Collection
-    {
-        return Product::query()->orderBy('name')->get(['id', 'name']);
     }
 
     public function categoryOptions(): Collection

@@ -151,6 +151,26 @@ final class AppStrings
 
     public const SEARCH_PLACEHOLDER_DELETED = 'تم حذف عبارة البحث بنجاح.';
 
+    public const ADD_SEARCH_SMART = 'إضافة اقتراح ذكي';
+
+    public const EDIT_SEARCH_SMART = 'تعديل اقتراح ذكي';
+
+    public const SEARCH_SMART_CREATED = 'تم إضافة الاقتراح الذكي بنجاح.';
+
+    public const SEARCH_SMART_UPDATED = 'تم تحديث الاقتراح الذكي بنجاح.';
+
+    public const SEARCH_SMART_DELETED = 'تم حذف الاقتراح الذكي بنجاح.';
+
+    public const ADD_SEARCH_TRENDING_PIN = 'إضافة كلمة للأكثر بحثاً';
+
+    public const EDIT_SEARCH_TRENDING_PIN = 'تعديل كلمة الأكثر بحثاً';
+
+    public const SEARCH_TRENDING_PIN_CREATED = 'تم إضافة الكلمة بنجاح.';
+
+    public const SEARCH_TRENDING_PIN_UPDATED = 'تم تحديث الكلمة بنجاح.';
+
+    public const SEARCH_TRENDING_PIN_DELETED = 'تم حذف الكلمة بنجاح.';
+
     public const ADD_ONBOARDING = 'إضافة شريحة ترحيب';
 
     public const EDIT_ONBOARDING = 'تعديل شريحة الترحيب';

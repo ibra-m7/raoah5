@@ -6,12 +6,17 @@ use App\Models\Category;
 use App\Services\Admin\CategoryService;
 use App\Support\AiSettings;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use RuntimeException;
 use Throwable;
 
 class ProductCopyGenerator
 {
+    private const CATEGORY_CACHE_KEY = 'ai:product_category_options';
+
+    private const CATEGORY_CACHE_TTL = 3600;
+
     public function __construct(
         private readonly GeminiClient $gemini,
     ) {}
@@ -31,7 +36,7 @@ class ProductCopyGenerator
      *     quantity_label: string
      * }
      */
-    public function generate(array $input): array
+    public function generate(array $input, bool $fast = true): array
     {
         if (! AiSettings::hasApiKey()) {
             throw new RuntimeException('missing_key');
@@ -42,10 +47,13 @@ class ProductCopyGenerator
             throw new RuntimeException('missing_name');
         }
 
-        $categories = $this->categoryOptions();
+        $categories = $this->categoryOptionsFor($input['category_id'] ?? null);
+        $system = $this->systemPrompt($categories);
 
         try {
-            $raw = $this->gemini->generateJson($this->systemPrompt($categories), $this->userPrompt($name, $input, $categories));
+            $raw = $fast
+                ? $this->gemini->generateJsonFast($system, $this->userPrompt($name, $input, $categories))
+                : $this->gemini->generateJson($system, $this->userPrompt($name, $input, $categories));
         } catch (Throwable $e) {
             throw new RuntimeException($e->getMessage() !== '' ? $e->getMessage() : 'gemini_failed', 0, $e);
         }
@@ -86,11 +94,6 @@ class ProductCopyGenerator
             $lines[] = 'عدد الحبات في العبوة: '.$pieces;
         }
 
-        $lines[] = 'التصنيفات المتاحة (id: المسار):';
-        foreach ($categories as $option) {
-            $lines[] = $option->id.': '.($option->path_label ?? $option->name);
-        }
-
         return implode("\n", $lines);
     }
 
@@ -119,9 +122,45 @@ class ProductCopyGenerator
     /**
      * @return Collection<int, Category>
      */
+    private function categoryOptionsFor(mixed $categoryId): Collection
+    {
+        $all = $this->categoryOptions();
+
+        if (! is_numeric($categoryId)) {
+            return $all;
+        }
+
+        $current = $all->firstWhere('id', (int) $categoryId);
+        if (! $current) {
+            return $all;
+        }
+
+        $parentId = (int) ($current->parent_id ?? 0);
+        $filtered = $all->filter(function (Category $category) use ($current, $parentId) {
+            if ((int) $category->id === (int) $current->id) {
+                return true;
+            }
+
+            if ($parentId > 0 && (int) ($category->parent_id ?? 0) === $parentId) {
+                return true;
+            }
+
+            return (int) ($category->depth ?? 0) >= 2;
+        });
+
+        return $filtered->count() >= 8 ? $filtered->values() : $all;
+    }
+
+    /**
+     * @return Collection<int, Category>
+     */
     private function categoryOptions(): Collection
     {
-        return app(CategoryService::class)->productCategoryOptions();
+        return Cache::remember(
+            self::CATEGORY_CACHE_KEY,
+            self::CATEGORY_CACHE_TTL,
+            fn () => app(CategoryService::class)->productCategoryOptions(),
+        );
     }
 
     /**
@@ -129,14 +168,20 @@ class ProductCopyGenerator
      */
     private function systemPrompt(Collection $categories): string
     {
-        $ids = $categories->pluck('id')->implode(', ');
+        $categoryJson = $categories
+            ->map(fn (Category $category) => [
+                'id' => (int) $category->id,
+                'path' => (string) ($category->path_label ?? $category->name),
+            ])
+            ->values()
+            ->toJson(JSON_UNESCAPED_UNICODE);
 
         return <<<TXT
 أنت مساعد إضافة منتجات لمتجر بقالة سعودي اسمه «روعة الخمسة».
 أرجع JSON فقط بهذا الشكل:
 {"description":"...","category_id":123,"price":12.5,"stock":20,"piece_count":null,"weight_label":"","quantity_label":"","benefits":["..."],"keywords":["..."],"usage_instructions":"..."}
 - description: وصف عربي قصير من سطرين إلى ثلاثة، بدون مبالغة.
-- category_id: رقم تصنيف من القائمة فقط. الأرقام المتاحة: {$ids}. اختر أدق تصنيف فرعي.
+- category_id: رقم تصنيف من القائمة فقط. اختر أدق تصنيف فرعي.
 - price: سعر تجزئة تقريبي بالريال السعودي للمنتج في السوق السعودي، رقم فقط بدون عملة.
 - stock: كمية مخزون ابتدائية معقولة بين 10 و 80.
 - piece_count: عدد الحبات إن وُجد في الاسم، وإلا null.
@@ -146,6 +191,7 @@ class ProductCopyGenerator
 - keywords: من 6 إلى 12 كلمة أو عبارة بحث عربية شائعة.
 - usage_instructions: طريقة استخدام عملية من سطرين إلى أربعة أسطر.
 اكتب بأسلوب بسيط يناسب العميل، ولا تختلق ادعاءات طبية أو ضمانات مبالغ فيها.
+التصنيفات المتاحة (JSON): {$categoryJson}
 TXT;
     }
 

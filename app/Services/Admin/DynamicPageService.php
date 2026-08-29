@@ -4,7 +4,6 @@ namespace App\Services\Admin;
 
 use App\Enums\DynamicPagePlacement;
 use App\Models\DynamicPage;
-use App\Models\Product;
 use App\Support\Constants;
 use App\Support\Media;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
@@ -23,13 +22,6 @@ class DynamicPageService
             ->latest('id')
             ->paginate(Constants::DEFAULT_PAGE_SIZE)
             ->withQueryString();
-    }
-
-    public function productOptions(): Collection
-    {
-        return Product::query()
-            ->orderBy('name')
-            ->get(['id', 'name', 'price', 'discount_price']);
     }
 
     public function options(): Collection

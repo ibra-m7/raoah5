@@ -50,6 +50,12 @@ class ProductRequest extends FormRequest
                 'exists:products,id',
                 Rule::notIn([(int) optional($this->route('product'))->id]),
             ],
+            'gift_product_id' => [
+                'nullable',
+                'integer',
+                'exists:products,id',
+                Rule::notIn([(int) optional($this->route('product'))->id]),
+            ],
         ];
     }
 
@@ -76,6 +82,7 @@ class ProductRequest extends FormRequest
             'usage_instructions' => 'طريقة الاستخدام',
             'complementary_product_ids' => 'يُشترى معه',
             'complementary_product_ids.*' => 'منتج يُشترى معه',
+            'gift_product_id' => 'منتج الهدية',
         ];
     }
 
@@ -88,6 +95,10 @@ class ProductRequest extends FormRequest
             'sku' => $this->input('sku') ?: null,
             'barcode' => $this->normalizedBarcode($this->input('barcode')),
             'image_url' => $this->input('image_url') ?: null,
+            'gift_product_id' => $this->input('gift_product_id') ?: null,
+            'complementary_product_ids' => array_values(array_filter(
+                (array) $this->input('complementary_product_ids', []),
+            )),
             'piece_count' => $this->filled('piece_count') ? $this->input('piece_count') : null,
             'weight_label' => $this->input('weight_label') ?: null,
             'quantity_label' => $this->input('quantity_label') ?: null,

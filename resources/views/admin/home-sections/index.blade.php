@@ -21,6 +21,7 @@
                         <tr>
                             <th>الاسم</th>
                             <th>شكل العرض</th>
+                            <th>لون الخلفية</th>
                             <th>المنتجات</th>
                             <th>{{ $strings::STATUS }}</th>
                             <th>{{ $strings::ACTIONS }}</th>
@@ -34,6 +35,20 @@
                                     <div class="text-muted small">{{ $section->subtitle }}</div>
                                 </td>
                                 <td>{{ $section->styleLabel() }}</td>
+                                <td>
+                                    @if ($section->background_color)
+                                        <span class="d-inline-flex align-items-center gap-2">
+                                            <span
+                                                class="d-inline-block rounded border"
+                                                style="width: 1.25rem; height: 1.25rem; background: {{ $section->background_color }};"
+                                                title="{{ $section->background_color }}"
+                                            ></span>
+                                            <span class="text-muted small">{{ $section->background_color }}</span>
+                                        </span>
+                                    @else
+                                        <span class="badge badge-soft">افتراضي</span>
+                                    @endif
+                                </td>
                                 <td>{{ $section->products_count }}</td>
                                 <td>
                                     <span class="badge badge-soft">{{ $section->is_active ? $strings::LIVE_IN_APP : $strings::INACTIVE }}</span>

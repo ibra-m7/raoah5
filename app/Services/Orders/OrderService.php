@@ -162,6 +162,8 @@ class OrderService
                     'unit_price' => $line['unit_price'],
                     'quantity' => $line['quantity'],
                     'line_total' => $line['line_total'],
+                    'is_gift' => (bool) ($line['is_gift'] ?? false),
+                    'gift_for_product_id' => $line['gift_for_product_id'] ?? null,
                 ]);
                 $product->decrement('stock', $line['quantity']);
             }
@@ -248,6 +250,8 @@ class OrderService
                     'unit_price' => $line['unit_price'],
                     'quantity' => $line['quantity'],
                     'line_total' => $line['line_total'],
+                    'is_gift' => (bool) ($line['is_gift'] ?? false),
+                    'gift_for_product_id' => $line['gift_for_product_id'] ?? null,
                 ]);
                 $product->decrement('stock', $line['quantity']);
             }
@@ -544,7 +548,7 @@ class OrderService
     /**
      * @param  list<array{product_id: mixed, quantity: mixed}>  $rawItems
      * @param  list<int>  $allowInactiveIds
-     * @return Collection<int, array{product: Product, quantity: int, unit_price: float, line_total: float}>
+     * @return Collection<int, array{product: Product, quantity: int, unit_price: float, line_total: float, is_gift?: bool}>
      */
     public function buildLines(array $rawItems, array $allowInactiveIds = []): Collection
     {
@@ -600,15 +604,77 @@ class OrderService
                 'quantity' => $qty,
                 'unit_price' => $unit,
                 'line_total' => $lineTotal,
+                'is_gift' => false,
             ]);
         }
 
-        return $lines;
+        return $this->appendGiftLines($lines);
+    }
+
+    /**
+     * @param  Collection<int, array{product: Product, quantity: int, unit_price: float, line_total: float, is_gift?: bool, gift_for_product_id?: int|null}>  $lines
+     * @return Collection<int, array{product: Product, quantity: int, unit_price: float, line_total: float, is_gift?: bool, gift_for_product_id?: int|null}>
+     */
+    private function appendGiftLines(Collection $lines): Collection
+    {
+        $paidLines = $lines->filter(fn (array $line) => ! ($line['is_gift'] ?? false));
+        if ($paidLines->isEmpty()) {
+            return $lines;
+        }
+
+        $parents = Product::query()
+            ->with([
+                'giftProducts' => fn ($query) => $query
+                    ->active()
+                    ->where('stock', '>', 0)
+                    ->with('primaryImage'),
+            ])
+            ->whereIn('id', $paidLines->pluck('product')->map(fn (Product $product) => $product->id))
+            ->get()
+            ->keyBy('id');
+
+        $giftLines = collect();
+        $giftStockUsed = [];
+
+        foreach ($paidLines as $line) {
+            /** @var Product $parent */
+            $parent = $line['product'];
+            $parentModel = $parents->get($parent->id);
+            if ($parentModel === null) {
+                continue;
+            }
+
+            $gift = $parentModel->giftProducts->first();
+            if ($gift === null) {
+                continue;
+            }
+
+            $giftId = (int) $gift->id;
+            $used = $giftStockUsed[$giftId] ?? 0;
+            $available = max(0, (int) $gift->stock - $used);
+            $qty = min((int) $line['quantity'], $available);
+            if ($qty < 1) {
+                continue;
+            }
+
+            $giftStockUsed[$giftId] = $used + $qty;
+
+            $giftLines->push([
+                'product' => $gift,
+                'quantity' => $qty,
+                'unit_price' => 0.0,
+                'line_total' => 0.0,
+                'is_gift' => true,
+                'gift_for_product_id' => (int) $parent->id,
+            ]);
+        }
+
+        return $lines->concat($giftLines->values());
     }
 
     /**
      * @param  array<string, mixed>  $payload
-     * @param  Collection<int, array{product: Product, quantity: int, unit_price: float, line_total: float}>  $lines
+     * @param  Collection<int, array{product: Product, quantity: int, unit_price: float, line_total: float, is_gift?: bool}>  $lines
      * @return Collection<int, CouponQuote>
      */
     private function resolveCouponQuotes(User $user, array $payload, Collection $lines): Collection

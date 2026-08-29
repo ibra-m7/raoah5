@@ -26,7 +26,15 @@ class CatalogService
 {
     public function productRelations(): array
     {
-        return ['images', 'primaryImage', 'category'];
+        return [
+            'images',
+            'primaryImage',
+            'category',
+            'giftProducts' => fn ($query) => $query
+                ->active()
+                ->where('stock', '>', 0)
+                ->with(['primaryImage']),
+        ];
     }
 
     public function storefront(?User $user = null): array
@@ -37,6 +45,7 @@ class CatalogService
 
         $products = Product::query()
             ->active()
+            ->sellable()
             ->with($relations)
             ->orderBy('sort_order')
             ->orderByDesc('review_count')
@@ -94,6 +103,7 @@ class CatalogService
 
         return Product::query()
             ->active()
+            ->sellable()
             ->with($this->productRelations())
             ->forCategory($filters['category_id'] ?? null)
             ->search($filters['q'] ?? $filters['search'] ?? null)
@@ -114,6 +124,7 @@ class CatalogService
 
         return Product::query()
             ->active()
+            ->sellable()
             ->with([
                 ...$relations,
                 'productRelations',
@@ -190,6 +201,7 @@ class CatalogService
         $allIds = $this->descendantCategoryIds($rootIds);
         $counts = Product::query()
             ->active()
+            ->sellable()
             ->whereIn('category_id', $allIds)
             ->selectRaw('category_id, COUNT(*) as aggregate')
             ->groupBy('category_id')

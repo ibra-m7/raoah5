@@ -5,7 +5,7 @@
         <div class="col-lg-7">
             <div class="page-card p-4 p-md-5">
                 <x-admin.help-note>
-                    نزّل القالب (50 منتجاً، باركود من 1 إلى 50). سمِّ كل صورة برقم الباركود مثل 3.png وضعها في ZIP ثم ارفع الملفين معاً.
+                    نزّل القالب ({{ $templateImageCount }} منتجاً بقالة، باركود من 1 إلى {{ $templateImageCount }}). سمِّ كل صورة برقم الباركود مثل 3.jpg وضعها في ZIP ثم ارفع الملفين معاً. الأقسام الجديدة تُنشأ تلقائياً.
                 </x-admin.help-note>
 
                 <a href="{{ route('admin.products.import.template') }}" class="btn btn-brand mb-4">
@@ -65,7 +65,7 @@
                     </table>
                 </div>
                 @if ($categories->isEmpty())
-                    <div class="text-danger small mt-2">أضف قسماً واحداً على الأقل قبل الاستيراد.</div>
+                    <div class="text-muted small mt-2">لا توجد أقسام بعد — سيُنشئ الاستيراد الأقسام تلقائياً تحت «المقاضي».</div>
                 @endif
             </div>
         </div>

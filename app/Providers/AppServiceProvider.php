@@ -41,6 +41,10 @@ class AppServiceProvider extends ServiceProvider
             return Limit::perMinute(20)->by($request->ip());
         });
 
+        RateLimiter::for('admin-ai-copy', function (Request $request) {
+            return Limit::perMinute(10)->by($request->user()?->id ?: $request->ip());
+        });
+
         Paginator::useBootstrapFive();
 
         View::share('theme', Theme::class);

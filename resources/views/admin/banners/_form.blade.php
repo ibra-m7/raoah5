@@ -9,6 +9,7 @@
     $categoryId = old('link_category_id', $banner->link_type === BannerLinkType::Category ? $banner->link_id : null);
     $pageId = old('link_page_id', $banner->link_type === BannerLinkType::Page ? $banner->link_id : null);
     $pages = $pages ?? collect();
+    $selectedProduct = $selectedProduct ?? collect();
 @endphp
 
 <div class="mb-3">
@@ -57,13 +58,15 @@
 <div data-link-panel="product" @if($linkType !== BannerLinkType::Product->value) hidden @endif>
     <div class="mb-3">
         <label class="form-label">المنتج</label>
-        <select name="link_product_id" class="form-select @error('link_id') is-invalid @enderror">
-            <option value="">اختر منتجاً</option>
-            @foreach ($products as $product)
-                <option value="{{ $product->id }}" @selected((string) $productId === (string) $product->id)>{{ $product->name }}</option>
-            @endforeach
-        </select>
-        @error('link_id') <div class="invalid-feedback">{{ $message }}</div> @enderror
+        <x-admin.product-picker
+            name="link_product_id"
+            :selected="$selectedProduct"
+            :multiple="false"
+            :allow-empty="true"
+            empty-label="اختر منتجاً"
+            hint="ابحث واختر منتجاً واحداً."
+        />
+        @error('link_id') <div class="invalid-feedback d-block">{{ $message }}</div> @enderror
     </div>
 </div>
 

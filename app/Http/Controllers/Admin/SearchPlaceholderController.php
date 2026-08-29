@@ -5,9 +5,14 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\SearchPlaceholderRequest;
 use App\Models\SearchPlaceholder;
+use App\Models\SearchSmartSuggestion;
+use App\Models\SearchTrendingPin;
 use App\Models\User;
+use App\Services\Admin\SearchDiscoveryService;
 use App\Services\Admin\SearchLogService;
 use App\Services\Admin\SearchPlaceholderService;
+use App\Services\Admin\SearchSmartSuggestionService;
+use App\Services\Admin\SearchTrendingPinService;
 use App\Support\AppStrings;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -18,12 +23,15 @@ class SearchPlaceholderController extends Controller
     public function __construct(
         private readonly SearchPlaceholderService $placeholders,
         private readonly SearchLogService $logs,
+        private readonly SearchSmartSuggestionService $smartSuggestions,
+        private readonly SearchTrendingPinService $trendingPins,
+        private readonly SearchDiscoveryService $discovery,
     ) {}
 
     public function index(Request $request): View
     {
         $tab = $request->string('tab')->toString();
-        if (! in_array($tab, ['phrases', 'customers', 'queries'], true)) {
+        if (! in_array($tab, ['phrases', 'smart', 'trending', 'customers', 'queries'], true)) {
             $tab = 'phrases';
         }
 
@@ -37,6 +45,9 @@ class SearchPlaceholderController extends Controller
         $customerRows = collect();
         $queries = null;
         $productsById = collect();
+        $smartItems = null;
+        $trendingPins = null;
+        $autoTrending = collect();
 
         if ($tab === 'customers') {
             $customers = $this->logs->paginateCustomers($filters);
@@ -76,8 +87,21 @@ class SearchPlaceholderController extends Controller
             $productsById = $this->logs->productsForQueryRows($queries->getCollection());
         }
 
+        if ($tab === 'smart') {
+            $smartItems = $this->smartSuggestions->paginate($filters);
+        }
+
+        if ($tab === 'trending') {
+            $trendingPins = $this->trendingPins->paginate($filters);
+            $autoTrending = $this->discovery->topQueriesFromLogs(12);
+        }
+
         $openPhraseModal = $request->boolean('open_phrase')
             || ($request->session()->hasOldInput() && old('form') === 'phrase');
+        $openSmartModal = $request->boolean('open_smart')
+            || ($request->session()->hasOldInput() && old('form') === 'smart');
+        $openTrendingModal = $request->boolean('open_trending')
+            || ($request->session()->hasOldInput() && old('form') === 'trending');
 
         return view('admin.search-placeholders.index', [
             'title' => AppStrings::NAV_SEARCH_PAGE,
@@ -93,8 +117,15 @@ class SearchPlaceholderController extends Controller
             'guestCount' => $guestCount,
             'queries' => $queries,
             'productsById' => $productsById,
+            'smartItems' => $smartItems,
+            'trendingPins' => $trendingPins,
+            'autoTrending' => $autoTrending,
             'openPhraseModal' => $openPhraseModal,
+            'openSmartModal' => $openSmartModal,
+            'openTrendingModal' => $openTrendingModal,
             'modalPlaceholder' => $this->modalPlaceholder(),
+            'modalSmart' => $this->modalSmart(),
+            'modalTrending' => $this->modalTrending(),
         ]);
     }
 
@@ -137,6 +168,36 @@ class SearchPlaceholderController extends Controller
         }
 
         return new SearchPlaceholder([
+            'is_active' => true,
+            'sort_order' => 0,
+        ]);
+    }
+
+    private function modalSmart(): SearchSmartSuggestion
+    {
+        if (old('form') === 'smart' && old('editing_id')) {
+            $existing = SearchSmartSuggestion::query()->find(old('editing_id'));
+            if ($existing) {
+                return $existing;
+            }
+        }
+
+        return new SearchSmartSuggestion([
+            'is_active' => true,
+            'sort_order' => 0,
+        ]);
+    }
+
+    private function modalTrending(): SearchTrendingPin
+    {
+        if (old('form') === 'trending' && old('editing_id')) {
+            $existing = SearchTrendingPin::query()->find(old('editing_id'));
+            if ($existing) {
+                return $existing;
+            }
+        }
+
+        return new SearchTrendingPin([
             'is_active' => true,
             'sort_order' => 0,
         ]);

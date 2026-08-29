@@ -57,3 +57,13 @@ If you discover a security vulnerability within Laravel, please send an e-mail t
 ## License
 
 The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+
+## Queue worker (توليد محتوى المنتجات)
+
+توليد محتوى المنتجات يعمل في الخلفية عبر Laravel Queue. شغّل عامل الطوابير في طرفية منفصلة:
+
+```bash
+php artisan queue:work --queue=default --sleep=3 --tries=2
+```
+
+التفاصيل: [docs/queue-worker.md](docs/queue-worker.md)
