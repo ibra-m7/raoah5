@@ -5,6 +5,9 @@
 
     RewriteEngine On
 
+    # Uploaded files: serve through Laravel (avoids Apache symlink 500 on Render).
+    RewriteRule ^storage/ index.php [L]
+
     # Handle Authorization Header
     RewriteCond %{HTTP:Authorization} .
     RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
