@@ -32,7 +32,7 @@ class ProductRequest extends FormRequest
             'weight_label' => ['nullable', 'string', 'max:80'],
             'quantity_label' => ['nullable', 'string', 'max:120'],
             'image' => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp,gif', 'max:4096'],
-            'image_url' => ['nullable', 'url', 'max:2048'],
+            'image_url' => ['nullable', 'string', 'max:2048'],
             'gallery' => ['nullable', 'array'],
             'gallery.*' => ['file', 'mimes:jpg,jpeg,png,webp,gif', 'max:4096'],
             'gallery_urls' => ['nullable', 'string', 'max:4000'],

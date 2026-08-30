@@ -445,14 +445,16 @@ class ProductService
         $data['is_active'] = (bool) ($data['is_active'] ?? false);
         $data['is_featured'] = (bool) ($data['is_featured'] ?? false);
         $data['is_gift'] = (bool) ($data['is_gift'] ?? false);
-        $discount = $data['discount_price'] ?? null;
-        $data['discount_price'] = $discount !== null && $discount !== '' && (float) $discount > 0
-            ? $discount
-            : null;
-        if ($data['discount_price'] === null) {
-            $data['promo_type'] = null;
-        } elseif (empty($data['promo_type'])) {
-            $data['promo_type'] = PromoType::Discount;
+        if (array_key_exists('discount_price', $data)) {
+            $discount = $data['discount_price'];
+            $data['discount_price'] = $discount !== null && $discount !== '' && (float) $discount > 0
+                ? $discount
+                : null;
+            if ($data['discount_price'] === null) {
+                $data['promo_type'] = null;
+            } elseif (empty($data['promo_type'])) {
+                $data['promo_type'] = PromoType::Discount;
+            }
         }
         $data['benefits'] = $this->lines($data['benefits'] ?? []);
         $data['keywords'] = $this->csv($data['keywords'] ?? []);

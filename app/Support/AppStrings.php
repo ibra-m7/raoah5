@@ -313,6 +313,8 @@ final class AppStrings
 
     public const DOWNLOAD_PRODUCT_TEMPLATE = 'تحميل قالب Excel';
 
+    public const EXPORT_PRODUCTS = 'تصدير المنتجات Excel';
+
     public const PRODUCT_IMPORT_SUCCESS = 'تم استيراد المنتجات.';
 
     public const SEARCH_PLACEHOLDER = 'ابحث عن منتج أو قسم أو طلب...';

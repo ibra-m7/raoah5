@@ -52,6 +52,7 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::get('products/import', [ProductController::class, 'importForm'])->name('products.import');
     Route::post('products/import', [ProductController::class, 'import'])->name('products.import.store');
     Route::get('products/import/template', [ProductController::class, 'template'])->name('products.import.template');
+    Route::get('products/export', [ProductController::class, 'export'])->name('products.export');
     Route::resource('products', ProductController::class)->except(['show']);
     Route::resource('categories', CategoryController::class)->except(['show']);
     Route::get('offers/available', [OfferController::class, 'available'])->name('offers.available');

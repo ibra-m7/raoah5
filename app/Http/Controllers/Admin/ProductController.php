@@ -9,6 +9,7 @@ use App\Http\Requests\Admin\ProductRequest;
 use App\Http\Requests\Admin\QuickGiftProductRequest;
 use App\Models\Product;
 use App\Services\Admin\ProductCopyBulkService;
+use App\Services\Admin\ProductExportService;
 use App\Services\Admin\ProductImportService;
 use App\Services\Admin\ProductService;
 use App\Services\Ai\ProductCopyGenerator;
@@ -26,6 +27,7 @@ class ProductController extends Controller
     public function __construct(
         private readonly ProductService $products,
         private readonly ProductImportService $importer,
+        private readonly ProductExportService $exporter,
         private readonly ProductCopyBulkService $copyBulk,
     ) {}
 
@@ -218,6 +220,18 @@ class ProductController extends Controller
         return response($xml, 200, [
             'Content-Type' => 'application/vnd.ms-excel; charset=UTF-8',
             'Content-Disposition' => 'attachment; filename="products-import-template.xls"; filename*=UTF-8\'\''.rawurlencode($filename),
+        ]);
+    }
+
+    public function export(Request $request): Response
+    {
+        $filters = $request->only(['q', 'status', 'category_id']);
+        $xml = $this->exporter->xml($filters);
+        $filename = $this->exporter->filename();
+
+        return response($xml, 200, [
+            'Content-Type' => 'application/vnd.ms-excel; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="products-export.xls"; filename*=UTF-8\'\''.rawurlencode($filename),
         ]);
     }
 

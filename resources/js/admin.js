@@ -104,9 +104,14 @@ document.addEventListener("keydown", (event) => {
 });
 
 const syncColorLabel = (input) => {
-    const label = document.querySelector(input.dataset.colorSync);
+    const label = input.dataset.colorSync ? document.querySelector(input.dataset.colorSync) : null;
     if (label) {
         label.textContent = input.value;
+    }
+
+    const preview = input.dataset.colorPreview ? document.querySelector(input.dataset.colorPreview) : null;
+    if (preview) {
+        preview.style.background = input.value;
     }
 };
 
@@ -2061,6 +2066,37 @@ const showGiftModalErrors = (form, payload) => {
     }
 };
 
+const applySelectedExistingGift = (modal) => {
+    const selectedRoot = modal?.querySelector("[data-gift-existing-picker] [data-product-lookup]");
+    const targetRoot = document.querySelector("[data-gift-product-picker] [data-product-lookup]");
+    const selectedChip = selectedRoot?.querySelector("[data-product-lookup-selected] [data-id]");
+    const selectedNode = selectedChip instanceof HTMLElement ? selectedChip.cloneNode(true) : null;
+    const alert = modal?.querySelector("[data-gift-form-error]");
+
+    if (!(selectedNode instanceof HTMLElement) || !(targetRoot instanceof HTMLElement)) {
+        if (alert) {
+            alert.hidden = false;
+            alert.textContent = "اختر منتجاً موجوداً أولاً ليتم استخدامه كهدية.";
+        }
+        return;
+    }
+
+    const selectedBox = targetRoot.querySelector("[data-product-lookup-selected]");
+    if (selectedBox) {
+        selectedBox.replaceChildren();
+        selectedBox.append(selectedNode);
+        lookupEmptyState(targetRoot);
+    }
+
+    if (alert) {
+        alert.hidden = true;
+        alert.textContent = "";
+    }
+
+    window.bootstrap.Modal.getOrCreateInstance(modal).hide();
+    resetGiftModal(modal);
+};
+
 const bindGiftProductModal = () => {
     const modal = document.getElementById("giftProductModal");
     const form = modal?.querySelector("#giftProductForm");
@@ -2072,6 +2108,10 @@ const bindGiftProductModal = () => {
     modal.addEventListener("show.bs.modal", () => {
         resetGiftModal(modal);
         bindProductLookups();
+    });
+
+    form.querySelector("[data-gift-use-existing]")?.addEventListener("click", () => {
+        applySelectedExistingGift(modal);
     });
 
     form.addEventListener("submit", async (event) => {

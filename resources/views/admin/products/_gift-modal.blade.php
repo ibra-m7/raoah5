@@ -55,6 +55,28 @@
                         <div class="invalid-feedback d-block" data-gift-error="image"></div>
                     </div>
 
+                    <div class="gift-modal-section border-top pt-3 mt-3">
+                        <label class="form-label">أو اختر منتجاً موجوداً كهدية</label>
+                        <div class="form-hint mb-2">اختر منتجاً من منتجاتك الحالية ليكون هدية لهذا المنتج مباشرة.</div>
+                        <div data-gift-existing-picker>
+                            <x-admin.product-picker
+                                name="existing_gift_product_id"
+                                :selected="[]"
+                                :multiple="false"
+                                :except="$currentProductId > 0 ? $currentProductId : null"
+                                :embedded="true"
+                                :allow-empty="true"
+                                empty-label="لم تُحدَّد هدية بعد"
+                                placeholder="ابحث عن منتج موجود..."
+                                hint=""
+                            />
+                        </div>
+                        <button type="button" class="btn btn-outline-primary rounded-pill mt-2" data-gift-use-existing>
+                            <i class="bi bi-check2-circle ms-1"></i>
+                            استخدام المنتج المختار كهدية
+                        </button>
+                    </div>
+
                     <div class="gift-modal-section mb-0">
                         <label class="form-label">منتجات رئيسية إضافية (اختياري)</label>
                         <div class="form-hint mb-2">اختر منتجات موجودة يُضاف معها هذا الهدية مجاناً.</div>

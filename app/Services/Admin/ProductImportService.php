@@ -39,7 +39,6 @@ class ProductImportService
             ['key' => 'stock', 'header' => 'المخزون', 'required' => true, 'hint' => 'الكمية المتوفرة', 'example' => '50'],
             ['key' => 'barcode', 'header' => 'الباركود', 'required' => false, 'hint' => 'رقم يطابق اسم الصورة في ZIP مثل 3.png للمنتج ذي الباركود 3', 'example' => '1'],
             ['key' => 'sku', 'header' => 'رمز المنتج', 'required' => false, 'hint' => 'اختياري. إن وُجد منتج بنفس الرمز يُحدَّث بدل إنشائه', 'example' => 'SKU-001'],
-            ['key' => 'discount_price', 'header' => 'سعر العرض', 'required' => false, 'hint' => 'أقل من السعر الأصلي ليظهر في العروض', 'example' => ''],
             ['key' => 'description', 'header' => 'الوصف', 'required' => false, 'hint' => 'وصف قصير للمنتج', 'example' => ''],
             ['key' => 'image_url', 'header' => 'رابط الصورة', 'required' => false, 'hint' => 'رابط مباشر إن لم تستخدم ZIP', 'example' => ''],
             ['key' => 'benefits', 'header' => 'الفوائد', 'required' => false, 'hint' => 'افصل كل فائدة بـ |', 'example' => ''],
@@ -141,9 +140,9 @@ class ProductImportService
                 ],
             ],
             [
-                'Required' => '<Alignment ss:Horizontal="Center" ss:WrapText="1"/><Font ss:Bold="1" ss:Color="#9B1C1C" ss:Size="11"/><Interior ss:Color="#FDECEC" ss:Pattern="Solid"/>',
-                'Optional' => '<Alignment ss:Horizontal="Center" ss:WrapText="1"/><Font ss:Bold="1" ss:Color="#166534" ss:Size="11"/><Interior ss:Color="#E8F8EC" ss:Pattern="Solid"/>',
-                'Title' => '<Font ss:Bold="1" ss:Size="14" ss:Color="#166534"/>',
+                'Required' => '<Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:ReadingOrder="RightToLeft" ss:WrapText="1"/><Font ss:Bold="1" ss:Color="#9B1C1C" ss:Size="11"/><Interior ss:Color="#FDECEC" ss:Pattern="Solid"/>',
+                'Optional' => '<Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:ReadingOrder="RightToLeft" ss:WrapText="1"/><Font ss:Bold="1" ss:Color="#166534" ss:Size="11"/><Interior ss:Color="#E8F8EC" ss:Pattern="Solid"/>',
+                'Title' => '<Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:ReadingOrder="RightToLeft" ss:WrapText="1"/><Font ss:Bold="1" ss:Size="14" ss:Color="#166534"/>',
             ],
         );
     }
@@ -405,14 +404,6 @@ class ProductImportService
         $category = $this->findOrCreateCategory($categoryName);
 
         $priceNum = (float) str_replace(',', '.', $price);
-        $discount = $get('discount_price');
-        $discountNum = $discount === '' ? null : (float) str_replace(',', '.', $discount);
-        if ($discountNum !== null && $discountNum <= 0) {
-            $discountNum = null;
-        }
-        if ($discountNum !== null && $discountNum >= $priceNum) {
-            throw new RuntimeException('سعر العرض يجب أن يكون أقل من السعر الأصلي.');
-        }
 
         $imageUrl = $get('image_url');
         if ($imageUrl !== '' && ! filter_var($imageUrl, FILTER_VALIDATE_URL)) {
@@ -429,7 +420,6 @@ class ProductImportService
             'category_id' => $category->id,
             'description' => $get('description') ?: null,
             'price' => $priceNum,
-            'discount_price' => $discountNum,
             'stock' => (int) $stock,
             'image_url' => $imageUrl !== '' ? $imageUrl : null,
             'benefits' => str_replace('|', "\n", $get('benefits')),

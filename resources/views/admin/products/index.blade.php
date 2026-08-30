@@ -13,6 +13,10 @@
             <i class="bi bi-file-earmark-excel ms-1"></i>
             {{ $strings::IMPORT_PRODUCTS }}
         </a>
+        <a href="{{ route('admin.products.export', request()->only(['q', 'status', 'category_id'])) }}" class="btn btn-outline-success rounded-pill">
+            <i class="bi bi-download ms-1"></i>
+            {{ $strings::EXPORT_PRODUCTS }}
+        </a>
         <form method="POST" action="{{ route('admin.products.generate-all-copy') }}" class="d-inline" data-product-copy-bulk-form>
             @csrf
             <button

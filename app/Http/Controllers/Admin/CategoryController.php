@@ -136,6 +136,7 @@ class CategoryController extends Controller
         $data = $request->validated();
         $data['icon'] = $request->file('icon');
         $data['image'] = $request->file('image');
+        $data['background_image'] = $request->file('background_image');
 
         return $data;
     }

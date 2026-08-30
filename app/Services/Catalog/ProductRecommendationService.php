@@ -45,12 +45,6 @@ class ProductRecommendationService
                 $manualIds,
             );
 
-        $bought = $this->applyCachedRank(
-            'bought_together',
-            ['product_id' => $product->id],
-            $this->engine->boughtTogether($product, 12)
-        )->reject(fn (Product $item) => in_array((int) $item->id, $manualIds, true));
-
         $similar = $this->applyCachedRank(
             'similar',
             ['product_id' => $product->id],
@@ -58,7 +52,7 @@ class ProductRecommendationService
         );
 
         return [
-            'bought_together' => $this->resources($manual->concat($bought)->take(8)->values()),
+            'bought_together' => $this->resources($manual->take(8)->values()),
             'similar' => $this->resources($similar->take(8)),
             'suggested' => $this->resources($this->forYou(null, [(int) $product->id], 8)),
         ];

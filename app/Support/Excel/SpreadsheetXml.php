@@ -11,7 +11,7 @@ final class SpreadsheetXml
     {
         $xml = '<?xml version="1.0" encoding="UTF-8"?>'."\n";
         $xml .= '<?mso-application progid="Excel.Sheet"?>'."\n";
-        $xml .= '<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet" xmlns:html="http://www.w3.org/TR/REC-html40">';
+        $xml .= '<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet" xmlns:html="http://www.w3.org/TR/REC-html40">';
         $xml .= '<DocumentProperties xmlns="urn:schemas-microsoft-com:office:office"><Author>روعة الخمسة</Author></DocumentProperties>';
         $xml .= '<Styles>';
         $xml .= '<Style ss:ID="Default"><Alignment ss:Horizontal="Right" ss:ReadingOrder="RightToLeft" ss:WrapText="1"/><Font ss:FontName="Cairo" ss:Size="11"/></Style>';
@@ -21,7 +21,9 @@ final class SpreadsheetXml
         $xml .= '</Styles>';
 
         foreach ($sheets as $sheet) {
-            $xml .= '<Worksheet ss:Name="'.self::esc($sheet['name']).'">';
+            $rtl = $sheet['rtl'] ?? true;
+            $rtlAttr = $rtl ? ' ss:RightToLeft="1"' : '';
+            $xml .= '<Worksheet ss:Name="'.self::esc($sheet['name']).'"'.$rtlAttr.'>';
             $xml .= '<Table>';
             foreach ($sheet['widths'] ?? [] as $width) {
                 $xml .= '<Column ss:AutoFitWidth="0" ss:Width="'.$width.'"/>';
@@ -36,11 +38,14 @@ final class SpreadsheetXml
                 $xml .= '</Row>';
             }
             $xml .= '</Table>';
-            $xml .= '<WorksheetOptions xmlns="urn:schemas-microsoft-com:office:excel"><DisplayRightToLeft/>';
-            if (! empty($sheet['freeze'])) {
-                $xml .= '<FreezePanes/><FrozenNoSplit/><SplitHorizontal>1</SplitHorizontal><TopRowBottomPane>1</TopRowBottomPane><ActivePane>2</ActivePane>';
+            $xml .= '<x:WorksheetOptions>';
+            if ($rtl) {
+                $xml .= '<x:DisplayRightToLeft/>';
             }
-            $xml .= '</WorksheetOptions></Worksheet>';
+            if (! empty($sheet['freeze'])) {
+                $xml .= '<x:FreezePanes/><x:FrozenNoSplit/><x:SplitHorizontal>1</x:SplitHorizontal><x:TopRowBottomPane>1</x:TopRowBottomPane><x:ActivePane>2</x:ActivePane>';
+            }
+            $xml .= '</x:WorksheetOptions></Worksheet>';
         }
 
         $xml .= '</Workbook>';
