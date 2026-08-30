@@ -10,8 +10,12 @@ final class Media
 {
     public static function store(?UploadedFile $file, string $directory, ?string $oldPath = null): ?string
     {
-        if ($file === null || ! $file->isValid()) {
+        if ($file === null) {
             return $oldPath;
+        }
+
+        if (! $file->isValid()) {
+            throw new \RuntimeException('فشل رفع الصورة: '.$file->getErrorMessage());
         }
 
         self::delete($oldPath);
@@ -63,7 +67,12 @@ final class Media
             return;
         }
 
-        Storage::disk('public')->delete($path);
+        $local = self::localStoragePath($path);
+        if ($local === null) {
+            return;
+        }
+
+        Storage::disk('public')->delete($local);
     }
 
     public static function url(?string $path): ?string
@@ -72,11 +81,72 @@ final class Media
             return null;
         }
 
-        if (str_starts_with($path, 'http://') || str_starts_with($path, 'https://') || str_starts_with($path, 'data:')) {
+        if (str_starts_with($path, 'data:')) {
+            return $path;
+        }
+
+        $local = self::localStoragePath($path);
+        if ($local !== null) {
+            return self::absoluteUrl('storage/'.$local);
+        }
+
+        if (str_starts_with($path, 'http://') || str_starts_with($path, 'https://')) {
             return $path;
         }
 
         return self::absoluteUrl('storage/'.ltrim($path, '/'));
+    }
+
+    /**
+     * Normalize a stored path or self-hosted /storage/ URL to a relative public-disk path.
+     */
+    public static function normalizeStoredPath(?string $path): ?string
+    {
+        if ($path === null || $path === '') {
+            return null;
+        }
+
+        $local = self::localStoragePath($path);
+
+        return $local ?? $path;
+    }
+
+    /**
+     * Resolve a relative path or same-app /storage/ URL to the public disk path.
+     */
+    public static function localStoragePath(?string $path): ?string
+    {
+        if ($path === null || $path === '') {
+            return null;
+        }
+
+        if (str_starts_with($path, 'data:')) {
+            return null;
+        }
+
+        if (! str_starts_with($path, 'http://') && ! str_starts_with($path, 'https://')) {
+            $relative = ltrim(str_replace('\\', '/', $path), '/');
+
+            return ($relative !== '' && ! str_contains($relative, '..')) ? $relative : null;
+        }
+
+        $parsed = parse_url($path);
+        if (! is_array($parsed) || empty($parsed['path'])) {
+            return null;
+        }
+
+        if (! self::isSameAppHost($parsed['host'] ?? null)) {
+            return null;
+        }
+
+        $storagePath = ltrim($parsed['path'], '/');
+        if (! str_starts_with($storagePath, 'storage/')) {
+            return null;
+        }
+
+        $relative = ltrim(substr($storagePath, strlen('storage/')), '/');
+
+        return ($relative !== '' && ! str_contains($relative, '..')) ? $relative : null;
     }
 
     public static function absoluteUrl(string $path): string
@@ -101,20 +171,46 @@ final class Media
             return true;
         }
 
-        if (str_starts_with($path, 'http://') || str_starts_with($path, 'https://') || str_starts_with($path, 'data:')) {
+        if (str_starts_with($path, 'data:')) {
             return false;
         }
 
-        return ! Storage::disk('public')->exists($path);
+        $local = self::localStoragePath($path);
+        if ($local !== null) {
+            return ! Storage::disk('public')->exists($local);
+        }
+
+        if (str_starts_with($path, 'http://') || str_starts_with($path, 'https://')) {
+            return false;
+        }
+
+        return true;
     }
 
     private static function isStored(?string $path): bool
     {
-        return $path !== null
-            && $path !== ''
-            && ! str_starts_with($path, 'http://')
-            && ! str_starts_with($path, 'https://')
-            && ! str_starts_with($path, 'data:')
-            && Storage::disk('public')->exists($path);
+        $local = self::localStoragePath($path);
+
+        return $local !== null && Storage::disk('public')->exists($local);
+    }
+
+    private static function isSameAppHost(?string $host): bool
+    {
+        if ($host === null || $host === '') {
+            return false;
+        }
+
+        $appHost = parse_url((string) config('app.url'), PHP_URL_HOST);
+        if (is_string($appHost) && $appHost !== '' && strcasecmp($appHost, $host) === 0) {
+            return true;
+        }
+
+        if (! app()->runningInConsole()) {
+            $requestHost = parse_url((string) request()->getSchemeAndHttpHost(), PHP_URL_HOST);
+
+            return is_string($requestHost) && $requestHost !== '' && strcasecmp($requestHost, $host) === 0;
+        }
+
+        return false;
     }
 }

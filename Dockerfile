@@ -253,6 +253,13 @@ RUN { \
     echo "opcache.validate_timestamps=0"; \
 } > /usr/local/etc/php/conf.d/opcache.ini
 
+RUN { \
+    echo "upload_max_filesize=64M"; \
+    echo "post_max_size=70M"; \
+    echo "max_file_uploads=50"; \
+    echo "memory_limit=256M"; \
+} > /usr/local/etc/php/conf.d/uploads.ini
+
 
 # =========================================================
 # 12. Laravel Production Environment
@@ -270,10 +277,12 @@ EXPOSE 80
 # =========================================================
 # 14. Start Laravel + Apache
 # =========================================================
-CMD php artisan storage:link --force && \
-    php artisan migrate --force && \
-    php artisan config:clear && \
-    php artisan config:cache && \
-    php artisan route:cache && \
-    php artisan view:cache && \
-    apache2-foreground
+CMD mkdir -p storage/app/public/products \
+    && chown -R www-data:www-data storage/app/public \
+    && php artisan storage:link --force \
+    && php artisan migrate --force \
+    && php artisan config:clear \
+    && php artisan config:cache \
+    && php artisan route:cache \
+    && php artisan view:cache \
+    && apache2-foreground

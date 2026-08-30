@@ -15,7 +15,11 @@ class ProductImportRequest extends FormRequest
     {
         return [
             'file' => ['required', 'file', 'max:10240'],
-            'images_zip' => ['nullable', 'file', 'max:51200'],
+            'images_zip' => [
+                app()->environment('production') ? 'required' : 'nullable',
+                'file',
+                'max:51200',
+            ],
         ];
     }
 

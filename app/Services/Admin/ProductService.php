@@ -485,10 +485,13 @@ class ProductService
 
     private function syncPrimaryImage(Product $product, mixed $file, ?string $fallbackUrl): void
     {
-        $url = Media::store($file, 'products', $product->primaryImage?->url) ?: $fallbackUrl;
+        $oldPath = Media::localStoragePath($product->primaryImage?->url);
+        $url = Media::store($file, 'products', $oldPath) ?: Media::normalizeStoredPath($fallbackUrl);
         if (! $url) {
             return;
         }
+
+        $url = Media::normalizeStoredPath($url) ?? $url;
 
         $primary = $product->primaryImage;
         if ($primary) {
@@ -555,8 +558,14 @@ class ProductService
         }
 
         foreach (preg_split('/\r\n|\r|\n/', (string) $urlsText) ?: [] as $line) {
-            $url = trim($line);
-            if ($url === '' || ! filter_var($url, FILTER_VALIDATE_URL)) {
+            $url = Media::normalizeStoredPath(trim($line));
+            if ($url === null || $url === '') {
+                continue;
+            }
+            if (
+                ! Media::localStoragePath($url)
+                && ! filter_var($url, FILTER_VALIDATE_URL)
+            ) {
                 continue;
             }
             $product->images()->create([
