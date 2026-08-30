@@ -505,6 +505,17 @@ class ProductService
         ]);
     }
 
+    public function clearPrimaryImageIfMissingLocal(Product $product): void
+    {
+        $primary = $product->primaryImage;
+        if ($primary === null || ! Media::isMissingLocal($primary->url)) {
+            return;
+        }
+
+        Media::delete($primary->url);
+        $primary->delete();
+    }
+
     public function attachPrimaryImageFromPath(Product $product, string $absolutePath): void
     {
         $path = Media::storePath($absolutePath, 'products', $product->primaryImage?->url);

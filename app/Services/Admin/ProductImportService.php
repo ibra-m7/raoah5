@@ -213,6 +213,8 @@ class ProductImportService
                         $this->products->attachPrimaryImageFromPath($product, $imageMap[$barcodeKey]);
                         $usedBarcodes[$barcodeKey] = true;
                         $images++;
+                    } else {
+                        $this->products->clearPrimaryImageIfMissingLocal($product->fresh());
                     }
                 } catch (\Illuminate\Validation\ValidationException $e) {
                     $errors[] = 'الصف '.$line.': '.(collect($e->errors())->flatten()->first() ?: $e->getMessage());

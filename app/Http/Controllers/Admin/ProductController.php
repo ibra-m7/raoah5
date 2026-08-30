@@ -257,6 +257,10 @@ class ProductController extends Controller
             $message .= ' بعض الصفوف أو الصور لم تُستورد.';
         }
 
+        if (($result['images'] ?? 0) === 0 && ! $request->hasFile('images_zip')) {
+            $message .= ' لم تُرفَع صور ZIP — على Render يجب رفع Excel مع ZIP بعد كل نشر جديد وإلا تختفي الصور.';
+        }
+
         return redirect()
             ->route('admin.products.index')
             ->with('success', $message)

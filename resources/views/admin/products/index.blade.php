@@ -106,7 +106,10 @@
                     <tbody>
                         @foreach ($products as $product)
                             @php
-                                $image = \App\Support\Media::url($product->primaryImage?->url);
+                                $imagePath = $product->primaryImage?->url;
+                                $image = $imagePath && ! \App\Support\Media::isMissingLocal($imagePath)
+                                    ? \App\Support\Media::url($imagePath)
+                                    : null;
                                 $productDetail = [
                                     'title' => $product->name,
                                     'image' => $image,
