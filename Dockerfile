@@ -216,6 +216,15 @@ RUN sed -ri \
     /etc/apache2/apache2.conf \
     /etc/apache2/conf-available/*.conf
 
+RUN printf '%s\n' \
+    '<Directory /var/www/html/public>' \
+    '    Options FollowSymLinks' \
+    '    AllowOverride All' \
+    '    Require all granted' \
+    '</Directory>' \
+    > /etc/apache2/conf-available/laravel-public.conf \
+    && a2enconf laravel-public
+
 
 # =========================================================
 # 10. Laravel Storage + Cache Permissions
