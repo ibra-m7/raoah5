@@ -39,6 +39,8 @@ final class Constants
 
     public const SETTING_DELIVERY_FALLBACK_FEE = 'delivery_fallback_fee';
 
+    public const SETTING_PICKUP_ENABLED = 'pickup_enabled';
+
     public const SETTING_STORE_NAME = 'store_name';
 
     public const SETTING_CURRENCY = 'currency';

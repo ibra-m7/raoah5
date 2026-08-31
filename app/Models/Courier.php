@@ -19,6 +19,8 @@ class Courier extends Authenticatable
         'password',
         'is_active',
         'is_online',
+        'handles_delivery',
+        'handles_pickup',
     ];
 
     protected $hidden = [
@@ -32,6 +34,8 @@ class Courier extends Authenticatable
             'password' => 'hashed',
             'is_active' => 'boolean',
             'is_online' => 'boolean',
+            'handles_delivery' => 'boolean',
+            'handles_pickup' => 'boolean',
         ];
     }
 
@@ -58,5 +62,14 @@ class Courier extends Authenticatable
     public function canReceiveOrders(): bool
     {
         return $this->is_active && $this->is_online;
+    }
+
+    public function handlesOrderMethod(string $orderMethod): bool
+    {
+        return match ($orderMethod) {
+            'pickup' => $this->handles_pickup,
+            'delivery' => $this->handles_delivery,
+            default => $this->handles_delivery,
+        };
     }
 }

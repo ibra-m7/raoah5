@@ -2,6 +2,7 @@
 
 namespace App\Services\Orders;
 
+use App\Enums\OrderMethod;
 use App\Enums\OrderStatus;
 use App\Enums\PaymentMethod;
 use App\Enums\PaymentStatus;
@@ -15,6 +16,8 @@ use App\Services\Coupons\CouponService;
 use App\Services\Couriers\CourierLedgerService;
 use App\Services\Delivery\DeliveryService;
 use App\Services\Notifications\NotificationService;
+use App\Services\Pickup\PickupSlotService;
+use App\Support\DeliverySettings;
 use App\Support\StoreSettings;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
@@ -27,6 +30,7 @@ class OrderService
         private readonly CouponService $coupons,
         private readonly NotificationService $notifications,
         private readonly DeliveryService $delivery,
+        private readonly PickupSlotService $pickupSlots,
         private readonly AdminEventService $adminEvents,
         private readonly CourierLedgerService $ledger,
     ) {}
@@ -91,21 +95,40 @@ class OrderService
             $discount = round(min($subtotal, $quotes->sum(fn ($quote) => $quote->discount)), 2);
             $primaryQuote = $quotes->first();
 
-            $address = $this->resolveAddress($user, $payload['address_id'] ?? null);
-            if ($address === null) {
+            $orderMethod = ($payload['order_method'] ?? 'delivery') === 'pickup'
+                ? OrderMethod::Pickup
+                : OrderMethod::Delivery;
+
+            if ($orderMethod === OrderMethod::Pickup && ! DeliverySettings::pickupEnabled()) {
                 throw ValidationException::withMessages([
-                    'address_id' => 'أضف عنوان توصيل داخل السعودية قبل إتمام الطلب.',
+                    'order_method' => 'الاستلام من المركز غير متاح حالياً.',
                 ]);
             }
 
-            $delivery = $this->delivery->quote(
-                $user,
-                $address,
-                $subtotal,
-                $freeShippingFromCoupons,
-            );
-            $shipping = $delivery->fee;
-            $hasFree = $delivery->isFree;
+            $address = null;
+            $shipping = 0.0;
+            $hasFree = true;
+            $deliveryLabel = null;
+
+            if ($orderMethod === OrderMethod::Delivery) {
+                $address = $this->resolveAddress($user, $payload['address_id'] ?? null);
+                if ($address === null) {
+                    throw ValidationException::withMessages([
+                        'address_id' => 'أضف عنوان توصيل داخل السعودية قبل إتمام الطلب.',
+                    ]);
+                }
+
+                $delivery = $this->delivery->quote(
+                    $user,
+                    $address,
+                    $subtotal,
+                    $freeShippingFromCoupons,
+                );
+                $shipping = $delivery->fee;
+                $hasFree = $delivery->isFree;
+                $deliveryLabel = $delivery->label;
+            }
+
             $total = round(max(0, $subtotal - $discount + $shipping), 2);
 
             $methodSlug = (string) ($payload['payment_method'] ?? 'cash');
@@ -121,29 +144,59 @@ class OrderService
 
             $fulfillment = ($payload['fulfillment_type'] ?? 'now') === 'scheduled' ? 'scheduled' : 'now';
             $scheduledAt = $fulfillment === 'scheduled' ? ($payload['scheduled_at'] ?? null) : null;
-            $couponCode = $quotes->isEmpty
+
+            if ($fulfillment === 'scheduled' && $scheduledAt === null) {
+                throw ValidationException::withMessages([
+                    'scheduled_at' => 'اختر وقت تنفيذ الطلب.',
+                ]);
+            }
+
+            if ($orderMethod === OrderMethod::Pickup && $fulfillment === 'scheduled' && $scheduledAt !== null) {
+                if (! $this->pickupSlots->isValidScheduledAt($scheduledAt)) {
+                    throw ValidationException::withMessages([
+                        'scheduled_at' => 'وقت التجهيز المحدد غير متاح.',
+                    ]);
+                }
+            }
+
+            $couponCode = $quotes->isEmpty()
                 ? null
                 : $quotes->map(fn ($quote) => $quote->coupon->code)->implode(', ');
 
+            $storeAddress = DeliverySettings::storeAddress();
+
             $order = Order::query()->create([
                 'user_id' => $user->id,
-                'address_id' => $address->id,
+                'address_id' => $address?->id,
                 'order_number' => $this->nextNumber(),
                 'status' => OrderStatus::Pending,
+                'order_method' => $orderMethod,
                 'subtotal' => $subtotal,
                 'shipping_fee' => $shipping,
                 'total' => $total,
                 'has_free_shipping' => $hasFree,
-                'delivery_label' => $delivery->label,
+                'delivery_label' => $deliveryLabel,
                 'shipping_manual' => false,
                 'payment_method' => $methodSlug,
                 'payment_status' => PaymentStatus::Pending,
-                'shipping_name' => $payload['shipping_name'] ?? $address->recipient_name ?? $user->name,
-                'shipping_phone' => $payload['shipping_phone'] ?? $address->phone ?? $user->phone ?? '',
-                'shipping_city' => $payload['shipping_city'] ?? $address->city ?? 'السعودية',
-                'shipping_district' => $payload['shipping_district'] ?? $address->district,
-                'shipping_street' => $payload['shipping_street'] ?? $address->street,
-                'shipping_details' => $payload['shipping_details'] ?? $address->details,
+                'shipping_name' => $orderMethod === OrderMethod::Pickup
+                    ? ($user->name ?? 'عميل')
+                    : ($payload['shipping_name'] ?? $address->recipient_name ?? $user->name),
+                'shipping_phone' => $orderMethod === OrderMethod::Pickup
+                    ? ($user->phone ?? '')
+                    : ($payload['shipping_phone'] ?? $address->phone ?? $user->phone ?? ''),
+                'shipping_city' => $orderMethod === OrderMethod::Pickup
+                    ? 'استلام من المركز'
+                    : ($payload['shipping_city'] ?? $address->city ?? 'السعودية'),
+                'shipping_district' => $orderMethod === OrderMethod::Pickup
+                    ? null
+                    : ($payload['shipping_district'] ?? $address->district),
+                'shipping_street' => $orderMethod === OrderMethod::Pickup
+                    ? $storeAddress
+                    : ($payload['shipping_street'] ?? $address->street),
+                'shipping_details' => $orderMethod === OrderMethod::Pickup
+                    ? $storeAddress
+                    : ($payload['shipping_details'] ?? $address->details),
                 'notes' => $payload['notes'] ?? null,
                 'coupon_id' => $primaryQuote?->coupon->id,
                 'coupon_code' => $couponCode,
@@ -445,6 +498,13 @@ class OrderService
                 ]);
             }
 
+            $orderMethod = $locked->order_method?->value ?? OrderMethod::Delivery->value;
+            if (! $courier->handlesOrderMethod($orderMethod)) {
+                throw ValidationException::withMessages([
+                    'order' => 'هذا النوع من الطلبات غير مخصص لك.',
+                ]);
+            }
+
             $locked->update([
                 'courier_id' => $courier->id,
                 'status' => OrderStatus::Preparing,
@@ -473,11 +533,17 @@ class OrderService
 
         if ($order->status !== OrderStatus::Preparing) {
             throw ValidationException::withMessages([
-                'order' => 'استلم الطلب من المتجر بعد قبول التحضير.',
+                'order' => $order->isPickup()
+                    ? 'أكّد جاهزية الطلب للاستلام أولاً.'
+                    : 'استلم الطلب من المتجر بعد قبول التحضير.',
             ]);
         }
 
-        $updated = $this->updateStatus($order, OrderStatus::OnTheWay, null, 'استلم الموصل الطلب من المتجر');
+        $note = $order->isPickup()
+            ? 'الطلب جاهز لاستلام العميل من المركز'
+            : 'استلم الموصل الطلب من المتجر';
+
+        $updated = $this->updateStatus($order, OrderStatus::OnTheWay, null, $note);
         $this->adminEvents->courierPickedUp($updated, $courier);
 
         return $updated;
@@ -493,11 +559,17 @@ class OrderService
 
         if ($order->status !== OrderStatus::OnTheWay) {
             throw ValidationException::withMessages([
-                'order' => 'أكّد الاستلام من المتجر قبل تسليم الطلب.',
+                'order' => $order->isPickup()
+                    ? 'أكّد جاهزية الطلب قبل تسليمه للعميل.'
+                    : 'أكّد الاستلام من المتجر قبل تسليم الطلب.',
             ]);
         }
 
-        $updated = $this->updateStatus($order, OrderStatus::Delivered, null, 'أكد الموصل التسليم');
+        $note = $order->isPickup()
+            ? 'استلم العميل الطلب من المركز'
+            : 'أكد الموصل التسليم';
+
+        $updated = $this->updateStatus($order, OrderStatus::Delivered, null, $note);
         $this->adminEvents->courierDelivered($updated, $courier);
 
         return $updated;

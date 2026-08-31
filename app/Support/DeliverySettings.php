@@ -66,6 +66,11 @@ final class DeliverySettings
         return self::storeLat() !== null && self::storeLng() !== null;
     }
 
+    public static function pickupEnabled(): bool
+    {
+        return self::bool(Constants::SETTING_PICKUP_ENABLED, true);
+    }
+
     /**
      * @return array<string, mixed>
      */
@@ -83,6 +88,7 @@ final class DeliverySettings
             'store_address' => self::storeAddress(),
             'max_km' => self::maxKm(),
             'fallback_fee' => self::fallbackFee(),
+            'pickup_enabled' => self::pickupEnabled(),
             'rules' => self::activeRulesPayload(),
             'perks' => self::activePerksPayload(),
         ];

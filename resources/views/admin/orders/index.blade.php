@@ -58,7 +58,8 @@
                                         ['label' => 'الإجمالي', 'value' => number_format((float) $order->total, 2).' '.$strings::CURRENCY],
                                         ['label' => 'الملاحظات', 'value' => $order->notes],
                                         ['label' => 'الكوبون', 'value' => $order->coupon_code],
-                                        ['label' => 'وقت التنفيذ', 'value' => $order->fulfillment_type === 'scheduled'
+                                        ['label' => 'طريقة الاستلام', 'value' => $order->orderMethodLabel()],
+                                        ['label' => $order->isPickup() ? 'فترة التجهيز' : 'وقت التنفيذ', 'value' => $order->fulfillment_type === 'scheduled'
                                             ? 'مجدول'.($order->scheduled_at ? ' — '.$order->scheduled_at->format('Y-m-d H:i') : '')
                                             : 'الآن'],
                                         ['label' => 'التاريخ', 'value' => $order->created_at?->format('Y-m-d H:i')],
@@ -75,6 +76,7 @@
                                         <span class="entity-open-text">
                                             <strong>{{ $order->order_number }}</strong>
                                             <small>{{ $order->created_at?->format('Y-m-d H:i') }}</small>
+                                            <span class="badge {{ $order->isPickup() ? 'text-bg-info' : 'text-bg-secondary' }} mt-1">{{ $order->orderMethodLabel() }}</span>
                                         </span>
                                     </button>
                                 </td>

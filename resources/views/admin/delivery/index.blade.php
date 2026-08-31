@@ -3,12 +3,15 @@
     $openRuleModal = $errors->any() && old('form') === 'rule';
     $openPerkModal = $errors->any() && old('form') === 'perk';
     $openSlotModal = $errors->any() && old('form') === 'slot';
-    if ($errors->any() && in_array(old('active_tab'), ['policy', 'slots', 'rules', 'perks'], true)) {
+    $openPickupSlotModal = $errors->any() && old('form') === 'pickup_slot';
+    if ($errors->any() && in_array(old('active_tab'), ['policy', 'slots', 'pickup_slots', 'rules', 'perks'], true)) {
         $tab = old('active_tab');
     } elseif ($openRuleModal) {
         $tab = 'rules';
     } elseif ($openPerkModal) {
         $tab = 'perks';
+    } elseif ($openPickupSlotModal || ($errors->hasAny(['interval_minutes']) && old('form') === 'pickup_slot')) {
+        $tab = 'pickup_slots';
     } elseif ($openSlotModal || $errors->hasAny(['weekday', 'weekdays', 'weekdays.*', 'start_time', 'end_time'])) {
         $tab = 'slots';
     }
@@ -33,6 +36,12 @@
                 <button type="button" class="nav-link {{ $tab === 'slots' ? 'active' : '' }}" id="tab-slots" data-bs-toggle="tab" data-bs-target="#pane-slots" role="tab" aria-controls="pane-slots" aria-selected="{{ $tab === 'slots' ? 'true' : 'false' }}">
                     <i class="bi bi-clock-history"></i>
                     أوقات التوصيل
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button type="button" class="nav-link {{ $tab === 'pickup_slots' ? 'active' : '' }}" id="tab-pickup-slots" data-bs-toggle="tab" data-bs-target="#pane-pickup-slots" role="tab" aria-controls="pane-pickup-slots" aria-selected="{{ $tab === 'pickup_slots' ? 'true' : 'false' }}">
+                    <i class="bi bi-bag-check"></i>
+                    أوقات التجهيز
                 </button>
             </li>
             <li class="nav-item" role="presentation">
@@ -81,6 +90,12 @@
                             <div class="form-check">
                                 <input class="form-check-input" type="checkbox" name="delivery_notes_enabled" value="1" id="delivery_notes_enabled" @checked(old('delivery_notes_enabled', $settings['delivery_notes_enabled']))>
                                 <label class="form-check-label" for="delivery_notes_enabled">تفعيل ملاحظات التوصيل في التطبيق</label>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="pickup_enabled" value="1" id="pickup_enabled" @checked(old('pickup_enabled', $settings['pickup_enabled']))>
+                                <label class="form-check-label" for="pickup_enabled">تفعيل الاستلام من المركز في التطبيق</label>
                             </div>
                         </div>
                     </div>
@@ -262,6 +277,110 @@
                                                         data-is-active="{{ $slot->is_active ? '1' : '0' }}"
                                                     >{{ $strings::EDIT }}</button>
                                                     <form method="POST" action="{{ route('admin.delivery.slots.destroy', $slot) }}" onsubmit="return confirm('{{ $strings::CONFIRM_DELETE }}')">
+                                                        @csrf
+                                                        @method('DELETE')
+                                                        <button class="btn btn-sm btn-outline-danger rounded-pill">{{ $strings::DELETE }}</button>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                @endif
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+
+            <div class="tab-pane fade {{ $tab === 'pickup_slots' ? 'show active' : '' }}" id="pane-pickup-slots" role="tabpanel" aria-labelledby="tab-pickup-slots" tabindex="0">
+                <h2 class="settings-pane-title">أوقات التجهيز (استلام من المركز)</h2>
+                <p class="settings-pane-lead">حدد نوافذ التجهيز المتاحة للعميل عند اختيار «استلم بنفسك».</p>
+
+                <div class="border rounded-4 p-3 p-md-4 mb-4 bg-light">
+                    <form method="POST" action="{{ route('admin.delivery.pickup-slots.store') }}">
+                        @csrf
+                        <input type="hidden" name="active_tab" value="pickup_slots">
+                        <input type="hidden" name="form" value="pickup_slot">
+                        <div class="mb-3">
+                            <label class="form-label d-block">أيام الدوام</label>
+                            <div class="d-flex flex-wrap gap-2">
+                                @foreach ($weekdayNames as $value => $label)
+                                    <div class="form-check form-check-inline m-0">
+                                        <input class="btn-check" type="checkbox" name="weekdays[]" value="{{ $value }}" id="pickup_weekday_{{ $value }}" @checked(collect(old('weekdays', []))->map(fn ($v) => (string) $v)->contains((string) $value))>
+                                        <label class="btn btn-outline-success rounded-pill btn-sm" for="pickup_weekday_{{ $value }}">{{ $label }}</label>
+                                    </div>
+                                @endforeach
+                            </div>
+                        </div>
+                        <div class="row g-2 align-items-end">
+                            <div class="col-md-2">
+                                <label class="form-label">من</label>
+                                <input type="time" name="start_time" value="{{ old('start_time', '10:00') }}" class="form-control" required>
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label">إلى</label>
+                                <input type="time" name="end_time" value="{{ old('end_time', '12:00') }}" class="form-control" required>
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label">فاصل الدقائق</label>
+                                <select name="interval_minutes" class="form-select">
+                                    @foreach ([5, 10, 15, 30, 60] as $interval)
+                                        <option value="{{ $interval }}" @selected((int) old('interval_minutes', 15) === $interval)>{{ $interval }} د</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label">{{ $strings::SORT_ORDER }}</label>
+                                <input type="number" min="0" name="sort_order" value="{{ old('sort_order', 0) }}" class="form-control">
+                            </div>
+                            <div class="col-md-2">
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" name="is_active" value="1" id="pickup_slot_is_active" @checked(old('is_active', true))>
+                                    <label class="form-check-label" for="pickup_slot_is_active">ظاهر في التطبيق</label>
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <button class="btn btn-brand w-100">{{ $strings::ADD_PICKUP_SLOT }}</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="row g-3">
+                    @foreach ($weekdayNames as $weekday => $dayLabel)
+                        @php $daySlots = $pickupSlotsByWeekday->get($weekday, collect()); @endphp
+                        <div class="col-md-6 col-xl-4">
+                            <div class="border rounded-4 h-100 p-3 bg-white">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <h3 class="h6 fw-bold mb-0">{{ $dayLabel }}</h3>
+                                    @if ($daySlots->where('is_active', true)->isNotEmpty())
+                                        <span class="badge badge-soft">{{ $daySlots->where('is_active', true)->count() }} فترة</span>
+                                    @else
+                                        <span class="badge text-bg-light text-muted">بدون دوام</span>
+                                    @endif
+                                </div>
+                                @if ($daySlots->isEmpty())
+                                    <p class="text-muted small mb-0">لا توجد فترات لهذا اليوم.</p>
+                                @else
+                                    <div class="d-flex flex-column gap-2">
+                                        @foreach ($daySlots as $slot)
+                                            <div class="d-flex align-items-center justify-content-between gap-2 p-2 rounded-3 border {{ $slot->is_active ? '' : 'opacity-60' }}">
+                                                <div>
+                                                    <div class="fw-bold" dir="ltr">{{ \Illuminate\Support\Str::of($slot->start_time)->substr(0, 5) }} – {{ \Illuminate\Support\Str::of($slot->end_time)->substr(0, 5) }}</div>
+                                                    <div class="small text-muted">كل {{ $slot->interval_minutes }} د · {{ $slot->is_active ? $strings::LIVE_IN_APP : $strings::INACTIVE }}</div>
+                                                </div>
+                                                <div class="d-flex gap-1 flex-shrink-0">
+                                                    <button type="button" class="btn btn-sm btn-outline-success rounded-pill" data-bs-toggle="modal" data-bs-target="#pickupSlotModal"
+                                                        data-pickup-slot-edit
+                                                        data-id="{{ $slot->id }}"
+                                                        data-weekday="{{ $slot->weekday }}"
+                                                        data-start-time="{{ \Illuminate\Support\Str::of($slot->start_time)->substr(0, 5) }}"
+                                                        data-end-time="{{ \Illuminate\Support\Str::of($slot->end_time)->substr(0, 5) }}"
+                                                        data-interval-minutes="{{ $slot->interval_minutes }}"
+                                                        data-sort-order="{{ $slot->sort_order }}"
+                                                        data-is-active="{{ $slot->is_active ? '1' : '0' }}"
+                                                    >{{ $strings::EDIT }}</button>
+                                                    <form method="POST" action="{{ route('admin.delivery.pickup-slots.destroy', $slot) }}" onsubmit="return confirm('{{ $strings::CONFIRM_DELETE }}')">
                                                         @csrf
                                                         @method('DELETE')
                                                         <button class="btn btn-sm btn-outline-danger rounded-pill">{{ $strings::DELETE }}</button>
@@ -558,6 +677,68 @@
                                 <div class="form-check">
                                     <input class="form-check-input" type="checkbox" name="is_active" value="1" id="slot_edit_is_active" data-slot-active @checked(old('is_active', true))>
                                     <label class="form-check-label" for="slot_edit_is_active">ظاهر في التطبيق</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-brand">{{ $strings::SAVE }}</button>
+                        <button type="button" class="btn btn-outline-secondary rounded-pill" data-bs-dismiss="modal">{{ $strings::CANCEL }}</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="pickupSlotModal" tabindex="-1" aria-hidden="true" @if ($openPickupSlotModal) data-open="1" @endif>
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content detail-modal">
+                <form method="POST" action="{{ route('admin.delivery.pickup-slots.store') }}" id="pickupSlotForm" data-update-base="{{ url('/admin/delivery/pickup-slots') }}">
+                    @csrf
+                    <input type="hidden" name="_method" value="PUT" data-http-method>
+                    <input type="hidden" name="form" value="pickup_slot">
+                    <input type="hidden" name="active_tab" value="pickup_slots">
+                    <input type="hidden" name="editing_id" value="" data-editing-id>
+                    <div class="modal-header">
+                        <h5 class="modal-title fw-bold">تعديل فترة التجهيز</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ $strings::CLOSE }}"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label">اليوم</label>
+                            <select name="weekday" class="form-select" required data-slot-weekday>
+                                @foreach ($weekdayNames as $value => $label)
+                                    <option value="{{ $value }}">{{ $label }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">من</label>
+                                <input type="time" name="start_time" class="form-control" required data-slot-start>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">إلى</label>
+                                <input type="time" name="end_time" class="form-control" required data-slot-end>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">فاصل الدقائق</label>
+                                <select name="interval_minutes" class="form-select" data-slot-interval>
+                                    @foreach ([5, 10, 15, 30, 60] as $interval)
+                                        <option value="{{ $interval }}">{{ $interval }} د</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">{{ $strings::SORT_ORDER }}</label>
+                                <input type="number" min="0" name="sort_order" class="form-control" data-slot-sort>
+                            </div>
+                            <div class="col-md-4 mb-3 d-flex align-items-end">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="is_active" value="1" id="pickup_slot_edit_is_active" data-slot-active checked>
+                                    <label class="form-check-label" for="pickup_slot_edit_is_active">ظاهر في التطبيق</label>
                                 </div>
                             </div>
                         </div>

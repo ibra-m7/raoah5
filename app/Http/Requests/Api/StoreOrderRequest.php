@@ -30,7 +30,8 @@ class StoreOrderRequest extends FormRequest
             'coupon_codes' => ['nullable', 'array', 'max:5'],
             'coupon_codes.*' => ['required', 'string', 'max:40'],
             'fulfillment_type' => ['nullable', 'string', Rule::in(['now', 'scheduled'])],
-            'scheduled_at' => ['nullable', 'date', 'after:now'],
+            'scheduled_at' => ['nullable', 'date', 'after:now', 'required_if:fulfillment_type,scheduled'],
+            'order_method' => ['nullable', 'string', Rule::in(['delivery', 'pickup'])],
             'address_id' => [
                 'nullable',
                 'integer',

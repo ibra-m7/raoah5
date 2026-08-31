@@ -104,6 +104,9 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::post('delivery/slots', [DeliveryController::class, 'storeSlot'])->name('delivery.slots.store');
     Route::put('delivery/slots/{delivery_slot_window}', [DeliveryController::class, 'updateSlot'])->name('delivery.slots.update');
     Route::delete('delivery/slots/{delivery_slot_window}', [DeliveryController::class, 'destroySlot'])->name('delivery.slots.destroy');
+    Route::post('delivery/pickup-slots', [DeliveryController::class, 'storePickupSlot'])->name('delivery.pickup-slots.store');
+    Route::put('delivery/pickup-slots/{pickup_slot_window}', [DeliveryController::class, 'updatePickupSlot'])->name('delivery.pickup-slots.update');
+    Route::delete('delivery/pickup-slots/{pickup_slot_window}', [DeliveryController::class, 'destroyPickupSlot'])->name('delivery.pickup-slots.destroy');
 
     Route::resource('coupons', CouponController::class)->except(['show']);
 

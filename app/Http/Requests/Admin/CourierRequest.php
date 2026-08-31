@@ -27,7 +27,20 @@ class CourierRequest extends FormRequest
             'phone' => ['required', 'string', Rule::unique('couriers', 'phone')->ignore($id)],
             'password' => $passwordRules,
             'is_active' => ['nullable', 'boolean'],
+            'handles_delivery' => ['nullable', 'boolean'],
+            'handles_pickup' => ['nullable', 'boolean'],
         ];
+    }
+
+    public function withValidator($validator): void
+    {
+        $validator->after(function ($validator) {
+            $handlesDelivery = $this->boolean('handles_delivery');
+            $handlesPickup = $this->boolean('handles_pickup');
+            if (! $handlesDelivery && ! $handlesPickup) {
+                $validator->errors()->add('handles_delivery', 'حدد نوعاً واحداً على الأقل من الطلبات.');
+            }
+        });
     }
 
     public function attributes(): array
@@ -53,6 +66,8 @@ class CourierRequest extends FormRequest
         $this->merge([
             'phone' => $phone,
             'is_active' => $this->boolean('is_active'),
+            'handles_delivery' => $this->boolean('handles_delivery'),
+            'handles_pickup' => $this->boolean('handles_pickup'),
             'password' => $this->filled('password') ? $this->input('password') : null,
         ]);
     }

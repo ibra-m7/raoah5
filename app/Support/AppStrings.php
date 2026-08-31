@@ -382,6 +382,14 @@ final class AppStrings
     public const DELIVERY_SLOT_UPDATED = 'تم تحديث فترة التوصيل.';
     public const DELIVERY_SLOT_DELETED = 'تم حذف فترة التوصيل.';
 
+    public const ADD_PICKUP_SLOT = 'إضافة فترة تجهيز';
+
+    public const PICKUP_SLOT_CREATED = 'تم إضافة فترة التجهيز.';
+
+    public const PICKUP_SLOT_UPDATED = 'تم تحديث فترة التجهيز.';
+
+    public const PICKUP_SLOT_DELETED = 'تم حذف فترة التجهيز.';
+
     public const ADD_COUPON = 'إضافة كوبون';
 
     public const EDIT_COUPON = 'تعديل الكوبون';

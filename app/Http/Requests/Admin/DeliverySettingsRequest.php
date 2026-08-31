@@ -24,6 +24,7 @@ class DeliverySettingsRequest extends FormRequest
             'delivery_store_address' => ['nullable', 'string', 'max:255'],
             'delivery_max_km' => ['nullable', 'numeric', 'min:0', 'max:5000'],
             'delivery_fallback_fee' => ['nullable', 'numeric', 'min:0', 'max:9999'],
+            'pickup_enabled' => ['nullable', 'boolean'],
             'free_shipping_threshold' => ['nullable', 'numeric', 'min:0'],
         ];
     }
@@ -47,6 +48,7 @@ class DeliverySettingsRequest extends FormRequest
             'delivery_first_order_free' => $this->boolean('delivery_first_order_free'),
             'delivery_hide_subtitle' => $this->boolean('delivery_hide_subtitle'),
             'delivery_notes_enabled' => $this->boolean('delivery_notes_enabled'),
+            'pickup_enabled' => $this->boolean('pickup_enabled'),
             'delivery_general_note' => $this->filled('delivery_general_note')
                 ? trim((string) $this->input('delivery_general_note'))
                 : '',

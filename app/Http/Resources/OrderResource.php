@@ -28,6 +28,8 @@ class OrderResource extends JsonResource
             'notes' => $this->notes,
             'coupon_code' => $this->coupon_code,
             'discount_amount' => (float) $this->discount_amount,
+            'order_method' => $this->order_method?->value ?? 'delivery',
+            'order_method_label' => $this->orderMethodLabel(),
             'fulfillment_type' => $this->fulfillment_type,
             'scheduled_at' => $this->scheduled_at?->toIso8601String(),
             'can_cancel' => $this->canBeCancelledByCustomer(),

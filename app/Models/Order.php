@@ -2,7 +2,9 @@
 
 namespace App\Models;
 
+use App\Enums\OrderMethod;
 use App\Enums\OrderStatus;
+use App\Support\DeliverySettings;
 use App\Enums\PaymentMethod;
 use App\Enums\PaymentStatus;
 use Illuminate\Database\Eloquent\Builder;
@@ -18,6 +20,7 @@ class Order extends Model
         'address_id',
         'order_number',
         'status',
+        'order_method',
         'subtotal',
         'shipping_fee',
         'total',
@@ -47,6 +50,7 @@ class Order extends Model
     {
         return [
             'status' => OrderStatus::class,
+            'order_method' => OrderMethod::class,
             'subtotal' => 'decimal:2',
             'shipping_fee' => 'decimal:2',
             'total' => 'decimal:2',
@@ -118,8 +122,26 @@ class Order extends Model
         return $this->status?->canBeCancelledByCustomer() === true;
     }
 
+    public function isPickup(): bool
+    {
+        return $this->order_method === OrderMethod::Pickup;
+    }
+
+    public function orderMethodLabel(): string
+    {
+        return $this->order_method?->label() ?? OrderMethod::Delivery->label();
+    }
+
     public function mapsUrl(): ?string
     {
+        if ($this->isPickup()) {
+            $lat = DeliverySettings::storeLat();
+            $lng = DeliverySettings::storeLng();
+            if ($lat !== null && $lng !== null) {
+                return 'https://www.google.com/maps/search/?api=1&query='.$lat.','.$lng;
+            }
+        }
+
         if ($this->relationLoaded('address') && $this->address) {
             return $this->address->mapsUrl();
         }

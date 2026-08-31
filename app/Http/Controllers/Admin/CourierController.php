@@ -73,7 +73,11 @@ class CourierController extends Controller
     {
         return view('admin.couriers.create', [
             'title' => AppStrings::ADD_COURIER,
-            'courier' => new Courier(['is_active' => true]),
+            'courier' => new Courier([
+                'is_active' => true,
+                'handles_delivery' => true,
+                'handles_pickup' => false,
+            ]),
         ]);
     }
 

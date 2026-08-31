@@ -4,6 +4,7 @@ namespace App\Http\Resources;
 
 use App\Enums\OrderStatus;
 use App\Models\Courier;
+use App\Support\DeliverySettings;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -15,6 +16,7 @@ class CourierOrderResource extends JsonResource
         $courierId = $request->user()?->id;
         $mine = $this->courier_id !== null && (int) $this->courier_id === (int) $courierId;
         $address = $this->whenLoaded('address') ? $this->address : null;
+        $isPickup = $this->isPickup();
 
         return [
             'id' => (string) $this->id,
@@ -23,6 +25,11 @@ class CourierOrderResource extends JsonResource
             'status_label' => $this->status === OrderStatus::Pending && $this->courier_id === null
                 ? 'طلب جديد'
                 : $this->status?->label(),
+            'order_method' => $this->order_method?->value ?? 'delivery',
+            'order_method_label' => $this->orderMethodLabel(),
+            'is_pickup' => $isPickup,
+            'fulfillment_type' => $this->fulfillment_type,
+            'scheduled_at' => $this->scheduled_at?->toIso8601String(),
             'subtotal' => (float) $this->subtotal,
             'shipping_fee' => (float) $this->shipping_fee,
             'total' => (float) $this->total,
@@ -38,16 +45,22 @@ class CourierOrderResource extends JsonResource
             'shipping_details' => $this->shipping_details,
             'notes' => $this->notes,
             'delivery_label' => $this->delivery_label,
+            'pickup_location' => $isPickup ? DeliverySettings::storeAddress() : null,
             'maps_url' => $this->mapsUrl(),
-            'latitude' => $address?->latitude !== null ? (float) $address->latitude : null,
-            'longitude' => $address?->longitude !== null ? (float) $address->longitude : null,
+            'latitude' => $isPickup
+                ? DeliverySettings::storeLat()
+                : ($address?->latitude !== null ? (float) $address->latitude : null),
+            'longitude' => $isPickup
+                ? DeliverySettings::storeLng()
+                : ($address?->longitude !== null ? (float) $address->longitude : null),
             'items_count' => $this->whenLoaded('items') ? $this->items->count() : $this->items()->count(),
             'items' => OrderItemResource::collection($this->whenLoaded('items')),
             'assigned_to_me' => $mine,
             'can_accept' => $this->courier_id === null
                 && in_array($this->status, [OrderStatus::Pending, OrderStatus::Preparing], true)
                 && $request->user() instanceof Courier
-                && $request->user()->canReceiveOrders(),
+                && $request->user()->canReceiveOrders()
+                && $request->user()->handlesOrderMethod($this->order_method?->value ?? 'delivery'),
             'can_pickup' => $mine && $this->status === OrderStatus::Preparing,
             'can_deliver' => $mine && $this->status === OrderStatus::OnTheWay,
             'created_at' => $this->created_at?->toIso8601String(),

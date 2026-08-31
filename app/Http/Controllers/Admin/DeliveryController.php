@@ -7,20 +7,23 @@ use App\Http\Requests\Admin\DeliveryPerkRequest;
 use App\Http\Requests\Admin\DeliveryRuleRequest;
 use App\Http\Requests\Admin\DeliverySettingsRequest;
 use App\Http\Requests\Admin\DeliverySlotWindowRequest;
+use App\Http\Requests\Admin\PickupSlotWindowRequest;
 use App\Models\DeliveryPerk;
 use App\Models\DeliveryRule;
 use App\Models\DeliverySlotWindow;
+use App\Models\PickupSlotWindow;
 use App\Models\Setting;
 use App\Support\AppStrings;
 use App\Support\Constants;
 use App\Support\DeliverySettings;
 use App\Support\StoreSettings;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\View\View;
 
 class DeliveryController extends Controller
 {
-    private const TABS = ['policy', 'slots', 'rules', 'perks'];
+    private const TABS = ['policy', 'slots', 'pickup_slots', 'rules', 'perks'];
 
     public function index(): View
     {
@@ -33,6 +36,9 @@ class DeliveryController extends Controller
             ->orderBy('id')
             ->get();
         $slots = DeliverySlotWindow::query()->ordered()->get();
+        $pickupSlots = Schema::hasTable('pickup_slot_windows')
+            ? PickupSlotWindow::query()->ordered()->get()
+            : collect();
 
         return view('admin.delivery.index', [
             'title' => AppStrings::NAV_DELIVERY,
@@ -41,6 +47,8 @@ class DeliveryController extends Controller
             'perks' => $perks,
             'slots' => $slots,
             'slotsByWeekday' => $slots->groupBy('weekday'),
+            'pickupSlots' => $pickupSlots,
+            'pickupSlotsByWeekday' => $pickupSlots->groupBy('weekday'),
             'weekdayNames' => DeliverySlotWindow::weekdayNames(),
             'settings' => [
                 'delivery_enabled' => DeliverySettings::enabled(),
@@ -53,6 +61,7 @@ class DeliveryController extends Controller
                 'delivery_store_address' => DeliverySettings::storeAddress(),
                 'delivery_max_km' => DeliverySettings::maxKm(),
                 'delivery_fallback_fee' => DeliverySettings::fallbackFee(),
+                'pickup_enabled' => DeliverySettings::pickupEnabled(),
                 'free_shipping_threshold' => StoreSettings::freeShippingThreshold(),
             ],
         ]);
@@ -72,6 +81,7 @@ class DeliveryController extends Controller
         Setting::setValue(Constants::SETTING_DELIVERY_STORE_ADDRESS, $data['delivery_store_address'] ?? '');
         Setting::setValue(Constants::SETTING_DELIVERY_MAX_KM, $data['delivery_max_km'] ?? '');
         Setting::setValue(Constants::SETTING_DELIVERY_FALLBACK_FEE, $data['delivery_fallback_fee'] ?? StoreSettings::shippingFee());
+        Setting::setValue(Constants::SETTING_PICKUP_ENABLED, ($data['pickup_enabled'] ?? false) ? '1' : '0');
         if (array_key_exists('free_shipping_threshold', $data) && $data['free_shipping_threshold'] !== null) {
             Setting::setValue(Constants::SETTING_FREE_SHIPPING_THRESHOLD, $data['free_shipping_threshold']);
         }
@@ -171,6 +181,38 @@ class DeliveryController extends Controller
         $delivery_slot_window->delete();
 
         return $this->redirectToTab('slots')->with('success', AppStrings::DELIVERY_SLOT_DELETED);
+    }
+
+    public function storePickupSlot(PickupSlotWindowRequest $request): RedirectResponse
+    {
+        $data = $request->validated();
+        unset($data['weekdays'], $data['weekday']);
+
+        foreach ($request->weekdays() as $weekday) {
+            PickupSlotWindow::query()->create([
+                ...$data,
+                'weekday' => $weekday,
+            ]);
+        }
+
+        return $this->redirectToTab('pickup_slots')->with('success', AppStrings::PICKUP_SLOT_CREATED);
+    }
+
+    public function updatePickupSlot(PickupSlotWindowRequest $request, PickupSlotWindow $pickup_slot_window): RedirectResponse
+    {
+        $data = $request->validated();
+        unset($data['weekdays']);
+
+        $pickup_slot_window->update($data);
+
+        return $this->redirectToTab('pickup_slots')->with('success', AppStrings::PICKUP_SLOT_UPDATED);
+    }
+
+    public function destroyPickupSlot(PickupSlotWindow $pickup_slot_window): RedirectResponse
+    {
+        $pickup_slot_window->delete();
+
+        return $this->redirectToTab('pickup_slots')->with('success', AppStrings::PICKUP_SLOT_DELETED);
     }
 
     private function resolveTab(mixed $tab): string

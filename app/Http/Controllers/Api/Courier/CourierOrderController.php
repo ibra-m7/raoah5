@@ -30,9 +30,25 @@ class CourierOrderController extends Controller
                 });
 
                 if ($courier->canReceiveOrders()) {
-                    $query->orWhere(function ($available) {
+                    $query->orWhere(function ($available) use ($courier) {
                         $available->whereNull('courier_id')
-                            ->whereIn('status', [OrderStatus::Pending, OrderStatus::Preparing]);
+                            ->whereIn('status', [OrderStatus::Pending, OrderStatus::Preparing])
+                            ->where(function ($method) use ($courier) {
+                                if ($courier->handles_delivery && $courier->handles_pickup) {
+                                    return;
+                                }
+                                if ($courier->handles_delivery) {
+                                    $method->where('order_method', 'delivery');
+
+                                    return;
+                                }
+                                if ($courier->handles_pickup) {
+                                    $method->where('order_method', 'pickup');
+
+                                    return;
+                                }
+                                $method->whereRaw('1 = 0');
+                            });
                     });
                 }
             })
@@ -104,8 +120,12 @@ class CourierOrderController extends Controller
             return true;
         }
 
-        return $courier->canReceiveOrders()
-            && $order->courier_id === null
-            && in_array($order->status, [OrderStatus::Pending, OrderStatus::Preparing], true);
+        if (! $courier->canReceiveOrders()
+            || $order->courier_id !== null
+            || ! in_array($order->status, [OrderStatus::Pending, OrderStatus::Preparing], true)) {
+            return false;
+        }
+
+        return $courier->handlesOrderMethod($order->order_method?->value ?? 'delivery');
     }
 }

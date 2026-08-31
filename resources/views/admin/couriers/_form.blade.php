@@ -24,7 +24,20 @@
     @endif
 </div>
 
-<div class="form-check mb-4">
+<div class="form-check mb-3">
     <input class="form-check-input" type="checkbox" name="is_active" value="1" id="courier_is_active" @checked(old('is_active', $courier->is_active ?? true))>
     <label class="form-check-label" for="courier_is_active">مفعّل في تطبيق الموصل</label>
+</div>
+
+<div class="mb-4">
+    <label class="form-label d-block">نوع الطلبات</label>
+    <div class="form-check">
+        <input class="form-check-input" type="checkbox" name="handles_delivery" value="1" id="courier_handles_delivery" @checked(old('handles_delivery', $courier->handles_delivery ?? true))>
+        <label class="form-check-label" for="courier_handles_delivery">توصيل للمنازل</label>
+    </div>
+    <div class="form-check">
+        <input class="form-check-input" type="checkbox" name="handles_pickup" value="1" id="courier_handles_pickup" @checked(old('handles_pickup', $courier->handles_pickup ?? false))>
+        <label class="form-check-label" for="courier_handles_pickup">استلام من المركز</label>
+    </div>
+    @error('handles_delivery') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
 </div>

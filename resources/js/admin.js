@@ -1206,12 +1206,16 @@ const fillSlotForm = (form, data = {}) => {
     if (active) {
         active.checked = String(data.isActive ?? "1") === "1";
     }
+    const interval = form.querySelector("[data-slot-interval]");
+    if (interval) {
+        interval.value = String(data.intervalMinutes ?? "15");
+    }
 };
 
 const bindDeliveryPage = () => {
     syncRulePricingUI();
     syncPerkRewardUI();
-    ["deliveryRuleModal", "deliveryPerkModal", "deliverySlotModal"].forEach((id) => {
+    ["deliveryRuleModal", "deliveryPerkModal", "deliverySlotModal", "pickupSlotModal"].forEach((id) => {
         const modal = document.getElementById(id);
         if (modal?.dataset.open === "1") {
             window.bootstrap.Modal.getOrCreateInstance(modal).show();
@@ -1281,6 +1285,13 @@ document.addEventListener("show.bs.modal", (event) => {
     if (modal.id === "deliverySlotModal") {
         const form = modal.querySelector("#deliverySlotForm");
         if (trigger.hasAttribute("data-delivery-slot-edit")) {
+            fillSlotForm(form, trigger.dataset);
+        }
+        return;
+    }
+    if (modal.id === "pickupSlotModal") {
+        const form = modal.querySelector("#pickupSlotForm");
+        if (trigger.hasAttribute("data-pickup-slot-edit")) {
             fillSlotForm(form, trigger.dataset);
         }
     }
