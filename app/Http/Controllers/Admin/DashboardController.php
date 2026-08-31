@@ -48,10 +48,16 @@ class DashboardController extends Controller
             ],
             'shortcuts' => [
                 [
-                    'label' => AppStrings::NAV_CATEGORIES,
-                    'hint' => 'أضف قسماً رئيسياً يظهر في دوائر الرئيسية',
-                    'route' => 'admin.categories.create',
-                    'icon' => 'bi-grid',
+                    'label' => AppStrings::NAV_HOME_SECTIONS,
+                    'hint' => 'أدر شرائط المنتجات وسلات التوفير في الصفحة الرئيسية',
+                    'route' => 'admin.home-sections.index',
+                    'icon' => 'bi-house',
+                ],
+                [
+                    'label' => AppStrings::NAV_PRODUCTS,
+                    'hint' => 'أضف منتجاً جديداً للكتالوج',
+                    'route' => 'admin.products.create',
+                    'icon' => 'bi-box-seam',
                 ],
                 [
                     'label' => AppStrings::NAV_BANNERS,
@@ -60,16 +66,10 @@ class DashboardController extends Controller
                     'icon' => 'bi-image',
                 ],
                 [
-                    'label' => AppStrings::NAV_OFFERS,
-                    'hint' => 'ضع خصماً على منتج ليظهر في العروض',
+                    'label' => AppStrings::NAV_PRODUCT_DISCOUNTS,
+                    'hint' => 'ضع خصماً على منتج ليظهر في شريط العروض',
                     'route' => 'admin.offers.create',
                     'icon' => 'bi-percent',
-                ],
-                [
-                    'label' => AppStrings::NAV_HOME_SECTIONS,
-                    'hint' => 'أنشئ صفاً من المنتجات في الرئيسية',
-                    'route' => 'admin.home-sections.create',
-                    'icon' => 'bi-house',
                 ],
             ],
             'pendingOrders' => Order::query()

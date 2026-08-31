@@ -8,6 +8,7 @@ use App\Models\Category;
 use App\Models\HomeSection;
 use App\Models\Order;
 use App\Models\Product;
+use App\Models\ProductBundle;
 use App\Models\User;
 use App\Enums\UserRole;
 use App\Support\AppStrings;
@@ -26,6 +27,7 @@ class SearchController extends Controller
         $customers = collect();
         $banners = collect();
         $homeSections = collect();
+        $bundles = collect();
 
         if ($q !== '') {
             $products = Product::query()->with('category')->search($q)->limit(8)->get();
@@ -41,6 +43,14 @@ class SearchController extends Controller
                 ->where(function ($query) use ($q) {
                     $query->where('title', 'like', '%'.$q.'%')
                         ->orWhere('key', 'like', '%'.$q.'%');
+                })
+                ->limit(6)
+                ->get();
+            $bundles = ProductBundle::query()
+                ->with('homeSections')
+                ->where(function ($query) use ($q) {
+                    $query->where('name', 'like', '%'.$q.'%')
+                        ->orWhere('slug', 'like', '%'.$q.'%');
                 })
                 ->limit(6)
                 ->get();
@@ -74,6 +84,7 @@ class SearchController extends Controller
             'customers' => $customers,
             'banners' => $banners,
             'homeSections' => $homeSections,
+            'bundles' => $bundles,
         ]);
     }
 }

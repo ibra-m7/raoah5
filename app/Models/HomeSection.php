@@ -9,13 +9,24 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class HomeSection extends Model
 {
+    public const CONTENT_PRODUCTS = 'products';
+
+    public const CONTENT_BUNDLES = 'bundles';
+
     protected $fillable = [
         'key',
+        'content_type',
         'title',
         'subtitle',
+        'title_color',
+        'subtitle_color',
         'background_color',
+        'background_image_url',
         'sort_order',
         'is_active',
+        'auto_scroll_cards',
+        'show_title_icon',
+        'emphasize_subtitle',
     ];
 
     protected function casts(): array
@@ -23,12 +34,22 @@ class HomeSection extends Model
         return [
             'is_active' => 'boolean',
             'sort_order' => 'integer',
+            'auto_scroll_cards' => 'boolean',
+            'show_title_icon' => 'boolean',
+            'emphasize_subtitle' => 'boolean',
         ];
     }
 
     public function products(): BelongsToMany
     {
         return $this->belongsToMany(Product::class, 'home_section_products')
+            ->withPivot('sort_order')
+            ->orderByPivot('sort_order');
+    }
+
+    public function bundles(): BelongsToMany
+    {
+        return $this->belongsToMany(ProductBundle::class, 'home_section_bundles', 'home_section_id', 'bundle_id')
             ->withPivot('sort_order')
             ->orderByPivot('sort_order');
     }
@@ -43,30 +64,13 @@ class HomeSection extends Model
         return $query->where('is_active', true)->orderBy('sort_order');
     }
 
-    /**
-     * @return array<string, array{label: string}>
-     */
-    public static function displayStyles(): array
+    public function showsBundles(): bool
     {
-        return [
-            'best_prices' => ['label' => 'أسعار مميزة'],
-            'most_requested' => ['label' => 'الأكثر طلباً'],
-            'fresh_groceries' => ['label' => 'منتجات طازجة'],
-            'general' => ['label' => 'قسم عادي'],
-        ];
+        return $this->content_type === self::CONTENT_BUNDLES;
     }
 
-    public function displayStyle(): string
+    public function contentTypeLabel(): string
     {
-        $known = ['best_prices', 'most_requested', 'fresh_groceries'];
-
-        return in_array((string) $this->key, $known, true) ? (string) $this->key : 'general';
-    }
-
-    public function styleLabel(): string
-    {
-        $style = $this->displayStyle();
-
-        return self::displayStyles()[$style]['label'] ?? 'قسم عادي';
+        return $this->showsBundles() ? 'سلات' : 'منتجات';
     }
 }

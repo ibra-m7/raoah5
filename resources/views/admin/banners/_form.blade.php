@@ -8,9 +8,16 @@
     $productId = old('link_product_id', $banner->link_type === BannerLinkType::Product ? $banner->link_id : null);
     $categoryId = old('link_category_id', $banner->link_type === BannerLinkType::Category ? $banner->link_id : null);
     $pageId = old('link_page_id', $banner->link_type === BannerLinkType::Page ? $banner->link_id : null);
+    $bundleId = old('link_bundle_id', $banner->link_type === BannerLinkType::Bundle ? $banner->link_id : null);
     $pages = $pages ?? collect();
+    $bundles = $bundles ?? collect();
     $selectedProduct = $selectedProduct ?? collect();
 @endphp
+
+<div class="alert alert-light border mb-4">
+    <strong>أين يظهر الإعلان؟</strong>
+    <p class="mb-0 small text-muted">في شريط الإعلانات أعلى الصفحة الرئيسية في التطبيق.</p>
+</div>
 
 <div class="mb-3">
     <label class="form-label">العنوان</label>
@@ -50,6 +57,7 @@
         <option value="{{ BannerLinkType::Product->value }}" @selected($linkType === BannerLinkType::Product->value)>منتج</option>
         <option value="{{ BannerLinkType::Category->value }}" @selected($linkType === BannerLinkType::Category->value)>قسم</option>
         <option value="{{ BannerLinkType::Page->value }}" @selected($linkType === BannerLinkType::Page->value)>صفحة ترويجية</option>
+        <option value="{{ BannerLinkType::Bundle->value }}" @selected($linkType === BannerLinkType::Bundle->value)>سلة توفير</option>
         <option value="{{ BannerLinkType::Url->value }}" @selected($linkType === BannerLinkType::Url->value)>رابط خارجي</option>
     </select>
     @error('link_type') <div class="invalid-feedback">{{ $message }}</div> @enderror
@@ -89,6 +97,19 @@
             <option value="">اختر صفحة</option>
             @foreach ($pages as $page)
                 <option value="{{ $page->id }}" @selected((string) $pageId === (string) $page->id)>{{ $page->title }}</option>
+            @endforeach
+        </select>
+        @error('link_id') <div class="invalid-feedback">{{ $message }}</div> @enderror
+    </div>
+</div>
+
+<div data-link-panel="bundle" @if($linkType !== BannerLinkType::Bundle->value) hidden @endif>
+    <div class="mb-3">
+        <label class="form-label">سلة التوفير</label>
+        <select name="link_bundle_id" class="form-select @error('link_id') is-invalid @enderror">
+            <option value="">اختر سلة</option>
+            @foreach ($bundles as $bundleOption)
+                <option value="{{ $bundleOption->id }}" @selected((string) $bundleId === (string) $bundleOption->id)>{{ $bundleOption->name }}</option>
             @endforeach
         </select>
         @error('link_id') <div class="invalid-feedback">{{ $message }}</div> @enderror

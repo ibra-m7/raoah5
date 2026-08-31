@@ -1,0 +1,42 @@
+{
+  "_bootstrap-icons-Du8Y8EHi.css": {
+    "file": "assets/bootstrap-icons-Du8Y8EHi.css",
+    "src": "_bootstrap-icons-Du8Y8EHi.css"
+  },
+  "node_modules/bootstrap-icons/font/fonts/bootstrap-icons.woff": {
+    "file": "assets/bootstrap-icons-BeopsB42.woff",
+    "src": "node_modules/bootstrap-icons/font/fonts/bootstrap-icons.woff"
+  },
+  "node_modules/bootstrap-icons/font/fonts/bootstrap-icons.woff2": {
+    "file": "assets/bootstrap-icons-mSm7cUeB.woff2",
+    "src": "node_modules/bootstrap-icons/font/fonts/bootstrap-icons.woff2"
+  },
+  "resources/js/admin.js": {
+    "file": "assets/admin-BwdGZnFp.js",
+    "name": "admin",
+    "src": "resources/js/admin.js",
+    "isEntry": true,
+    "css": [
+      "assets/admin-DOAPkobz.css",
+      "assets/bootstrap-icons-Du8Y8EHi.css"
+    ],
+    "assets": [
+      "assets/bootstrap-icons-mSm7cUeB.woff2",
+      "assets/bootstrap-icons-BeopsB42.woff"
+    ]
+  },
+  "resources/js/marketing.js": {
+    "file": "assets/marketing-BFlLtgOe.js",
+    "name": "marketing",
+    "src": "resources/js/marketing.js",
+    "isEntry": true,
+    "css": [
+      "assets/marketing-B9Fa7PIZ.css",
+      "assets/bootstrap-icons-Du8Y8EHi.css"
+    ],
+    "assets": [
+      "assets/bootstrap-icons-mSm7cUeB.woff2",
+      "assets/bootstrap-icons-BeopsB42.woff"
+    ]
+  }
+}

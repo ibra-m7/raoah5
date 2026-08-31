@@ -31,14 +31,17 @@ class BannerRequest extends FormRequest
                     BannerLinkType::Product->value,
                     BannerLinkType::Category->value,
                     BannerLinkType::Page->value,
+                    BannerLinkType::Bundle->value,
                 ], true)),
                 Rule::when($this->input('link_type') === BannerLinkType::Product->value, ['exists:products,id']),
                 Rule::when($this->input('link_type') === BannerLinkType::Category->value, ['exists:categories,id']),
                 Rule::when($this->input('link_type') === BannerLinkType::Page->value, ['exists:dynamic_pages,id']),
+                Rule::when($this->input('link_type') === BannerLinkType::Bundle->value, ['exists:product_bundles,id']),
             ],
             'link_product_id' => ['nullable', 'integer', 'exists:products,id'],
             'link_category_id' => ['nullable', 'integer', 'exists:categories,id'],
             'link_page_id' => ['nullable', 'integer', 'exists:dynamic_pages,id'],
+            'link_bundle_id' => ['nullable', 'integer', 'exists:product_bundles,id'],
             'link_url' => [
                 'nullable',
                 'url',
@@ -74,6 +77,7 @@ class BannerRequest extends FormRequest
             BannerLinkType::Product->value => $this->input('link_product_id'),
             BannerLinkType::Category->value => $this->input('link_category_id'),
             BannerLinkType::Page->value => $this->input('link_page_id'),
+            BannerLinkType::Bundle->value => $this->input('link_bundle_id'),
             default => null,
         };
 

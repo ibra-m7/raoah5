@@ -51,8 +51,8 @@ class AppNetworkImage extends StatelessWidget {
     final uri = Uri.tryParse(url);
     if (uri == null || !uri.hasScheme) return url;
     final host = uri.host.toLowerCase();
-    if (host.contains('onrender.com')) {
-      return _rewriteToCurrentApi(uri);
+    if (_shouldRewriteMediaHost(host, uri.path)) {
+      return _rewriteToCurrentOrigin(uri);
     }
     final isUnsplash = host == 'images.unsplash.com' || host == 'unsplash.com';
     if (isUnsplash) {
@@ -66,16 +66,27 @@ class AppNetworkImage extends StatelessWidget {
     return url;
   }
 
-  static String _rewriteToCurrentApi(Uri uri) {
-    final api = Uri.tryParse(EnvConfig.apiBaseUrl);
-    if (api == null || api.host.isEmpty) {
+  static bool _shouldRewriteMediaHost(String host, String path) {
+    if (host.contains('onrender.com')) return true;
+    const legacy = {
+      '16.16.172.215',
+      '172.20.2.95',
+      '172.20.2.63',
+      '192.168.134.66',
+    };
+    return legacy.contains(host);
+  }
+
+  static String _rewriteToCurrentOrigin(Uri uri) {
+    final origin = Uri.tryParse(EnvConfig.apiOrigin);
+    if (origin == null || origin.host.isEmpty) {
       return uri.toString();
     }
 
     return Uri(
-      scheme: api.scheme,
-      host: api.host,
-      port: api.hasPort ? api.port : null,
+      scheme: origin.scheme,
+      host: origin.host,
+      port: origin.hasPort ? origin.port : null,
       path: uri.path,
       query: uri.query.isEmpty ? null : uri.query,
     ).toString();

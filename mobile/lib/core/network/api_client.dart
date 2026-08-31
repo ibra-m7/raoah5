@@ -15,6 +15,12 @@ class ApiClient {
   String? authToken;
   String? _workingBase;
 
+  /// أعد ضبط الاتصال بعد تغيير `.env` أو Hot Restart.
+  void resetConnection() {
+    _workingBase = null;
+    EnvConfig.noteWorkingApiBase('');
+  }
+
   Map<String, String> _headers({bool auth = false}) {
     return {
       'Accept': 'application/json',
@@ -128,6 +134,7 @@ class ApiClient {
           continue;
         }
         _workingBase = base;
+        EnvConfig.noteWorkingApiBase(base);
         return json;
       } on TimeoutException catch (e) {
         lastError = e;

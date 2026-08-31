@@ -43,6 +43,16 @@ class GenerateProductCopyJob implements ShouldQueue
             return;
         }
 
+        if (! $products->productNeedsGeneratedCopy($product)) {
+            if (ProductCopyBulkService::shouldTrack()) {
+                ProductCopyBulkService::recordSuccess();
+            }
+
+            return;
+        }
+
+        usleep(350000);
+
         try {
             $copy = $generator->generate([
                 'name' => $product->name,
@@ -53,7 +63,9 @@ class GenerateProductCopyJob implements ShouldQueue
                 'piece_count' => $product->piece_count,
             ], fast: true);
 
-            $products->applyGeneratedCopy($product, $copy);
+            unset($copy['meta']);
+
+            $products->applyGeneratedCopy($product, $copy, onlyEmpty: true);
 
             if (ProductCopyBulkService::shouldTrack()) {
                 ProductCopyBulkService::recordSuccess();

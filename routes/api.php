@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\AddressController;
 use App\Http\Controllers\Api\AiAssistantController;
 use App\Http\Controllers\Api\Auth\OtpAuthController;
+use App\Http\Controllers\Api\BundleController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\CouponController;
 use App\Http\Controllers\Api\Courier\CourierAuthController;
@@ -27,6 +28,7 @@ Route::get('products/{product}/recommendations', [RecommendationController::clas
 Route::post('recommendations/cart', [RecommendationController::class, 'forCart']);
 Route::get('products/{product}', [ProductController::class, 'show']);
 Route::get('pages/{page}', [DynamicPageController::class, 'show']);
+Route::get('bundles/{bundle}', [BundleController::class, 'show']);
 Route::post('search/log', [SearchLogController::class, 'store'])->middleware('throttle:60,1');
 
 Route::get('ai/config', [AiAssistantController::class, 'config']);

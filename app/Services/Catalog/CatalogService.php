@@ -2,6 +2,7 @@
 
 namespace App\Services\Catalog;
 
+use App\Enums\PromoType;
 use App\Http\Resources\BannerResource;
 use App\Http\Resources\CategoryResource;
 use App\Http\Resources\DynamicPageResource;
@@ -13,6 +14,7 @@ use App\Models\DisplaySection;
 use App\Models\DynamicPage;
 use App\Models\HomeSection;
 use App\Models\Product;
+use App\Models\ProductBundle;
 use App\Models\User;
 use App\Support\Constants;
 use App\Support\StoreSettings;
@@ -51,15 +53,27 @@ class CatalogService
             ->orderByDesc('review_count')
             ->get();
 
-        $offers = $products
+        $promoProducts = $products
             ->filter(fn (Product $product) => $product->has_discount)
+            ->values();
+
+        $discounts = $promoProducts
+            ->filter(fn (Product $product) => $product->promo_type !== PromoType::Offer)
+            ->take(8)
+            ->values();
+
+        $offers = $promoProducts
+            ->filter(fn (Product $product) => $product->promo_type === PromoType::Offer)
             ->take(8)
             ->values();
 
         $sections = $this->optionalCollect(
             fn () => HomeSection::query()
                 ->active()
-                ->with(['products' => fn ($q) => $q->active()->with($relations)])
+                ->with([
+                    'products' => fn ($q) => $q->active()->with($relations),
+                    'bundles' => fn ($q) => $q->active()->with($this->bundleRelations()),
+                ])
                 ->get()
         );
 
@@ -77,6 +91,7 @@ class CatalogService
         return [
             'banners' => BannerResource::collection($banners)->resolve(),
             'categories' => CategoryResource::collection($categories)->resolve(),
+            'discounts' => ProductResource::collection($discounts)->resolve(),
             'offers' => ProductResource::collection($offers)->resolve(),
             'sections' => HomeSectionResource::collection($sections)->resolve(),
             'display_sections' => $this->displaySectionsFromTree($categories),
@@ -96,6 +111,31 @@ class CatalogService
             ->first();
     }
 
+    public function findBundle(string $id): ?ProductBundle
+    {
+        return ProductBundle::query()
+            ->active()
+            ->with($this->bundleRelations())
+            ->where(function ($query) use ($id) {
+                $query->where('id', $id)->orWhere('slug', $id);
+            })
+            ->first();
+    }
+
+    /**
+     * @return array<int, string|\Closure>
+     */
+    public function bundleRelations(): array
+    {
+        $relations = $this->productRelations();
+
+        return [
+            'items' => fn ($q) => $q->orderBy('sort_order')->with([
+                'product' => fn ($productQuery) => $productQuery->active()->sellable()->with($relations),
+            ]),
+        ];
+    }
+
     public function paginateProducts(array $filters = []): LengthAwarePaginator
     {
         $perPage = (int) ($filters['per_page'] ?? Constants::DEFAULT_PAGE_SIZE);
@@ -111,6 +151,15 @@ class CatalogService
                 $query->whereNotNull('discount_price')
                     ->whereColumn('discount_price', '<', 'price');
             })
+            ->when(
+                in_array((string) ($filters['promo_type'] ?? ''), ['discount', 'offer'], true),
+                function ($query) use ($filters) {
+                    $type = PromoType::from((string) $filters['promo_type']);
+                    $query->whereNotNull('discount_price')
+                        ->whereColumn('discount_price', '<', 'price')
+                        ->where('promo_type', $type);
+                },
+            )
             ->when(($filters['featured'] ?? null) === '1', fn ($query) => $query->featured())
             ->orderBy('sort_order')
             ->orderByDesc('review_count')

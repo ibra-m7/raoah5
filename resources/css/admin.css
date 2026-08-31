@@ -1215,6 +1215,217 @@ body {
     background: #fff9eb;
 }
 
+.bundle-items-editor {
+    display: grid;
+    gap: 0.75rem;
+}
+
+.bundle-items-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.bundle-items-summary {
+    padding: 0.45rem 0.85rem;
+    border-radius: 999px;
+    background: rgba(136, 212, 152, 0.14);
+    color: var(--color-primary-dark);
+    font-size: 0.82rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.bundle-items-empty {
+    display: grid;
+    place-items: center;
+    gap: 0.35rem;
+    padding: 1.35rem 1rem;
+    border: 1px dashed rgba(27, 58, 45, 0.14);
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.72);
+    color: var(--color-muted-text);
+    text-align: center;
+}
+
+.bundle-items-empty i {
+    font-size: 1.35rem;
+    color: var(--color-primary);
+}
+
+.bundle-items-empty p {
+    margin: 0;
+    font-size: 0.86rem;
+}
+
+.bundle-items-list {
+    display: grid;
+    gap: 0.55rem;
+}
+
+.bundle-item-row {
+    display: grid;
+    grid-template-columns: 52px minmax(0, 1fr) auto auto;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.65rem 0.75rem;
+    border: 1px solid rgba(27, 58, 45, 0.08);
+    border-radius: 14px;
+    background: #fff;
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.04);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.bundle-item-row.is-new,
+.bundle-item-row.is-pulse {
+    border-color: rgba(95, 175, 114, 0.45);
+    box-shadow: 0 8px 20px rgba(95, 175, 114, 0.14);
+}
+
+.bundle-item-row.is-pulse {
+    transform: scale(1.01);
+}
+
+.bundle-item-thumb {
+    width: 52px;
+    height: 52px;
+    border-radius: 12px;
+    overflow: hidden;
+    background: #f5f5f5;
+    display: grid;
+    place-items: center;
+    color: var(--color-muted-text);
+}
+
+.bundle-item-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.bundle-item-meta {
+    min-width: 0;
+}
+
+.bundle-item-meta strong {
+    display: block;
+    font-size: 0.9rem;
+    line-height: 1.35;
+}
+
+.bundle-item-meta small {
+    display: block;
+    margin-top: 0.15rem;
+    color: var(--color-muted-text);
+}
+
+.bundle-item-qty {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.2rem;
+    border-radius: 999px;
+    background: rgba(136, 212, 152, 0.12);
+}
+
+.bundle-qty-btn {
+    width: 28px;
+    height: 28px;
+    border: 0;
+    border-radius: 999px;
+    background: #fff;
+    color: var(--color-primary-dark);
+    font-weight: 800;
+    line-height: 1;
+}
+
+.bundle-qty-btn:hover {
+    background: rgba(95, 175, 114, 0.12);
+}
+
+.bundle-qty-input {
+    width: 42px;
+    border: 0;
+    background: transparent;
+    text-align: center;
+    font-weight: 700;
+    color: var(--color-dark-text);
+    padding: 0;
+}
+
+.bundle-qty-input::-webkit-outer-spin-button,
+.bundle-qty-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.bundle-item-remove {
+    width: 34px;
+    height: 34px;
+    border: 0;
+    border-radius: 999px;
+    background: rgba(229, 57, 53, 0.08);
+    color: #c62828;
+}
+
+.bundle-item-remove:hover {
+    background: rgba(229, 57, 53, 0.14);
+}
+
+@media (max-width: 767.98px) {
+    .bundle-item-row {
+        grid-template-columns: 48px minmax(0, 1fr);
+        grid-template-areas:
+            "thumb meta"
+            "qty remove";
+    }
+
+    .bundle-item-thumb {
+        grid-area: thumb;
+    }
+
+    .bundle-item-meta {
+        grid-area: meta;
+    }
+
+    .bundle-item-qty {
+        grid-area: qty;
+        justify-self: start;
+    }
+
+    .bundle-item-remove {
+        grid-area: remove;
+        justify-self: end;
+    }
+}
+
+.category-picker-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 0.5rem;
+    max-height: 240px;
+    overflow: auto;
+    padding: 0.75rem;
+    border: 1px solid var(--bs-border-color);
+    border-radius: 0.75rem;
+    background: #fff;
+}
+
+.category-picker-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0;
+    padding: 0.35rem 0.5rem;
+    border-radius: 0.5rem;
+    cursor: pointer;
+}
+
+.category-picker-item:hover {
+    background: rgba(25, 135, 84, 0.08);
+}
+
 .gift-modal-section {
     margin-top: 1rem;
     padding: 1rem 1rem 0.5rem;

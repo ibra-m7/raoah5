@@ -34,15 +34,15 @@
                 @error('sku') <div class="invalid-feedback">{{ $message }}</div> @enderror
                 <div class="form-hint">يُولَّد تلقائياً إذا تُرك فارغاً.</div>
             </div>
-            <div class="col-12">
+            <div class="col-md-4 col-lg-3">
                 <label class="form-label">الباركود</label>
-                <input type="text" name="barcode" value="{{ old('barcode', $product->barcode) }}" class="form-control @error('barcode') is-invalid @enderror" dir="ltr">
+                <input type="text" name="barcode" value="{{ old('barcode', $product->barcode) }}" class="form-control form-control-sm @error('barcode') is-invalid @enderror" dir="ltr">
                 @error('barcode') <div class="invalid-feedback">{{ $message }}</div> @enderror
                 <div class="form-hint">يُستخدم لربط صورة الاستيراد مثل 3.png بالمنتج ذي الباركود 3.</div>
             </div>
-            <div class="col-12">
+            <div class="col-md-5 col-lg-4">
                 <label class="form-label">التصنيف</label>
-                <select name="category_id" class="form-select @error('category_id') is-invalid @enderror" required>
+                <select name="category_id" class="form-select form-select-sm @error('category_id') is-invalid @enderror" required>
                     <option value="">اختر التصنيف</option>
                     @foreach ($categories as $category)
                         <option value="{{ $category->id }}" @selected(old('category_id', $product->category_id) == $category->id)>
@@ -77,7 +77,7 @@
                 <label class="form-label">سعر العرض</label>
                 <input type="number" step="0.01" min="0" name="discount_price" value="{{ old('discount_price', $product->discount_price) }}" class="form-control @error('discount_price') is-invalid @enderror">
                 @error('discount_price') <div class="invalid-feedback">{{ $message }}</div> @enderror
-                <div class="form-hint">فارغ أو 0 = السعر الأصلي بدون خصم.</div>
+                <div class="form-hint">فارغ أو 0 = السعر الأصلي بدون خصم. عند الإدخال هنا يُسجَّل كـ «خصم» في التطبيق (وليس «عرض خاص»).</div>
             </div>
             <div class="col-md-4">
                 <label class="form-label">المخزون</label>
@@ -194,7 +194,7 @@
                             </span>
                             <div>
                                 <h4 class="product-relation-card__title">منتج هدية</h4>
-                                <p class="product-relation-card__desc">يُضاف مجاناً عند الشراء ويظهر على كارد المنتج.</p>
+                                <p class="product-relation-card__desc">ابحث عن منتج من قائمة المنتجات لتحويله إلى هدية، أو أنشئ هدية جديدة غير موجودة في المنتجات.</p>
                             </div>
                         </div>
                         <button
@@ -215,11 +215,11 @@
                             :multiple="false"
                             :except="$product->exists ? $product->id : null"
                             :allow-empty="true"
-                            :gift-only="true"
+                            :exclude-gifts="true"
                             :embedded="true"
                             empty-label="لم تُحدَّد هدية بعد"
-                            placeholder="ابحث عن منتج هدية..."
-                            hint=""
+                            placeholder="ابحث عن منتج من قائمة المنتجات..."
+                            hint="اختر منتجاً موجوداً ليُحوَّل إلى هدية مع هذا المنتج ويُزال من قائمة المنتجات المعروضة للبيع."
                         />
                     </div>
                     @error('gift_product_id') <div class="text-danger small px-1 pt-2">{{ $message }}</div> @enderror

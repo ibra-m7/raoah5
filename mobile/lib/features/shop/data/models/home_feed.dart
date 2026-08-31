@@ -4,6 +4,7 @@ import '../../../../core/constants/app_strings.dart';
 import '../../../../core/theme/home_section_gradient.dart';
 import '../../../../core/widgets/app_network_image.dart';
 import '../../domain/entities/product.dart';
+import '../models/bundle_model.dart';
 import '../models/category_model.dart';
 import '../models/dynamic_page_model.dart';
 import '../models/product_model.dart';
@@ -46,19 +47,37 @@ class BannerModel {
 class HomeSectionModel {
   final String id;
   final String key;
+  final String contentType;
   final String title;
   final String? subtitle;
   final String? backgroundColor;
+  final String? backgroundImageUrl;
+  final String? titleColor;
+  final String? subtitleColor;
+  final bool autoScrollCards;
+  final bool showTitleIcon;
+  final bool emphasizeSubtitle;
   final List<ProductModel> products;
+  final List<BundleModel> bundles;
 
   const HomeSectionModel({
     required this.id,
     required this.key,
+    this.contentType = 'products',
     required this.title,
     this.subtitle,
     this.backgroundColor,
+    this.backgroundImageUrl,
+    this.titleColor,
+    this.subtitleColor,
+    this.autoScrollCards = false,
+    this.showTitleIcon = false,
+    this.emphasizeSubtitle = false,
     this.products = const [],
+    this.bundles = const [],
   });
+
+  bool get showsBundles => contentType == 'bundles';
 
   List<Color> get gradientColors =>
       HomeSectionGradient.colors(backgroundColor);
@@ -67,10 +86,18 @@ class HomeSectionModel {
     return HomeSectionModel(
       id: '${json['id']}',
       key: (json['key'] as String?) ?? '',
+      contentType: (json['content_type'] as String?) ?? 'products',
       title: (json['title'] as String?) ?? '',
       subtitle: json['subtitle'] as String?,
       backgroundColor: json['background_color'] as String?,
+      backgroundImageUrl: json['background_image_url'] as String?,
+      titleColor: json['title_color'] as String?,
+      subtitleColor: json['subtitle_color'] as String?,
+      autoScrollCards: json['auto_scroll_cards'] == true,
+      showTitleIcon: json['show_title_icon'] == true,
+      emphasizeSubtitle: json['emphasize_subtitle'] == true,
       products: jsonMapList(json['products'], ProductModel.fromJson),
+      bundles: jsonMapList(json['bundles'], BundleModel.fromJson),
     );
   }
 }
@@ -104,6 +131,7 @@ class DisplaySectionModel {
 class HomeFeed {
   final List<BannerModel> banners;
   final List<CategoryModel> categories;
+  final List<ProductModel> discounts;
   final List<ProductModel> offers;
   final List<HomeSectionModel> sections;
   final List<DisplaySectionModel> displaySections;
@@ -115,6 +143,7 @@ class HomeFeed {
   const HomeFeed({
     this.banners = const [],
     this.categories = const [],
+    this.discounts = const [],
     this.offers = const [],
     this.sections = const [],
     this.displaySections = const [],
@@ -133,7 +162,8 @@ class HomeFeed {
     return HomeFeed(
       banners: jsonMapList(json['banners'], BannerModel.fromJson),
       categories: jsonMapList(json['categories'], CategoryModel.fromJson),
-      offers: jsonMapList(json['offers'], ProductModel.fromJson),
+      discounts: _parsePromoProducts(json, kind: _PromoFeedKind.discounts),
+      offers: _parsePromoProducts(json, kind: _PromoFeedKind.offers),
       sections: jsonMapList(json['sections'], HomeSectionModel.fromJson),
       displaySections: jsonMapList(
         json['display_sections'],
@@ -226,6 +256,7 @@ class DeliveryConfig {
   final String storeAddress;
   final double? maxKm;
   final double fallbackFee;
+  final bool pickupEnabled;
   final List<DeliveryRuleInfo> rules;
 
   const DeliveryConfig({
@@ -240,6 +271,7 @@ class DeliveryConfig {
     this.storeAddress = '',
     this.maxKm,
     this.fallbackFee = 15,
+    this.pickupEnabled = true,
     this.rules = const [],
   });
 
@@ -274,6 +306,7 @@ class DeliveryConfig {
       storeAddress: (json['store_address'] as String?) ?? '',
       maxKm: (json['max_km'] as num?)?.toDouble(),
       fallbackFee: (json['fallback_fee'] as num?)?.toDouble() ?? 15,
+      pickupEnabled: json['pickup_enabled'] as bool? ?? true,
       rules: rules,
     );
   }
@@ -413,6 +446,26 @@ class StoreConfig {
       searchTrending: trending,
     );
   }
+}
+
+enum _PromoFeedKind { discounts, offers }
+
+List<ProductModel> _parsePromoProducts(
+  Map<String, dynamic> json, {
+  required _PromoFeedKind kind,
+}) {
+  if (json['discounts'] != null) {
+    final source = kind == _PromoFeedKind.discounts
+        ? json['discounts']
+        : json['offers'];
+    return jsonMapList(source, ProductModel.fromJson);
+  }
+
+  final legacy = jsonMapList(json['offers'], ProductModel.fromJson);
+  if (kind == _PromoFeedKind.discounts) {
+    return legacy.where((product) => product.isDiscountPromo).toList();
+  }
+  return legacy.where((product) => product.isOfferPromo).toList();
 }
 
 String _sarSymbol(String? raw) {

@@ -9,6 +9,8 @@ use App\Models\Category;
 use App\Models\DisplaySection;
 use App\Models\HomeSection;
 use App\Models\Product;
+use App\Models\ProductBundle;
+use App\Services\Admin\BundleService;
 use App\Support\Slug;
 use Illuminate\Database\Seeder;
 
@@ -153,9 +155,22 @@ class CatalogSeeder extends Seeder
             );
         }
 
-        $this->section('most_requested', 'الأكثر طلباً', null, 1, collect($products)->sortByDesc('review_count')->take(12)->pluck('id'));
+        $this->section('most_requested', 'الأكثر طلباً', null, 1, collect($products)->sortByDesc('review_count')->take(12)->pluck('id'), showTitleIcon: true);
         $this->section('fresh_groceries', 'خضروات وفواكه', 'طازجة يومياً من أجود المزارع', 2, collect($products)->whereIn('category_id', [$ids['produce'], $ids['frozen']])->pluck('id'));
-        $this->section('best_prices', 'أسعار ولا في الأحلام', 'إلا في روعة الخمسة! 😉', 3, collect($products)->pluck('id'));
+        $this->section('best_prices', 'أسعار ولا في الأحلام', 'إلا في روعة الخمسة! 😉', 3, collect($products)->pluck('id'), showTitleIcon: true, emphasizeSubtitle: true);
+
+        $bundleSection = HomeSection::query()->updateOrCreate(
+            ['key' => 'bundle_banner'],
+            [
+                'content_type' => HomeSection::CONTENT_BUNDLES,
+                'title' => 'سلات التوفير',
+                'subtitle' => 'وفّر أكثر مع باقاتنا المختارة',
+                'sort_order' => 4,
+                'is_active' => true,
+            ],
+        );
+
+        $bundles = $this->seedBundles(collect($products), $bundleSection);
 
         $this->relate($bySku, 'prod_001', 'prod_002', ProductRelationType::Complementary);
         $this->relate($bySku, 'prod_007', 'prod_015', ProductRelationType::Complementary);
@@ -250,15 +265,18 @@ class CatalogSeeder extends Seeder
         return $children;
     }
 
-    private function section(string $key, string $title, ?string $subtitle, int $order, $productIds): void
+    private function section(string $key, string $title, ?string $subtitle, int $order, $productIds, bool $showTitleIcon = false, bool $emphasizeSubtitle = false): void
     {
         $section = HomeSection::query()->updateOrCreate(
             ['key' => $key],
             [
+                'content_type' => HomeSection::CONTENT_PRODUCTS,
                 'title' => $title,
                 'subtitle' => $subtitle,
                 'sort_order' => $order,
                 'is_active' => true,
+                'show_title_icon' => $showTitleIcon,
+                'emphasize_subtitle' => $emphasizeSubtitle,
             ],
         );
 
@@ -267,6 +285,51 @@ class CatalogSeeder extends Seeder
             $sync[$id] = ['sort_order' => $i];
         }
         $section->products()->sync($sync);
+    }
+
+    /**
+     * @param  \Illuminate\Support\Collection<int, Product>  $products
+     * @return \Illuminate\Support\Collection<int, ProductBundle>
+     */
+    private function seedBundles($products, HomeSection $bundleSection)
+    {
+        $service = app(BundleService::class);
+        $ids = $products->take(5)->pluck('id')->values();
+        if ($ids->count() < 3) {
+            return collect();
+        }
+
+        $created = collect();
+
+        $created->push($service->createForSection($bundleSection, [
+            'name' => 'سلة الإفطار',
+            'slug' => 'breakfast-bundle',
+            'summary' => 'كل ما تحتاجه صباحاً بسعر مميز',
+            'discount_percent' => 20,
+            'items' => [
+                ['product_id' => $ids[0], 'quantity' => 1],
+                ['product_id' => $ids[1], 'quantity' => 1],
+                ['product_id' => $ids[2], 'quantity' => 2],
+            ],
+            'sort_order' => 1,
+            'is_active' => true,
+        ]));
+
+        $created->push($service->createForSection($bundleSection, [
+            'name' => 'سلة المقاضي',
+            'slug' => 'groceries-bundle',
+            'summary' => 'منتجات يومية بخصم مجمّع',
+            'discount_percent' => 15,
+            'items' => [
+                ['product_id' => $ids[1], 'quantity' => 1],
+                ['product_id' => $ids[3], 'quantity' => 1],
+                ['product_id' => $ids[4], 'quantity' => 1],
+            ],
+            'sort_order' => 2,
+            'is_active' => true,
+        ]));
+
+        return $created;
     }
 
     private function relate($bySku, string $sku, string $relatedSku, ProductRelationType $type): void

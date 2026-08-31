@@ -63,6 +63,16 @@ final class AppStrings
 
     public const NAV_CATALOG = 'الكتالوج';
 
+    public const NAV_STOREFRONT = 'واجهة التطبيق';
+
+    public const NAV_PROMO = 'التسعير والترويج';
+
+    public const NAV_OPERATIONS = 'العمليات';
+
+    public const NAV_STORE_SETTINGS = 'إعدادات المتجر';
+
+    public const NAV_PRODUCT_DISCOUNTS = 'خصومات المنتجات';
+
     public const LANDING_KICKER = 'منصة التجارة الذكية';
 
     public const LANDING_HERO_TITLE = 'أدر متجرك بفخامة ووضوح';
@@ -83,7 +93,7 @@ final class AppStrings
 
     public const NAV_BANNERS = 'الإعلانات';
 
-    public const NAV_OFFERS = 'العروض والخصومات';
+    public const NAV_OFFERS = 'خصومات المنتجات';
 
     public const NAV_HOME_SECTIONS = 'أقسام الرئيسية';
 
@@ -136,6 +146,18 @@ final class AppStrings
     public const DYNAMIC_PAGE_UPDATED = 'تم تحديث الصفحة الترويجية بنجاح.';
 
     public const DYNAMIC_PAGE_DELETED = 'تم حذف الصفحة الترويجية بنجاح.';
+
+    public const NAV_BUNDLES = 'سلات التوفير';
+
+    public const ADD_BUNDLE = 'إضافة سلة توفير';
+
+    public const EDIT_BUNDLE = 'تعديل سلة التوفير';
+
+    public const BUNDLE_CREATED = 'تم إضافة سلة التوفير بنجاح.';
+
+    public const BUNDLE_UPDATED = 'تم تحديث سلة التوفير بنجاح.';
+
+    public const BUNDLE_DELETED = 'تم حذف سلة التوفير بنجاح.';
 
     public const NAV_ONBOARDING = 'شرائح الترحيب';
 
@@ -301,7 +323,7 @@ final class AppStrings
 
     public const GENERATE_PRODUCT_COPY = 'توليد المحتوى';
 
-    public const CONFIRM_GENERATE_ALL_PRODUCT_COPY = 'سيتم توليد الوصف والتصنيف والفوائد وكلمات البحث وطريقة الاستخدام لجميع المنتجات. قد يستغرق ذلك بعض الوقت. هل تريد المتابعة؟';
+    public const CONFIRM_GENERATE_ALL_PRODUCT_COPY = 'سيتم توليد المحتوى الناقص فقط (الوصف، التصنيف، الفوائد، كلمات البحث، طريقة الاستخدام) للمنتجات التي تحتاجه. المنتجات المكتملة تُتخطى. قد يستغرق ذلك بعض الوقت. هل تريد المتابعة؟';
 
     public const PRODUCTS_WIPED = 'تم حذف كل المنتجات من التطبيق.';
 

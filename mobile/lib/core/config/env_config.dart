@@ -1,8 +1,11 @@
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
-/// نقطة وصول مركزية لمتغيرات البيئة
+/// نقطة وصول مركزية لمتغيرات البيئة وعنوان الـ API.
 class EnvConfig {
   EnvConfig._();
+
+  /// IP سيرفر AWS الحالي (Laragon — بدون دومين).
+  static const productionHost = '16.171.249.18';
 
   static String get geminiApiKey {
     final key = dotenv.env['GEMINI_API_KEY'] ?? '';
@@ -20,28 +23,60 @@ class EnvConfig {
   }
 
   static String _trimBase(String url) {
-    // أزل المسافات الزائدة داخل الرابط (مثل http:// 192...)
     final cleaned = url.trim().replaceAll(RegExp(r'\s+'), '');
     return cleaned.endsWith('/')
         ? cleaned.substring(0, cleaned.length - 1)
         : cleaned;
   }
 
-  /// الشبكة المحلية (نفس الواي فاي).
+  /// الشبكة المحلية (نفس الواي فاي) — للتطوير فقط.
   static const localApi = 'http://172.20.2.95:8088/api';
 
-  /// الإنتاج المؤقت على AWS EC2 (ويندوز سيرفر + Laragon).
-  static const remoteApi = 'http://16.171.249.18/api';
+  /// الإنتاج على AWS EC2.
+  static const remoteApi = 'http://$productionHost/api';
 
-  /// العنوان المفضّل من `.env` — إن وُجد، وإلا سيرفر AWS.
+  /// العنوان من `.env` — وإلا سيرفر AWS.
   static String get apiBaseUrl {
     return _trimBase(dotenv.env['API_BASE_URL'] ?? remoteApi);
   }
 
-  /// ترتيب المحاولة: `.env` ثم AWS ثم المحلي.
+  /// أصل السيرفر الفعلي بعد أول اتصال API ناجح.
+  static String? _resolvedOrigin;
+
+  static void noteWorkingApiBase(String base) {
+    final trimmed = _trimBase(base);
+    if (trimmed.isEmpty) {
+      _resolvedOrigin = null;
+      return;
+    }
+    final uri = Uri.tryParse(trimmed);
+    if (uri == null || uri.host.isEmpty) return;
+    _resolvedOrigin = uri.replace(path: '', query: null, fragment: null).toString();
+  }
+
+  /// أصل السيرفر بدون `/api` — لروابط الصور `/storage/...`.
+  static String get apiOrigin {
+    if (_resolvedOrigin != null && _resolvedOrigin!.isNotEmpty) {
+      return _resolvedOrigin!;
+    }
+    final uri = Uri.tryParse(apiBaseUrl);
+    if (uri == null || uri.host.isEmpty) return 'http://$productionHost';
+    return uri.replace(path: '', query: null, fragment: null).toString();
+  }
+
+  static bool get usesProductionServer {
+    final host = Uri.tryParse(apiBaseUrl)?.host ?? '';
+    return host == productionHost;
+  }
+
+  /// في الإنتاج: سيرفر AWS فقط. محلياً: `.env` ثم AWS ثم LAN.
   static List<String> get apiBaseUrls {
+    final primary = apiBaseUrl;
+    if (usesProductionServer) {
+      return [primary];
+    }
     return {
-      apiBaseUrl,
+      primary,
       remoteApi,
       localApi,
     }.toList();

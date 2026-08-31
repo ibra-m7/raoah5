@@ -1,6 +1,6 @@
 <x-layouts.admin :title="$title">
     <div class="page-card p-4 p-md-5" style="max-width: 980px">
-        <form method="POST" action="{{ route('admin.home-sections.store') }}">
+        <form method="POST" action="{{ route('admin.home-sections.store') }}" enctype="multipart/form-data">
             @csrf
             @include('admin.home-sections._form')
             <div class="d-flex gap-2">

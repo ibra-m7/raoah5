@@ -6,6 +6,7 @@ use App\Enums\BannerLinkType;
 use App\Models\Banner;
 use App\Models\Category;
 use App\Models\DynamicPage;
+use App\Models\ProductBundle;
 use App\Support\Constants;
 use App\Support\Media;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
@@ -39,6 +40,15 @@ class BannerService
     public function pageOptions(): Collection
     {
         return DynamicPage::query()->orderBy('title')->get(['id', 'title']);
+    }
+
+    public function bundleOptions(): Collection
+    {
+        return ProductBundle::query()
+            ->where('is_active', true)
+            ->orderBy('sort_order')
+            ->orderBy('name')
+            ->get(['id', 'name']);
     }
 
     public function create(array $data): Banner
@@ -88,7 +98,7 @@ class BannerService
             'subtitle' => $data['subtitle'] ?? null,
             'image_url' => $stored,
             'link_type' => $type,
-            'link_id' => in_array($type, [BannerLinkType::Product, BannerLinkType::Category, BannerLinkType::Page], true)
+            'link_id' => in_array($type, [BannerLinkType::Product, BannerLinkType::Category, BannerLinkType::Page, BannerLinkType::Bundle], true)
                 ? ($data['link_id'] ?? null)
                 : null,
             'link_url' => $type === BannerLinkType::Url ? ($data['link_url'] ?? null) : null,

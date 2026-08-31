@@ -91,7 +91,8 @@ class ProductController extends Controller
                 $reason === 'connection' => 'تعذّر الاتصال بخدمة الذكاء الاصطناعي.',
                 str_contains($reasonLower, 'quota')
                     || str_contains($reasonLower, 'rate limit')
-                    || str_contains($reasonLower, 'resource exhausted') => 'تم تجاوز حد التوليد. جرّب بعد دقيقة أو غيّر نموذج الذكاء الاصطناعي من الإعدادات.',
+                    ||                 str_contains($reasonLower, 'resource exhausted') => 'تم تجاوز حد التوليد. جرّب بعد دقيقة أو غيّر نموذج الذكاء الاصطناعي من الإعدادات.',
+                $reason === 'invalid_json' => 'استجابة غير صالحة من الذكاء الاصطناعي. حاول مرة أخرى.',
                 default => 'تعذّر التوليد الآن. حاول مرة أخرى.',
             };
 
@@ -109,40 +110,69 @@ class ProductController extends Controller
             'piece_count' => $copy['piece_count'],
             'weight_label' => $copy['weight_label'],
             'quantity_label' => $copy['quantity_label'],
+            'meta' => $copy['meta'] ?? ['cached' => false, 'source' => 'ai'],
         ]);
     }
 
-    public function generateAllContent(): RedirectResponse
+    public function generateAllContent(Request $request): RedirectResponse|JsonResponse
     {
         try {
             $status = $this->copyBulk->start();
         } catch (RuntimeException $e) {
+            $message = match ($e->getMessage()) {
+                'missing_key' => 'مفتاح الذكاء الاصطناعي غير جاهز.',
+                'already_running' => 'توليد المحتوى قيد التنفيذ بالفعل.',
+                'no_products' => 'لا توجد منتجات للتوليد.',
+                'all_complete' => 'جميع المنتجات لديها محتوى كامل بالفعل.',
+                default => 'تعذّر بدء التوليد. حاول مرة أخرى.',
+            };
+
+            $httpStatus = match ($e->getMessage()) {
+                'missing_key', 'already_running' => 422,
+                'all_complete' => 200,
+                default => 500,
+            };
+
+            if ($request->expectsJson()) {
+                return response()->json(['message' => $message], $httpStatus);
+            }
+
             return match ($e->getMessage()) {
-                'missing_key' => back()->with('error', 'مفتاح الذكاء الاصطناعي غير جاهز.'),
-                'already_running' => back()->with('error', 'توليد المحتوى قيد التنفيذ بالفعل.'),
-                'no_products' => back()->with('error', 'لا توجد منتجات للتوليد.'),
-                default => back()->with('error', 'تعذّر بدء التوليد. حاول مرة أخرى.'),
+                'missing_key' => back()->with('error', $message),
+                'already_running' => back()->with('error', $message),
+                'no_products' => back()->with('error', $message),
+                'all_complete' => back()->with('success', $message),
+                default => back()->with('error', $message),
             };
         }
 
+        if ($request->expectsJson()) {
+            return response()->json($this->copyBulk->statusWithPercent());
+        }
+
+        $skipped = (int) ($status['skipped'] ?? 0);
+        $skippedNote = $skipped > 0
+            ? " (تم تخطي {$skipped} منتجاً لأن محتواه مكتمل)"
+            : '';
+
         return back()->with(
             'success',
-            "بدأ توليد المحتوى في الخلفية لـ {$status['total']} منتج. يمكنك متابعة التقدم من هذه الصفحة."
+            "بدأ توليد المحتوى لـ {$status['total']} منتج{$skippedNote}. يمكنك متابعة التقدم من هذه الصفحة."
         );
+    }
+
+    public function processContentGenerationChunk(): JsonResponse
+    {
+        set_time_limit(180);
+
+        $this->copyBulk->processChunk(ProductCopyBulkService::CHUNK_SIZE);
+
+        return response()->json($this->copyBulk->statusWithPercent());
     }
 
     public function copyGenerationStatus(): JsonResponse
     {
-        $status = $this->copyBulk->status();
-        $total = max(1, (int) $status['total']);
-        $processed = (int) $status['processed'];
-
-        return response()->json([
-            ...$status,
-            'percent' => $status['running']
-                ? (int) round(($processed / $total) * 100)
-                : ($status['finished_at'] ? 100 : 0),
-        ]);
+        return response()->json($this->copyBulk->statusWithPercent());
     }
 
     public function cancelContentGeneration(): JsonResponse
@@ -158,13 +188,7 @@ class ProductController extends Controller
             ], 422);
         }
 
-        $total = max(1, (int) $status['total']);
-        $processed = (int) $status['processed'];
-
-        return response()->json([
-            ...$status,
-            'percent' => (int) round(($processed / $total) * 100),
-        ]);
+        return response()->json($this->copyBulk->statusWithPercent());
     }
 
     public function store(ProductRequest $request): RedirectResponse

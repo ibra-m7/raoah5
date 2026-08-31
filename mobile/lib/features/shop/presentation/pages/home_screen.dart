@@ -37,9 +37,13 @@ import '../widgets/main_bottom_nav_bar.dart';
 import '../widgets/main_shell_scope.dart';
 import '../widgets/price_line.dart';
 import '../widgets/product_card.dart';
+import '../widgets/auto_scroll_horizontal_list.dart';
+import '../widgets/bundle_banner_section.dart';
+import '../widgets/home_section_shell.dart';
 import '../widgets/card_cart_control.dart';
 import '../widgets/product_card_shimmer.dart';
 import '../widgets/product_preview_sheet.dart';
+import '../widgets/promo_badge.dart';
 import '../widgets/scroll_refresh_shell.dart';
 import 'categories_screen.dart';
 import 'checkout_screen.dart';
@@ -190,8 +194,14 @@ List<_PromoSlide> _promoSlidesFor(CatalogState catalog) {
     );
   }
   if (slides.isNotEmpty) return slides;
+  final promoProducts = <ProductModel>[
+    ...catalog.offers,
+    ...catalog.discounts.where(
+      (product) => !catalog.offers.any((offer) => offer.id == product.id),
+    ),
+  ];
   return [
-    for (final product in catalog.offers.take(4))
+    for (final product in promoProducts.take(4))
       _PromoSlide(
         imageUrl: product.imageUrl,
         title: product.name,
@@ -631,6 +641,9 @@ class _CurvedProductCarouselSection extends StatelessWidget {
   final Widget? titleLeading;
   final List<ProductModel> products;
   final List<Color> gradientColors;
+  final String? backgroundImageUrl;
+  final Color? titleColor;
+  final Color? subtitleColor;
   final bool curveTop;
   final bool curveBottom;
   final bool ticker;
@@ -643,6 +656,9 @@ class _CurvedProductCarouselSection extends StatelessWidget {
     this.titleLeading,
     required this.products,
     required this.gradientColors,
+    this.backgroundImageUrl,
+    this.titleColor,
+    this.subtitleColor,
     this.curveTop = false,
     this.curveBottom = true,
     this.ticker = false,
@@ -654,291 +670,149 @@ class _CurvedProductCarouselSection extends StatelessWidget {
     if (products.isEmpty) return const SizedBox.shrink();
     final scale = AppScale.of(context);
 
-    return ClipPath(
-      clipper: _SectionWaveClipper(
-        curveTop: curveTop,
-        curveBottom: curveBottom,
-      ),
-      child: Container(
-        width: double.infinity,
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topRight,
-            end: Alignment.bottomLeft,
-            colors: gradientColors,
-          ),
-        ),
-        child: Padding(
-          padding: EdgeInsets.only(top: scale.s(20), bottom: scale.s(18)),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: scale.pagePad),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              if (titleLeading != null) ...[
-                                titleLeading!,
-                                SizedBox(width: scale.s(8)),
-                              ],
-                              Flexible(
-                                child: Text(
-                                  title,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: Theme.of(context).textTheme.titleLarge
-                                      ?.copyWith(
-                                        fontSize: scale.s(16),
-                                        fontWeight: FontWeight.w900,
-                                        color: AppTheme.primaryDark,
-                                        height: 1.15,
-                                      ),
-                                ),
-                              ),
+    return HomeSectionShell(
+      gradientColors: gradientColors,
+      backgroundImageUrl: backgroundImageUrl,
+      curveTop: curveTop,
+      curveBottom: curveBottom,
+      child: Padding(
+        padding: EdgeInsets.only(top: scale.s(20), bottom: scale.s(18)),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: scale.pagePad),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            if (titleLeading != null) ...[
+                              titleLeading!,
+                              SizedBox(width: scale.s(8)),
                             ],
-                          ),
-                          if (subtitle != null && subtitle!.isNotEmpty) ...[
-                            const SizedBox(height: 3),
-                            Padding(
-                              padding: EdgeInsetsDirectional.only(
-                                start: titleLeading != null ? scale.s(46) : 0,
-                              ),
+                            Flexible(
                               child: Text(
-                                subtitle!,
-                                maxLines: 2,
+                                title,
+                                maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
-                                style:
-                                    subtitleStyle ??
-                                    Theme.of(
-                                      context,
-                                    ).textTheme.labelSmall?.copyWith(
-                                      fontSize: 11,
-                                      color: AppTheme.mutedText,
-                                      fontWeight: FontWeight.w600,
-                                      height: 1.25,
+                                style: Theme.of(context).textTheme.titleLarge
+                                    ?.copyWith(
+                                      fontSize: scale.s(16),
+                                      fontWeight: FontWeight.w900,
+                                      color: titleColor ?? AppTheme.primaryDark,
+                                      height: 1.15,
                                     ),
                               ),
                             ),
                           ],
+                        ),
+                        if (subtitle != null && subtitle!.isNotEmpty) ...[
+                          const SizedBox(height: 3),
+                          Padding(
+                            padding: EdgeInsetsDirectional.only(
+                              start: titleLeading != null ? scale.s(46) : 0,
+                            ),
+                            child: Text(
+                              subtitle!,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: subtitleStyle ??
+                                  Theme.of(
+                                    context,
+                                  ).textTheme.labelSmall?.copyWith(
+                                    fontSize: 11,
+                                    color: subtitleColor ?? AppTheme.mutedText,
+                                    fontWeight: FontWeight.w600,
+                                    height: 1.25,
+                                  ),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: onViewAll,
+                    style: TextButton.styleFrom(
+                      foregroundColor: titleColor ?? AppTheme.primaryDark,
+                      padding: const EdgeInsetsDirectional.only(start: 8),
+                      minimumSize: Size.zero,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            AppStrings.homeShowAll,
+                            style: Theme.of(context).textTheme.labelLarge
+                                ?.copyWith(
+                                  fontSize: 11.5,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppTheme.primary,
+                                ),
+                          ),
+                          const Icon(
+                            Icons.chevron_right_rounded,
+                            size: 15,
+                            color: AppTheme.primary,
+                          ),
                         ],
                       ),
                     ),
-                    TextButton(
-                      onPressed: onViewAll,
-                      style: TextButton.styleFrom(
-                        foregroundColor: AppTheme.primaryDark,
-                        padding: const EdgeInsetsDirectional.only(start: 8),
-                        minimumSize: Size.zero,
-                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(height: scale.s(16)),
+            SizedBox(
+              height: scale.productCardHeight,
+              child: ticker
+                  ? AutoScrollHorizontalList(
+                      height: scale.productCardHeight,
+                      itemWidth: scale.productCardWidth,
+                      gap: scale.s(10),
+                      padding: EdgeInsets.symmetric(horizontal: scale.pagePad),
+                      itemCount: products.length,
+                      itemBuilder: (_, i) => ProductCard(
+                        product: products[i],
+                        heroTag: 'home_carousel_${title}_${i}_${products[i].id}',
+                        imageWidthFactor: AppScale.homeProductImageWidthFactor,
+                        compactFooter: true,
                       ),
-                      child: FittedBox(
-                        fit: BoxFit.scaleDown,
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              AppStrings.homeShowAll,
-                              style: Theme.of(context).textTheme.labelLarge
-                                  ?.copyWith(
-                                    fontSize: 11.5,
-                                    fontWeight: FontWeight.w700,
-                                    color: AppTheme.primary,
-                                  ),
-                            ),
-                            const Icon(
-                              Icons.chevron_right_rounded,
-                              size: 15,
-                              color: AppTheme.primary,
-                            ),
-                          ],
+                    )
+                  : ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      physics: const BouncingScrollPhysics(),
+                      cacheExtent: 200,
+                      padding: EdgeInsets.symmetric(
+                        horizontal: scale.pagePad,
+                      ),
+                      itemCount: products.length,
+                      separatorBuilder: (_, _) =>
+                          SizedBox(width: scale.s(10)),
+                      itemBuilder: (_, i) => SizedBox(
+                        width: scale.productCardWidth,
+                        child: ProductCard(
+                          product: products[i],
+                          heroTag:
+                              'home_carousel_${title}_${i}_${products[i].id}',
+                          imageWidthFactor:
+                              AppScale.homeProductImageWidthFactor,
+                          compactFooter: true,
                         ),
                       ),
                     ),
-                  ],
-                ),
-              ),
-              SizedBox(height: scale.s(16)),
-              SizedBox(
-                height: scale.productCardHeight,
-                child: ticker
-                    ? _TickerProductRow(products: products, title: title)
-                    : ListView.separated(
-                        scrollDirection: Axis.horizontal,
-                        physics: const BouncingScrollPhysics(),
-                        cacheExtent: 200,
-                        padding: EdgeInsets.symmetric(
-                          horizontal: scale.pagePad,
-                        ),
-                        itemCount: products.length,
-                        separatorBuilder: (_, _) =>
-                            SizedBox(width: scale.s(10)),
-                        itemBuilder: (_, i) => SizedBox(
-                          width: scale.productCardWidth,
-                          child: ProductCard(
-                            product: products[i],
-                            heroTag:
-                                'home_carousel_${title}_${i}_${products[i].id}',
-                            imageWidthFactor:
-                                AppScale.homeProductImageWidthFactor,
-                            compactFooter: true,
-                          ),
-                        ),
-                      ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _TickerProductRow extends StatefulWidget {
-  final List<ProductModel> products;
-  final String title;
-
-  const _TickerProductRow({required this.products, required this.title});
-
-  @override
-  State<_TickerProductRow> createState() => _TickerProductRowState();
-}
-
-class _TickerProductRowState extends State<_TickerProductRow>
-    with SingleTickerProviderStateMixin {
-  late final ScrollController _scroll;
-  late final Ticker _ticker;
-  Duration _lastElapsed = Duration.zero;
-  Timer? _resumeTimer;
-  double _loopWidth = 0;
-  bool _userHolding = false;
-
-  static const _pixelsPerSecond = 34.0;
-  static const _resumeAfter = Duration(seconds: 2);
-
-  @override
-  void initState() {
-    super.initState();
-    _scroll = ScrollController();
-    _ticker = createTicker(_onTick);
-  }
-
-  @override
-  void dispose() {
-    _resumeTimer?.cancel();
-    _ticker.dispose();
-    _scroll.dispose();
-    super.dispose();
-  }
-
-  void _onTick(Duration elapsed) {
-    if (!_scroll.hasClients || _loopWidth <= 0 || _userHolding) {
-      _lastElapsed = elapsed;
-      return;
-    }
-
-    final dt = (elapsed - _lastElapsed).inMicroseconds / 1e6;
-    _lastElapsed = elapsed;
-    if (dt <= 0 || dt > 0.08) return;
-
-    var next = _scroll.offset + _pixelsPerSecond * dt;
-    if (next >= _loopWidth) {
-      next -= _loopWidth;
-    }
-    final max = _scroll.position.maxScrollExtent;
-    if (next > max) next = 0;
-    if (next < 0) next = 0;
-    _scroll.jumpTo(next);
-  }
-
-  void _ensureRunning(double loopWidth) {
-    if (loopWidth <= 0) return;
-    _loopWidth = loopWidth;
-    if (!_ticker.isActive) {
-      _lastElapsed = Duration.zero;
-      _ticker.start();
-    }
-  }
-
-  void _pauseForUser() {
-    if (_userHolding) return;
-    _userHolding = true;
-    _resumeTimer?.cancel();
-  }
-
-  void _scheduleResume() {
-    _resumeTimer?.cancel();
-    _resumeTimer = Timer(_resumeAfter, () {
-      if (!mounted) return;
-      if (_scroll.hasClients &&
-          _loopWidth > 0 &&
-          _scroll.offset >= _loopWidth) {
-        _scroll.jumpTo(_scroll.offset % _loopWidth);
-      }
-      _userHolding = false;
-      _lastElapsed = Duration.zero;
-      if (!_ticker.isActive) _ticker.start();
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    if (widget.products.isEmpty) return const SizedBox.shrink();
-
-    final scale = AppScale.of(context);
-    final gap = scale.s(10);
-    final cardW = scale.productCardWidth;
-    final loop = widget.products.length * (cardW + gap);
-    final copies = widget.products.length <= 3 ? 4 : 2;
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) _ensureRunning(loop);
-    });
-
-    return Listener(
-      behavior: HitTestBehavior.translucent,
-      onPointerDown: (_) => _pauseForUser(),
-      onPointerUp: (_) => _scheduleResume(),
-      onPointerCancel: (_) => _scheduleResume(),
-      child: NotificationListener<ScrollNotification>(
-        onNotification: (notification) {
-          if (notification is ScrollStartNotification &&
-              notification.dragDetails != null) {
-            _pauseForUser();
-          } else if (notification is ScrollEndNotification && _userHolding) {
-            _scheduleResume();
-          }
-          return false;
-        },
-        child: ListView.separated(
-          controller: _scroll,
-          scrollDirection: Axis.horizontal,
-          physics: const BouncingScrollPhysics(
-            parent: AlwaysScrollableScrollPhysics(),
-          ),
-          cacheExtent: 200,
-          padding: EdgeInsets.symmetric(horizontal: scale.pagePad),
-          itemCount: widget.products.length * copies,
-          separatorBuilder: (_, _) => SizedBox(width: gap),
-          itemBuilder: (_, i) {
-            final product = widget.products[i % widget.products.length];
-            return SizedBox(
-              width: cardW,
-              child: ProductCard(
-                product: product,
-                heroTag: 'home_ticker_${widget.title}_${i}_${product.id}',
-                imageWidthFactor: AppScale.homeProductImageWidthFactor,
-              ),
-            );
-          },
+            ),
+          ],
         ),
       ),
     );
@@ -1598,6 +1472,9 @@ class _HomeTabState extends State<_HomeTab> {
     for (final p in catalog.offers.take(4)) {
       if (p.imageUrl.trim().isNotEmpty) urls.add(p.imageUrl);
     }
+    for (final p in catalog.discounts.take(4)) {
+      if (p.imageUrl.trim().isNotEmpty) urls.add(p.imageUrl);
+    }
     for (final p in catalog.products.take(8)) {
       if (p.imageUrl.trim().isNotEmpty) urls.add(p.imageUrl);
     }
@@ -1738,28 +1615,96 @@ class _HomeTabState extends State<_HomeTab> {
                               ),
                             if (!showFullHomeLoading &&
                                 !showRefreshShimmer &&
+                                browsingHome &&
+                                catalog.discounts.isNotEmpty)
+                              SliverToBoxAdapter(
+                                child: _CurvedProductCarouselSection(
+                                  title: 'خصومات اليوم',
+                                  subtitle: 'أسعار مخفّضة على منتجات مختارة',
+                                  products: catalog.discounts,
+                                  gradientColors: const [
+                                    Color(0xFFFFF1F1),
+                                    Color(0xFFFFE3E3),
+                                  ],
+                                  titleColor: const Color(0xFFC62828),
+                                  subtitleColor: const Color(0xFFB71C1C),
+                                  curveTop: false,
+                                  curveBottom: true,
+                                ),
+                              ),
+                            if (!showFullHomeLoading &&
+                                !showRefreshShimmer &&
+                                browsingHome &&
+                                catalog.offers.isNotEmpty)
+                              SliverToBoxAdapter(
+                                child: _CurvedProductCarouselSection(
+                                  title: 'عروض خاصة',
+                                  subtitle: 'عروض ترويجية لفترة محدودة',
+                                  products: catalog.offers,
+                                  gradientColors: const [
+                                    Color(0xFFFFF6ED),
+                                    Color(0xFFFFE8CC),
+                                  ],
+                                  titleColor: const Color(0xFFE65100),
+                                  subtitleColor: const Color(0xFFBF360C),
+                                  curveTop: false,
+                                  curveBottom: true,
+                                ),
+                              ),
+                            if (!showFullHomeLoading &&
+                                !showRefreshShimmer &&
                                 browsingHome)
                               ...catalog.sections.map((section) {
+                                final titleColor = homeSectionTextColor(
+                                  section.titleColor,
+                                  AppTheme.primaryDark,
+                                );
+                                final subtitleColor = homeSectionTextColor(
+                                  section.subtitleColor,
+                                  AppTheme.mutedText,
+                                );
+                                final autoScroll = section.autoScrollCards;
+
+                                if (section.showsBundles) {
+                                  return SliverToBoxAdapter(
+                                    child: BundleBannerSection(
+                                      title: section.title,
+                                      subtitle: section.subtitle,
+                                      bundles: section.bundles,
+                                      gradientColors: section.gradientColors,
+                                      backgroundImageUrl:
+                                          section.backgroundImageUrl,
+                                      titleColor: titleColor,
+                                      subtitleColor: subtitleColor,
+                                      autoScrollCards: section.autoScrollCards,
+                                      curveTop:
+                                          catalog.sections.first == section,
+                                    ),
+                                  );
+                                }
                                 return SliverToBoxAdapter(
                                   child: _CurvedProductCarouselSection(
                                     title: section.title,
                                     subtitle: section.subtitle,
-                                    subtitleStyle: section.key == 'best_prices'
-                                        ? const TextStyle(
+                                    subtitleStyle: section.emphasizeSubtitle
+                                        ? TextStyle(
                                             fontSize: 11,
                                             fontWeight: FontWeight.w800,
-                                            color: AppTheme.primary,
+                                            color: subtitleColor ??
+                                                AppTheme.primary,
                                             height: 1.25,
                                           )
                                         : null,
-                                    titleLeading:
-                                        section.key == 'best_prices' ||
-                                            section.key == 'most_requested'
+                                    titleLeading: section.showTitleIcon
                                         ? const _SectionFireIcon()
                                         : null,
-                                    ticker: section.key == 'most_requested',
+                                    ticker: autoScroll,
                                     products: section.products,
                                     gradientColors: section.gradientColors,
+                                    backgroundImageUrl:
+                                        section.backgroundImageUrl,
+                                    titleColor: titleColor,
+                                    subtitleColor: subtitleColor,
                                     curveTop: catalog.sections.first == section,
                                     curveBottom: true,
                                     onViewAll: () =>
@@ -2035,21 +1980,9 @@ class _PromoSlideCaption extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         if (product?.hasDiscount == true)
-          Container(
-            margin: const EdgeInsets.only(bottom: 8),
-            padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.92),
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: const Text(
-              'عرض السوبر',
-              style: TextStyle(
-                fontSize: 10,
-                fontWeight: FontWeight.w800,
-                color: Color(0xFFBF360C),
-              ),
-            ),
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: PromoBadge(product: product!, fontSize: 10),
           ),
         if (slide.title.isNotEmpty)
           Text(

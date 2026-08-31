@@ -4,6 +4,8 @@ namespace App\Services\Ai;
 
 use App\Support\AiSettings;
 use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Http\Client\Pool;
+use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use RuntimeException;
@@ -25,6 +27,79 @@ class GeminiClient
     public function generateJsonFast(string $system, string $userPrompt, array $history = []): string
     {
         return $this->requestJson($system, $this->buildContents($userPrompt, $history), fast: true);
+    }
+
+    /**
+     * Concurrent fast JSON generation. Same model/payload as generateJsonFast.
+     *
+     * @param  array<string|int, array{system: string, user: string}>  $requests
+     * @return array<string|int, string>
+     */
+    public function generateJsonFastMany(array $requests): array
+    {
+        if ($requests === []) {
+            return [];
+        }
+
+        $apiKey = trim((string) config('services.gemini.key'));
+        if ($apiKey === '') {
+            throw new RuntimeException('missing_key');
+        }
+
+        $model = AiSettings::model();
+        $timeout = 20;
+        $url = 'https://generativelanguage.googleapis.com/v1beta/models/'.$model.':generateContent';
+
+        $responses = Http::pool(function (Pool $pool) use ($requests, $apiKey, $url, $timeout) {
+            foreach ($requests as $key => $request) {
+                $system = (string) ($request['system'] ?? '');
+                $user = (string) ($request['user'] ?? '');
+                $payload = $this->fastPayload($system, $this->buildContents($user, []));
+
+                $pool->as((string) $key)
+                    ->timeout($timeout)
+                    ->withHeaders(['x-goog-api-key' => $apiKey])
+                    ->acceptJson()
+                    ->asJson()
+                    ->post($url, $payload);
+            }
+        });
+
+        $results = [];
+        foreach ($requests as $key => $request) {
+            $response = $responses[(string) $key] ?? null;
+            if (! $response instanceof Response || ! $response->successful()) {
+                continue;
+            }
+
+            $text = $this->extractText($response->json());
+            if ($text !== '') {
+                $results[$key] = $text;
+            }
+        }
+
+        return $results;
+    }
+
+    /**
+     * @param  list<array<string, mixed>>  $contents
+     * @return array<string, mixed>
+     */
+    private function fastPayload(string $system, array $contents): array
+    {
+        return [
+            'systemInstruction' => [
+                'parts' => [['text' => $system]],
+            ],
+            'contents' => $contents,
+            'generationConfig' => [
+                'maxOutputTokens' => 1536,
+                'responseMimeType' => 'application/json',
+                'thinkingConfig' => [
+                    'thinkingBudget' => 0,
+                ],
+            ],
+        ];
     }
 
     /**
@@ -59,8 +134,8 @@ class GeminiClient
         }
 
         $lastError = '';
-        $models = $this->modelsToTry();
-        $timeout = $fast ? 25 : 45;
+        $models = $this->modelsToTry($fast);
+        $timeout = $fast ? 20 : 45;
 
         foreach ($models as $model) {
             foreach ($this->payloads($system, $contents, $fast) as $payload) {
@@ -154,7 +229,7 @@ class GeminiClient
         ];
 
         if ($fast) {
-            return [$plain, $primary];
+            return [$this->fastPayload($system, $contents)];
         }
 
         return [
@@ -175,8 +250,17 @@ class GeminiClient
     /**
      * @return list<string>
      */
-    private function modelsToTry(): array
+    private function modelsToTry(bool $fast = false): array
     {
+        if ($fast) {
+            $fallbacks = AiSettings::fallbacks();
+
+            return array_values(array_unique([
+                AiSettings::model(),
+                $fallbacks[0] ?? 'gemini-flash-lite-latest',
+            ]));
+        }
+
         return array_values(array_unique([
             AiSettings::model(),
             ...AiSettings::fallbacks(),

@@ -26,6 +26,9 @@ import '../widgets/checkout_sheet.dart';
 import '../widgets/cart_item_groups.dart';
 import '../widgets/cart_summary_group.dart';
 import '../widgets/coupon_badge_icon.dart';
+import '../../data/models/pickup_slots.dart';
+import '../widgets/order_method_toggle.dart';
+import '../widgets/pickup_slots_sheet.dart';
 import '../widgets/delivery_slots_sheet.dart';
 import '../widgets/notes_sheet.dart';
 import '../widgets/payment_method_logo.dart';
@@ -46,8 +49,10 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
   final _couponCtrl = TextEditingController();
   bool _paying = false;
   bool _fulfillNow = true;
+  OrderMethod _orderMethod = OrderMethod.delivery;
   DateTime? _scheduledAt;
   DeliverySlotSelection? _slotSelection;
+  PickupSlotSelection? _pickupSlotSelection;
   String? _method;
   bool _paymentChosen = false;
   String? _stcPhone;
@@ -76,12 +81,22 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
     super.dispose();
   }
 
+  bool get _isPickup => _orderMethod == OrderMethod.pickup;
+
   String _scheduleLabel() {
     if (_fulfillNow) return 'الآن';
-    final slot = _slotSelection?.slot;
-    final day = _slotSelection?.day;
-    if (slot != null && day != null) {
-      return '${day.label} · ${slot.timeRange} ${slot.periodLetter}';
+    if (_isPickup) {
+      final slot = _pickupSlotSelection?.slot;
+      final day = _pickupSlotSelection?.day;
+      if (slot != null && day != null) {
+        return '${day.label} · ${slot.timeLabel}';
+      }
+    } else {
+      final slot = _slotSelection?.slot;
+      final day = _slotSelection?.day;
+      if (slot != null && day != null) {
+        return '${day.label} · ${slot.timeRange} ${slot.periodLetter}';
+      }
     }
     if (_scheduledAt != null) {
       final d = _scheduledAt!;
@@ -91,6 +106,21 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
   }
 
   Future<void> _pickSchedule() async {
+    if (_isPickup) {
+      final result = await PickupSlotsSheet.show(
+        context,
+        initial: _pickupSlotSelection ??
+            (_fulfillNow ? const PickupSlotSelection.now() : null),
+      );
+      if (!mounted || result == null) return;
+      setState(() {
+        _pickupSlotSelection = result;
+        _fulfillNow = result.fulfillNow;
+        _scheduledAt = result.scheduledAt;
+      });
+      return;
+    }
+
     final result = await DeliverySlotsSheet.show(
       context,
       initial: _slotSelection ??
@@ -164,7 +194,7 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
       return;
     }
     final address = context.read<AddressCubit>().state.selected;
-    if (address == null) {
+    if (!_isPickup && address == null) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
         content: Text('أضف عنوان توصيل أولاً', textAlign: TextAlign.center),
       ));
@@ -172,8 +202,11 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
       return;
     }
     if (!_fulfillNow && _scheduledAt == null) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text('اختر وقت تنفيذ الطلب', textAlign: TextAlign.center),
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(
+          _isPickup ? 'اختر وقت التجهيز' : 'اختر وقت تنفيذ الطلب',
+          textAlign: TextAlign.center,
+        ),
       ));
       return;
     }
@@ -190,11 +223,12 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
       await context.read<OrdersCubit>().placeOrder(
             items: List.from(cartState.items),
             paymentMethod: _method!,
-            addressId: address.id,
+            addressId: _isPickup ? null : address?.id,
             notes: notes,
             couponCodes: _quotes.map((q) => q.code).toList(),
             fulfillmentType: _fulfillNow ? 'now' : 'scheduled',
             scheduledAt: _fulfillNow ? null : _scheduledAt,
+            orderMethod: _isPickup ? 'pickup' : 'delivery',
           );
     } on ApiException catch (e) {
       if (!mounted) return;
@@ -258,7 +292,7 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
       final quote = await CouponsApi.instance.preview(
         code: value,
         items: items,
-        addressId: context.read<AddressCubit>().state.selected?.id,
+        addressId: _isPickup ? null : context.read<AddressCubit>().state.selected?.id,
       );
       if (!mounted) return;
       setState(() {
@@ -285,6 +319,15 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
   }
 
   Future<void> _refreshDelivery() async {
+    if (_isPickup) {
+      if (_delivery != null || _deliveryError != null) {
+        setState(() {
+          _delivery = null;
+          _deliveryError = null;
+        });
+      }
+      return;
+    }
     final cart = context.read<CartCubit>().state;
     final address = context.read<AddressCubit>().state.selected;
     final key = '${address?.id}|${_cartKey(cart.items)}';
@@ -369,25 +412,28 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
                 _quotes.isNotEmpty && _quotedCartKey == _cartKey(cart.items);
             final quotes = quoteValid ? List<CouponQuote>.from(_quotes) : const <CouponQuote>[];
             final currentDeliveryKey = '${address?.id}|${_cartKey(cart.items)}';
-            if (currentDeliveryKey != _deliveryKey) {
+            if (!_isPickup && currentDeliveryKey != _deliveryKey) {
               WidgetsBinding.instance.addPostFrameCallback((_) {
                 if (mounted) _refreshDelivery();
               });
             }
             final loggedIn = AuthSession.instance.isLoggedIn;
-            final quotedShipping = quotes.isNotEmpty
-                ? quotes.last.shippingFee
-                : _delivery?.fee;
-            final shipping = quotedShipping ??
-                (!loggedIn && store.delivery.firstOrderFree
-                    ? 0.0
-                    : (store.freeShippingThreshold > 0 &&
-                            subtotal >= store.freeShippingThreshold
+            final quotedShipping = _isPickup
+                ? 0.0
+                : (quotes.isNotEmpty ? quotes.last.shippingFee : _delivery?.fee);
+            final shipping = _isPickup
+                ? 0.0
+                : (quotedShipping ??
+                    (!loggedIn && store.delivery.firstOrderFree
                         ? 0.0
-                        : store.shippingFee));
-            final free = quotes.any((q) => q.hasFreeShipping || q.freeShipping) ||
+                        : (store.freeShippingThreshold > 0 &&
+                                subtotal >= store.freeShippingThreshold
+                            ? 0.0
+                            : store.shippingFee)));
+            final free = _isPickup ||
+                quotes.any((q) => q.hasFreeShipping || q.freeShipping) ||
                 (_delivery?.isFree ?? shipping <= 0);
-            final deliveryLabel = store.delivery.hideDeliverySubtitle
+            final deliveryLabel = _isPickup || store.delivery.hideDeliverySubtitle
                 ? null
                 : (quotes.isNotEmpty
                         ? quotes.last.deliveryLabel
@@ -396,7 +442,7 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
                     (!loggedIn && store.delivery.firstOrderFree
                         ? 'أول طلب مجاني'
                         : null);
-            final deliveryNote = store.delivery.hideDeliverySubtitle
+            final deliveryNote = _isPickup || store.delivery.hideDeliverySubtitle
                 ? null
                 : () {
                     final fromQuote = quotes.isNotEmpty
@@ -426,7 +472,29 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
                 ListView(
                   padding: const EdgeInsets.fromLTRB(12, 2, 12, 96),
                   children: [
-                      _InvoicePlainCard(
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: OrderMethodToggle(
+                          value: _orderMethod,
+                          pickupEnabled: store.delivery.pickupEnabled,
+                          onChanged: (method) {
+                            setState(() {
+                              _orderMethod = method;
+                              _fulfillNow = true;
+                              _scheduledAt = null;
+                              _slotSelection = const DeliverySlotSelection.now();
+                              _pickupSlotSelection = const PickupSlotSelection.now();
+                              _delivery = null;
+                              _deliveryError = null;
+                            });
+                            if (method == OrderMethod.delivery) {
+                              _refreshDelivery();
+                            }
+                          },
+                        ),
+                      ),
+                      if (!_isPickup)
+                        _InvoicePlainCard(
                         onTap: () => DeliveryAddressesSheet.show(context),
                         child: Row(
                           children: [
@@ -466,29 +534,70 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
                           ],
                         ),
                       ),
+                      if (_isPickup)
+                        _InvoicePlainCard(
+                          child: Row(
+                            children: [
+                              const Icon(
+                                Icons.storefront_outlined,
+                                size: 18,
+                                color: AppTheme.primaryDark,
+                              ),
+                              const SizedBox(width: 8),
+                              const Text(
+                                'موقع الاستلام',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 14.5,
+                                  color: AppTheme.darkText,
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              Expanded(
+                                child: Text(
+                                  store.delivery.storeAddress.isNotEmpty
+                                      ? store.delivery.storeAddress
+                                      : 'موقع المركز',
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w900,
+                                    fontSize: 14.5,
+                                    color: AppTheme.primaryDark,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       _InvoiceCard(
                         icon: Icons.schedule_rounded,
-                        title: 'فترة التوصيل',
+                        title: _isPickup ? 'فترة التجهيز' : 'فترة التوصيل',
                         child: Row(
                           children: [
                             Expanded(
                               child: _DeliveryOptionCard(
-                                title: 'توصيل فوري',
+                                title: _isPickup ? 'تجهيز فوري' : 'توصيل فوري',
                                 subtitle: 'أقرب وقت',
                                 icon: Icons.bolt_rounded,
                                 selected: _fulfillNow,
                                 onTap: () => setState(() {
                                   _fulfillNow = true;
                                   _scheduledAt = null;
-                                  _slotSelection =
-                                      const DeliverySlotSelection.now();
+                                  if (_isPickup) {
+                                    _pickupSlotSelection =
+                                        const PickupSlotSelection.now();
+                                  } else {
+                                    _slotSelection =
+                                        const DeliverySlotSelection.now();
+                                  }
                                 }),
                               ),
                             ),
                             const SizedBox(width: 8),
                             Expanded(
                               child: _DeliveryOptionCard(
-                                title: 'جدولة الطلب',
+                                title: _isPickup ? 'تجهيز في وقت آخر' : 'جدولة الطلب',
                                 subtitle: !_fulfillNow &&
                                         _scheduleLabel() != 'الآن'
                                     ? _scheduleLabel()
@@ -602,56 +711,58 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
                                     '- ${productDiscount.toStringAsFixed(1)} ${store.currency}',
                               ),
                             ],
-                            const SizedBox(height: 10),
-                            _PayRow(
-                              label: 'التوصيل',
-                              value: free
-                                  ? 'مجاني'
-                                  : '${shipping.toStringAsFixed(1)} ${store.currency}',
-                              bold: true,
-                            ),
-                            if (deliveryLabel != null &&
-                                deliveryLabel.trim().isNotEmpty) ...[
-                              const SizedBox(height: 4),
-                              Align(
-                                alignment: Alignment.centerRight,
-                                child: Text(
-                                  deliveryLabel,
-                                  style: const TextStyle(
-                                    color: AppTheme.mutedText,
-                                    fontWeight: FontWeight.w500,
-                                    fontSize: 11,
+                            if (!_isPickup) ...[
+                              const SizedBox(height: 10),
+                              _PayRow(
+                                label: 'التوصيل',
+                                value: free
+                                    ? 'مجاني'
+                                    : '${shipping.toStringAsFixed(1)} ${store.currency}',
+                                bold: true,
+                              ),
+                              if (deliveryLabel != null &&
+                                  deliveryLabel.trim().isNotEmpty) ...[
+                                const SizedBox(height: 4),
+                                Align(
+                                  alignment: Alignment.centerRight,
+                                  child: Text(
+                                    deliveryLabel,
+                                    style: const TextStyle(
+                                      color: AppTheme.mutedText,
+                                      fontWeight: FontWeight.w500,
+                                      fontSize: 11,
+                                    ),
                                   ),
                                 ),
-                              ),
-                            ],
-                            if (deliveryNote != null &&
-                                deliveryNote.trim().isNotEmpty) ...[
-                              const SizedBox(height: 4),
-                              Align(
-                                alignment: Alignment.centerRight,
-                                child: Text(
-                                  deliveryNote,
-                                  textAlign: TextAlign.right,
-                                  style: const TextStyle(
-                                    color: AppTheme.mutedText,
-                                    fontWeight: FontWeight.w500,
-                                    fontSize: 11,
-                                    height: 1.35,
+                              ],
+                              if (deliveryNote != null &&
+                                  deliveryNote.trim().isNotEmpty) ...[
+                                const SizedBox(height: 4),
+                                Align(
+                                  alignment: Alignment.centerRight,
+                                  child: Text(
+                                    deliveryNote,
+                                    textAlign: TextAlign.right,
+                                    style: const TextStyle(
+                                      color: AppTheme.mutedText,
+                                      fontWeight: FontWeight.w500,
+                                      fontSize: 11,
+                                      height: 1.35,
+                                    ),
                                   ),
                                 ),
-                              ),
-                            ],
-                            if (_deliveryError != null) ...[
-                              const SizedBox(height: 8),
-                              Text(
-                                _deliveryError!,
-                                style: const TextStyle(
-                                  color: Color(0xFFC62828),
-                                  fontWeight: FontWeight.w500,
-                                  fontSize: 11.5,
+                              ],
+                              if (_deliveryError != null) ...[
+                                const SizedBox(height: 8),
+                                Text(
+                                  _deliveryError!,
+                                  style: const TextStyle(
+                                    color: Color(0xFFC62828),
+                                    fontWeight: FontWeight.w500,
+                                    fontSize: 11.5,
+                                  ),
                                 ),
-                              ),
+                              ],
                             ],
                             if (discount > 0) ...[
                               const SizedBox(height: 8),
@@ -753,7 +864,7 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
                     glass: !_paymentChosen,
                     loading: _paying,
                     enabled: _paymentChosen &&
-                        _deliveryError == null &&
+                        (_isPickup || _deliveryError == null) &&
                         !_paying,
                     onTap: _submit,
                   ),

@@ -22,9 +22,8 @@
             <button
                 type="submit"
                 class="btn btn-success rounded-pill"
-                title="توليد الوصف والتصنيف والفوائد وكلمات البحث وطريقة الاستخدام لجميع المنتجات"
+                title="توليد المحتوى الناقص للمنتجات (الوصف، التصنيف، الفوائد، كلمات البحث، طريقة الاستخدام)"
                 data-product-copy-bulk-submit
-                onclick="if (!confirm(@json($strings::CONFIRM_GENERATE_ALL_PRODUCT_COPY))) return false;"
             >
                 <i class="bi bi-stars ms-1"></i>
                 {{ $strings::GENERATE_PRODUCT_COPY }}
@@ -35,7 +34,9 @@
         class="page-card p-3 mb-3 border border-success-subtle"
         data-product-copy-bulk
         data-status-url="{{ route('admin.products.copy-generation-status') }}"
+        data-chunk-url="{{ route('admin.products.copy-generation-chunk') }}"
         data-cancel-url="{{ route('admin.products.cancel-copy-generation') }}"
+        data-confirm="{{ $strings::CONFIRM_GENERATE_ALL_PRODUCT_COPY }}"
         hidden
     >
         <div class="d-flex justify-content-between align-items-center gap-3 mb-2">
@@ -116,7 +117,7 @@
                                     'badges' => array_values(array_filter([
                                         $product->is_active ? $strings::ACTIVE : $strings::INACTIVE,
                                         $product->is_featured ? 'مميز' : null,
-                                        $product->has_discount ? 'خصم '.$product->discount_percent.'%' : null,
+                                        $product->has_discount ? ($product->promo_type?->label() ?? 'خصم') : null,
                                     ])),
                                     'fields' => array_values(array_filter([
                                         ['label' => 'رمز المنتج', 'value' => $product->sku],
@@ -162,7 +163,15 @@
                                 </td>
                                 <td>{{ $product->stock }}</td>
                                 <td>
-                                    <span class="badge badge-soft">{{ $product->is_active ? 'نشط' : 'مخفي' }}</span>
+                                    <div class="d-flex flex-wrap gap-1">
+                                        <span class="badge badge-soft">{{ $product->is_active ? 'نشط' : 'مخفي' }}</span>
+                                        @if ($product->has_discount)
+                                            <span class="badge bg-success-subtle text-success-emphasis">خصم نشط</span>
+                                        @endif
+                                        @if ($product->is_featured)
+                                            <span class="badge bg-primary-subtle text-primary-emphasis">مميز</span>
+                                        @endif
+                                    </div>
                                 </td>
                                 <td>
                                     <div class="d-flex gap-2">

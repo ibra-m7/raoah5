@@ -5,6 +5,11 @@
         :create-label="$strings::ADD_BANNER"
     />
 
+    <div class="alert alert-light border mb-3">
+        <strong>أين يظهر الإعلان؟</strong>
+        <p class="mb-0 small text-muted">يظهر في شريط الإعلانات أعلى الصفحة الرئيسية. يمكن ربطه بمنتج أو قسم أو سلة أو صفحة ترويجية.</p>
+    </div>
+
     <form method="GET" class="d-flex flex-wrap gap-2 mb-3">
         <input type="text" name="q" value="{{ $filters['q'] ?? '' }}" class="form-control" style="max-width: 240px" placeholder="{{ $strings::SEARCH }}">
         <select name="status" class="form-select" style="max-width: 140px">

@@ -13,13 +13,14 @@
     <div class="modal-dialog modal-lg modal-dialog-scrollable">
         <div class="modal-content detail-modal">
             <div class="modal-header">
-                <h5 class="modal-title fw-bold">إضافة منتج هدية جديد</h5>
+                <h5 class="modal-title fw-bold">هدية جديدة</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ $strings::CLOSE }}"></button>
             </div>
             <form id="giftProductForm" class="modal-scroll-form" enctype="multipart/form-data">
                 @csrf
                 <div class="modal-body">
                     <x-admin.help-note>
+                        أنشئ هدية جديدة غير موجودة في قائمة المنتجات. لن تظهر في قسم المنتجات ولن تُباع بشكل مستقل.
                         @if ($currentProductId > 0)
                             سيُربط تلقائياً بالمنتج الذي تعدّله الآن. يمكنك أيضاً ربطه بمنتجات رئيسية إضافية.
                         @else
@@ -29,7 +30,7 @@
 
                     <div class="row">
                         <div class="col-md-8 mb-3">
-                            <label class="form-label">اسم منتج الهدية *</label>
+                            <label class="form-label">اسم الهدية *</label>
                             <input type="text" name="name" class="form-control" required maxlength="255" data-gift-field="name">
                             <div class="invalid-feedback d-block" data-gift-error="name"></div>
                         </div>
@@ -53,28 +54,6 @@
                         <label class="form-label">صورة الهدية</label>
                         <input type="file" name="image" accept="image/*" class="form-control" data-gift-field="image">
                         <div class="invalid-feedback d-block" data-gift-error="image"></div>
-                    </div>
-
-                    <div class="gift-modal-section border-top pt-3 mt-3">
-                        <label class="form-label">أو اختر منتجاً موجوداً كهدية</label>
-                        <div class="form-hint mb-2">اختر منتجاً من منتجاتك الحالية ليكون هدية لهذا المنتج مباشرة.</div>
-                        <div data-gift-existing-picker>
-                            <x-admin.product-picker
-                                name="existing_gift_product_id"
-                                :selected="[]"
-                                :multiple="false"
-                                :except="$currentProductId > 0 ? $currentProductId : null"
-                                :embedded="true"
-                                :allow-empty="true"
-                                empty-label="لم تُحدَّد هدية بعد"
-                                placeholder="ابحث عن منتج موجود..."
-                                hint=""
-                            />
-                        </div>
-                        <button type="button" class="btn btn-outline-primary rounded-pill mt-2" data-gift-use-existing>
-                            <i class="bi bi-check2-circle ms-1"></i>
-                            استخدام المنتج المختار كهدية
-                        </button>
                     </div>
 
                     <div class="gift-modal-section mb-0">

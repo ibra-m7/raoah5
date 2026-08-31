@@ -161,6 +161,21 @@ class Product extends Model
         return $query->where('is_gift', false);
     }
 
+    public function scopeNeedsGeneratedCopy(Builder $query): Builder
+    {
+        return $query->where(function (Builder $nested) {
+            $nested->whereNull('description')
+                ->orWhere('description', '')
+                ->orWhereNull('usage_instructions')
+                ->orWhere('usage_instructions', '')
+                ->orWhereNull('category_id')
+                ->orWhereNull('benefits')
+                ->orWhereJsonLength('benefits', 0)
+                ->orWhereNull('keywords')
+                ->orWhereJsonLength('keywords', 0);
+        });
+    }
+
     public function scopeSearch(Builder $query, ?string $term): Builder
     {
         $term = trim((string) $term);

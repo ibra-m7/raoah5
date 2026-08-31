@@ -5,6 +5,15 @@
         :create-label="$type->addLabel()"
     />
 
+    <div class="alert alert-light border mb-3">
+        <strong>الفرق بين الخصومات والعروض</strong>
+        <p class="mb-0 small text-muted">
+            <strong>الخصومات:</strong> تخفيضات دائمة أو روتينية — تظهر في شريط «خصومات اليوم» بالتطبيق بشارة حمراء.
+            <strong>العروض:</strong> حملات ترويجية خاصة — تظهر في شريط «عروض خاصة» بشارة برتقالية وفي سلايدر الترويج.
+            لا يمكن للمنتج أن يكون عليه النوعان معاً.
+        </p>
+    </div>
+
     <div class="promo-tabs">
         @foreach (\App\Enums\PromoType::cases() as $tab)
             <a href="{{ route('admin.offers.index', ['type' => $tab->value]) }}" class="promo-tab {{ $type === $tab ? 'is-active' : '' }}">
@@ -30,6 +39,7 @@
                     <thead>
                         <tr>
                             <th></th>
+                            <th>النوع</th>
                             <th>المنتج</th>
                             <th>السعر الأصلي</th>
                             <th>بعد التخفيض</th>
@@ -44,6 +54,11 @@
                                     @if ($product->primaryImage?->url)
                                         <img src="{{ \App\Support\Media::url($product->primaryImage->url) }}" alt="" class="table-thumb">
                                     @endif
+                                </td>
+                                <td>
+                                    <span class="badge {{ $type === \App\Enums\PromoType::Offer ? 'bg-warning-subtle text-warning-emphasis' : 'bg-danger-subtle text-danger-emphasis' }}">
+                                        {{ $type->label() }}
+                                    </span>
                                 </td>
                                 <td>
                                     <div class="fw-bold">{{ $product->name }}</div>

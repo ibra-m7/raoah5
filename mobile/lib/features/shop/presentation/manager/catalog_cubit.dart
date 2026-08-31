@@ -33,6 +33,7 @@ class CatalogState extends Equatable {
 
   List<BannerModel> get banners => feed.banners;
   List<CategoryModel> get categories => feed.categories;
+  List<ProductModel> get discounts => feed.discounts;
   List<ProductModel> get offers => feed.offers;
   List<HomeSectionModel> get sections => feed.sections;
   List<DisplaySectionModel> get displaySections => feed.displaySections;
@@ -69,6 +70,7 @@ class CatalogState extends Equatable {
   static Map<String, ProductModel> _buildProductsById(HomeFeed feed) {
     final map = <String, ProductModel>{
       for (final product in feed.products) product.id: product,
+      for (final product in feed.discounts) product.id: product,
       for (final product in feed.offers) product.id: product,
       for (final product in feed.suggested) product.id: product,
     };

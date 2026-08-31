@@ -5,6 +5,11 @@
     $type = old('type', $coupon->type?->value ?? 'percent');
 @endphp
 
+<div class="alert alert-light border mb-4">
+    <strong>أين يظهر الكوبون؟</strong>
+    <p class="mb-0 small text-muted">يُطبَّق عند إتمام الطلب في التطبيق. لا يظهر في الصفحة الرئيسية.</p>
+</div>
+
 <div class="mb-3">
     <label class="form-label">كود الكوبون</label>
     <input type="text" name="code" value="{{ old('code', $coupon->code) }}" class="form-control @error('code') is-invalid @enderror" required dir="ltr" style="text-transform: uppercase">
@@ -98,13 +103,22 @@
 
 <div class="mb-3" id="categories_wrap">
     <label class="form-label">الأقسام المشمولة</label>
-    <select name="category_ids[]" class="form-select @error('category_ids') is-invalid @enderror" multiple size="8">
+    <input type="search" class="form-control mb-2" placeholder="ابحث في الأقسام..." data-category-picker-q>
+    <div class="category-picker-grid" data-category-picker>
         @foreach ($categories as $category)
-            <option value="{{ $category->id }}" @selected(in_array($category->id, $selectedCategories))>{{ $category->name }}</option>
+            <label class="category-picker-item" data-category-picker-item data-label="{{ $category->name }}">
+                <input
+                    type="checkbox"
+                    name="category_ids[]"
+                    value="{{ $category->id }}"
+                    @checked(in_array($category->id, $selectedCategories))
+                >
+                <span>{{ $category->name }}</span>
+            </label>
         @endforeach
-    </select>
-    @error('category_ids') <div class="invalid-feedback">{{ $message }}</div> @enderror
-    <div class="form-hint">يشمل القسم وفروعه.</div>
+    </div>
+    @error('category_ids') <div class="invalid-feedback d-block">{{ $message }}</div> @enderror
+    <div class="form-hint">يشمل القسم وفروعه. يُطبَّق الخصم عند الدفع فقط.</div>
 </div>
 
 <div class="row">

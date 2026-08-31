@@ -1537,6 +1537,7 @@ const bindProductAiCopy = (root = document) => {
         }
 
         let timer = null;
+        let successTimer = null;
         let lastName = "";
         let busy = false;
 
@@ -1544,6 +1545,7 @@ const bindProductAiCopy = (root = document) => {
         const aiField = (key) => box.querySelector(`[data-ai-field="${key}"]`);
         const empty = (el) => !el || String(el.value).trim() === "";
         const emptyOrZero = (el) => empty(el) || String(el.value).trim() === "0";
+        const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
         const payload = () => ({
             name: field("name")?.value.trim() || "",
@@ -1554,53 +1556,139 @@ const bindProductAiCopy = (root = document) => {
             piece_count: field("piece_count")?.value || "",
         });
 
-        const setStatus = (text, show = true) => {
+        const localHints = (name) => {
+            const hints = {
+                weight_label: "",
+                piece_count: null,
+                quantity_label: "",
+            };
+
+            const weight = name.match(
+                /(\d+(?:[.,]\d+)?)\s*(كيلو|كجم|كغ|kg|جرام|غرام|جم|g|مل|ml|لتر|ل|l)\b/i,
+            );
+            if (weight) {
+                hints.weight_label = `${weight[1].replace(",", ".")} ${weight[2]}`;
+            }
+
+            const pieces =
+                name.match(/(?:×|x)\s*(\d{1,3})\b/i) ||
+                name.match(/(\d{1,3})\s*(?:حبة|حبات|قطعة|قطع|علبة|عبوة|كيس|أكياس)\b/u);
+            if (pieces) {
+                const count = Number.parseInt(pieces[1], 10);
+                if (count >= 2 && count <= 9999) {
+                    hints.piece_count = count;
+                    hints.quantity_label = `العدد ${count}`;
+                }
+            } else if (hints.weight_label) {
+                hints.quantity_label = hints.weight_label;
+            }
+
+            return hints;
+        };
+
+        const setStatus = (text, show = true, tone = "muted") => {
             if (!(status instanceof HTMLElement)) {
                 return;
             }
+            clearTimeout(successTimer);
             status.hidden = !show || !text;
             status.textContent = text || "";
+            status.classList.remove("text-muted", "text-success", "text-danger");
+            status.classList.add(
+                tone === "success"
+                    ? "text-success"
+                    : tone === "danger"
+                      ? "text-danger"
+                      : "text-muted",
+            );
         };
 
         const fillText = (el, value, overwrite) => {
             if (!el || value == null) {
-                return;
+                return false;
             }
             const text = String(value).trim();
             if (text === "" || (!overwrite && !empty(el))) {
-                return;
+                return false;
             }
             el.value = text;
+            return true;
         };
 
         const fillNumber = (el, value, overwrite) => {
             if (!el || value == null || value === "") {
-                return;
+                return false;
             }
             if (!overwrite && !emptyOrZero(el)) {
-                return;
+                return false;
             }
             el.value = String(value);
+            return true;
+        };
+
+        const applyLocalHints = (hints) => {
+            fillText(field("weight_label"), hints.weight_label, false);
+            fillNumber(field("piece_count"), hints.piece_count, false);
+            fillText(field("quantity_label"), hints.quantity_label, false);
         };
 
         const applyCopy = (copy, force) => {
-            fillText(field("description"), copy.description, force);
+            const applied = [];
+
+            if (fillText(field("description"), copy.description, force)) {
+                applied.push("الوصف");
+            }
             fillText(aiField("description"), copy.description, force);
-            if (copy.category_id && (force || empty(field("category_id")))) {
+
+            if (copy.category_id && empty(field("category_id"))) {
                 const select = field("category_id");
                 if (select) {
                     select.value = String(copy.category_id);
                     select.dispatchEvent(new Event("change", { bubbles: true }));
+                    applied.push("التصنيف");
                 }
             }
-            fillNumber(field("price"), copy.price, false);
-            fillNumber(field("stock"), copy.stock, false);
-            fillNumber(field("piece_count"), copy.piece_count, false);
-            fillText(field("weight_label"), copy.weight_label, false);
-            fillText(field("quantity_label"), copy.quantity_label, false);
-            fillText(aiField("benefits"), copy.benefits, force);
-            fillText(aiField("keywords"), copy.keywords, force);
-            fillText(aiField("usage_instructions"), copy.usage_instructions, force);
+
+            if (fillNumber(field("price"), copy.price, false)) {
+                applied.push("السعر");
+            }
+            if (fillNumber(field("stock"), copy.stock, false)) {
+                applied.push("المخزون");
+            }
+            if (fillNumber(field("piece_count"), copy.piece_count, false)) {
+                applied.push("عدد الحبات");
+            }
+            if (fillText(field("weight_label"), copy.weight_label, false)) {
+                applied.push("الوزن");
+            }
+            if (fillText(field("quantity_label"), copy.quantity_label, false)) {
+                applied.push("وصف الكمية");
+            }
+            if (fillText(aiField("benefits"), copy.benefits, force)) {
+                applied.push("الفوائد");
+            }
+            if (fillText(aiField("keywords"), copy.keywords, force)) {
+                applied.push("كلمات البحث");
+            }
+            if (fillText(aiField("usage_instructions"), copy.usage_instructions, force)) {
+                applied.push("طريقة الاستخدام");
+            }
+
+            return applied;
+        };
+
+        const postCopy = async (data, attempt = 0) => {
+            try {
+                return await window.axios.post(endpoint, data, { timeout: 60000 });
+            } catch (error) {
+                const code = error?.response?.status;
+                if (attempt < 1 && [502, 503, 504].includes(code)) {
+                    setStatus("إعادة المحاولة...");
+                    await sleep(900);
+                    return postCopy(data, attempt + 1);
+                }
+                throw error;
+            }
         };
 
         const generate = async (force = false) => {
@@ -1610,7 +1698,7 @@ const bindProductAiCopy = (root = document) => {
             }
             if (data.name.length < 3) {
                 if (force) {
-                    setStatus("أدخل اسم المنتج أولاً.");
+                    setStatus("أدخل اسم المنتج أولاً (3 أحرف على الأقل).", true, "danger");
                 }
                 return;
             }
@@ -1622,14 +1710,25 @@ const bindProductAiCopy = (root = document) => {
             }
             setStatus("جاري التوليد...");
 
+            applyLocalHints(localHints(data.name));
+
             try {
-                const { data: copy } = await window.axios.post(endpoint, data);
-                applyCopy(copy, force);
-                setStatus("", false);
+                const { data: copy } = await postCopy(data);
+                const applied = applyCopy(copy, force);
+                const textFields = force
+                    ? ["الوصف", "الفوائد", "كلمات البحث", "طريقة الاستخدام"]
+                    : applied;
+                const suffix = copy?.meta?.cached ? " (سريع)" : "";
+                const message =
+                    textFields.length > 0
+                        ? `تم التوليد: ${[...new Set(textFields)].join("، ")}${suffix}`
+                        : `تم التوليد${suffix}`;
+                setStatus(message, true, "success");
+                successTimer = setTimeout(() => setStatus("", false), 4500);
             } catch (error) {
                 const message =
                     error?.response?.data?.message || "تعذّر التوليد الآن.";
-                setStatus(message);
+                setStatus(message, true, "danger");
             } finally {
                 busy = false;
                 box.classList.remove("is-busy");
@@ -1666,6 +1765,150 @@ const bindProductAiCopy = (root = document) => {
 bindProductAiCopy();
 window.addEventListener("admin:content-ready", () => bindProductAiCopy());
 
+const bindBundleAiCopy = (root = document) => {
+    root.querySelectorAll("[data-bundle-ai-copy]").forEach((box) => {
+        if (!(box instanceof HTMLElement) || box.dataset.bound === "1") {
+            return;
+        }
+        box.dataset.bound = "1";
+
+        const form = box.closest("form");
+        const endpoint = box.dataset.endpoint;
+        const status = box.querySelector("[data-ai-status]");
+        const button = box.querySelector("[data-ai-generate]");
+        if (!form || !endpoint) {
+            return;
+        }
+
+        let successTimer = null;
+        let busy = false;
+
+        const field = (name) => form.querySelector(`[name="${name}"]`);
+        const aiField = (key) => box.querySelector(`[data-ai-field="${key}"]`);
+        const empty = (el) => !el || String(el.value).trim() === "";
+        const emptyOrZero = (el) => empty(el) || Number(el.value) === 0;
+
+        const productNames = () =>
+            [...form.querySelectorAll("[data-bundle-items-list] .bundle-item-meta strong")]
+                .map((el) => el.textContent.trim())
+                .filter(Boolean);
+
+        const setStatus = (text, show = true, tone = "muted") => {
+            if (!(status instanceof HTMLElement)) {
+                return;
+            }
+            clearTimeout(successTimer);
+            status.hidden = !show || !text;
+            status.textContent = text || "";
+            status.classList.remove("text-muted", "text-success", "text-danger");
+            status.classList.add(
+                tone === "success"
+                    ? "text-success"
+                    : tone === "danger"
+                      ? "text-danger"
+                      : "text-muted",
+            );
+        };
+
+        const fillText = (el, value, overwrite) => {
+            if (!el || value == null) {
+                return false;
+            }
+            const text = String(value).trim();
+            if (text === "" || (!overwrite && !empty(el))) {
+                return false;
+            }
+            el.value = text;
+            return true;
+        };
+
+        const fillNumber = (el, value, overwrite) => {
+            if (!el || value == null || value === "") {
+                return false;
+            }
+            if (!overwrite && !emptyOrZero(el)) {
+                return false;
+            }
+            el.value = String(value);
+            el.dispatchEvent(new Event("input", { bubbles: true }));
+            el.dispatchEvent(new Event("change", { bubbles: true }));
+            return true;
+        };
+
+        const generate = async () => {
+            const name = field("name")?.value.trim() || "";
+            if (busy) {
+                return;
+            }
+            if (name.length < 3) {
+                setStatus("أدخل اسم السلة أولاً (3 أحرف على الأقل).", true, "danger");
+                return;
+            }
+
+            busy = true;
+            box.classList.add("is-busy");
+            if (button instanceof HTMLButtonElement) {
+                button.disabled = true;
+            }
+            setStatus("جاري التوليد...");
+
+            try {
+                const { data: copy } = await window.axios.post(
+                    endpoint,
+                    {
+                        name,
+                        section_title: box.dataset.sectionTitle || "",
+                        product_names: productNames(),
+                    },
+                    { timeout: 60000 },
+                );
+
+                const applied = [];
+                if (fillText(aiField("summary") || field("summary"), copy.summary, true)) {
+                    applied.push("الملخص");
+                }
+                if (fillText(aiField("description") || field("description"), copy.description, true)) {
+                    applied.push("الوصف");
+                }
+                if (
+                    fillNumber(
+                        aiField("discount_percent") || field("discount_percent"),
+                        copy.discount_percent,
+                        false,
+                    )
+                ) {
+                    applied.push("نسبة الخصم");
+                }
+
+                const suffix = copy?.meta?.cached ? " (سريع)" : "";
+                setStatus(
+                    applied.length > 0
+                        ? `تم التوليد: ${applied.join("، ")}${suffix}`
+                        : `تم التوليد${suffix}`,
+                    true,
+                    "success",
+                );
+                successTimer = setTimeout(() => setStatus("", false), 4500);
+            } catch (error) {
+                const message =
+                    error?.response?.data?.message || "تعذّر التوليد الآن.";
+                setStatus(message, true, "danger");
+            } finally {
+                busy = false;
+                box.classList.remove("is-busy");
+                if (button instanceof HTMLButtonElement) {
+                    button.disabled = false;
+                }
+            }
+        };
+
+        button?.addEventListener("click", () => generate());
+    });
+};
+
+bindBundleAiCopy();
+window.addEventListener("admin:content-ready", () => bindBundleAiCopy());
+
 const bindProductCopyBulk = (root = document) => {
     const panel = root.querySelector("[data-product-copy-bulk]");
     if (!(panel instanceof HTMLElement) || panel.dataset.bound === "1") {
@@ -1674,16 +1917,19 @@ const bindProductCopyBulk = (root = document) => {
     panel.dataset.bound = "1";
 
     const statusUrl = panel.dataset.statusUrl;
+    const chunkUrl = panel.dataset.chunkUrl;
     const cancelUrl = panel.dataset.cancelUrl;
+    const confirmMessage = panel.dataset.confirm || "";
     const title = panel.querySelector("[data-bulk-title]");
     const count = panel.querySelector("[data-bulk-count]");
     const bar = panel.querySelector("[data-bulk-bar]");
     const detail = panel.querySelector("[data-bulk-detail]");
     const cancelBtn = panel.querySelector("[data-bulk-cancel]");
     const submit = root.querySelector("[data-product-copy-bulk-submit]");
-    let timer = null;
+    let processing = false;
+    let stopRequested = false;
 
-    const setSubmitBusy = (busy) => {
+    const setSubmitBusy = (busy, label = "جاري البدء...") => {
         if (!(submit instanceof HTMLButtonElement)) {
             return;
         }
@@ -1692,7 +1938,7 @@ const bindProductCopyBulk = (root = document) => {
         }
         submit.disabled = busy;
         submit.innerHTML = busy
-            ? '<span class="spinner-border spinner-border-sm ms-1"></span> جاري البدء...'
+            ? `<span class="spinner-border spinner-border-sm ms-1"></span> ${label}`
             : submit.dataset.originalLabel;
     };
 
@@ -1701,6 +1947,7 @@ const bindProductCopyBulk = (root = document) => {
         const processed = Number(data.processed || 0);
         const ok = Number(data.ok || 0);
         const failed = Number(data.failed || 0);
+        const skipped = Number(data.skipped || 0);
         const percent = Number(data.percent || 0);
         const running = Boolean(data.running);
         const finished = Boolean(data.finished_at);
@@ -1738,13 +1985,15 @@ const bindProductCopyBulk = (root = document) => {
 
         if (running) {
             if (title) {
-                title.textContent = "جاري توليد المحتوى في الخلفية...";
+                title.textContent = "جاري توليد المحتوى...";
             }
             if (detail) {
+                const skippedNote =
+                    skipped > 0 ? ` تم تخطي ${skipped} منتجاً مكتمل المحتوى.` : "";
                 detail.textContent =
-                    "يمكنك متابعة استخدام لوحة التحكم. سيتم تحديث التقدم تلقائياً.";
+                    `يتم التوليد مباشرة من المتصفح. يمكنك متابعة التقدم هنا.${skippedNote}`;
             }
-            setSubmitBusy(true);
+            setSubmitBusy(true, `جاري التوليد ${processed}/${total}`);
             return;
         }
 
@@ -1759,42 +2008,86 @@ const bindProductCopyBulk = (root = document) => {
             title.textContent = failed > 0 ? "اكتمل التوليد مع بعض الأخطاء" : "اكتمل توليد المحتوى";
         }
         if (detail) {
+            const skippedNote =
+                skipped > 0 ? ` تم تخطي ${skipped} منتجاً مكتمل المحتوى.` : "";
             detail.textContent =
                 failed > 0
-                    ? `تم توليد المحتوى لـ ${ok} منتج، وفشل ${failed}.`
-                    : `تم توليد المحتوى لجميع المنتجات (${ok}).`;
+                    ? `تم توليد المحتوى لـ ${ok} منتج، وفشل ${failed}.${skippedNote}`
+                    : `تم توليد المحتوى لـ ${ok} منتج.${skippedNote}`;
         }
     };
 
-    const poll = async () => {
-        if (!statusUrl) {
+    const runChunks = async () => {
+        if (processing || !chunkUrl) {
             return;
         }
 
+        processing = true;
+        stopRequested = false;
+
         try {
-            const { data } = await window.axios.get(statusUrl);
-            render(data);
-            if (data.running) {
-                timer = window.setTimeout(poll, 4000);
+            while (!stopRequested) {
+                const { data } = await window.axios.post(
+                    chunkUrl,
+                    {},
+                    { timeout: 180000 },
+                );
+                render(data);
+
+                if (!data.running) {
+                    break;
+                }
             }
-        } catch {
-            timer = window.setTimeout(poll, 6000);
+        } catch (error) {
+            const message =
+                error?.response?.data?.message || "تعذّر متابعة التوليد. حاول مرة أخرى.";
+            if (detail) {
+                detail.textContent = message;
+            }
+            setSubmitBusy(false);
+        } finally {
+            processing = false;
         }
     };
 
     const form = root.querySelector("[data-product-copy-bulk-form]");
-    form?.addEventListener("submit", () => {
+    form?.addEventListener("submit", async (event) => {
+        event.preventDefault();
+
+        if (confirmMessage && !window.confirm(confirmMessage)) {
+            return;
+        }
+
         setSubmitBusy(true);
-        window.setTimeout(poll, 1500);
+        panel.hidden = false;
+
+        try {
+            const formData = new FormData(form);
+            const { data } = await window.axios.post(form.action, formData, {
+                headers: { Accept: "application/json" },
+            });
+            render(data);
+            await runChunks();
+        } catch (error) {
+            const message =
+                error?.response?.data?.message || "تعذّر بدء التوليد. حاول مرة أخرى.";
+            if (detail) {
+                detail.textContent = message;
+            }
+            panel.hidden = false;
+            setSubmitBusy(false);
+        }
     });
 
     cancelBtn?.addEventListener("click", async () => {
         if (!cancelUrl) {
             return;
         }
-        if (!window.confirm("هل تريد إلغاء توليد المحتوى المتبقي في الخلفية؟")) {
+        if (!window.confirm("هل تريد إلغاء توليد المحتوى المتبقي؟")) {
             return;
         }
+
+        stopRequested = true;
 
         if (cancelBtn instanceof HTMLButtonElement) {
             cancelBtn.disabled = true;
@@ -1802,11 +2095,8 @@ const bindProductCopyBulk = (root = document) => {
 
         try {
             const { data } = await window.axios.post(cancelUrl);
-            if (timer) {
-                window.clearTimeout(timer);
-                timer = null;
-            }
             render(data);
+            setSubmitBusy(false);
         } catch {
             if (cancelBtn instanceof HTMLButtonElement) {
                 cancelBtn.disabled = false;
@@ -1814,7 +2104,15 @@ const bindProductCopyBulk = (root = document) => {
         }
     });
 
-    poll();
+    window.axios
+        .get(statusUrl)
+        .then(({ data }) => {
+            render(data);
+            if (data.running) {
+                runChunks();
+            }
+        })
+        .catch(() => {});
 };
 
 bindProductCopyBulk();
@@ -2009,6 +2307,376 @@ document.addEventListener("click", (event) => {
 bindProductLookups();
 window.addEventListener("admin:content-ready", bindProductLookups);
 
+const bundleExistingIds = (root) =>
+    [...root.querySelectorAll("[data-bundle-items-list] [data-product-id]")]
+        .map((row) => Number(row.dataset.productId))
+        .filter((id) => id > 0);
+
+const bundleReindex = (root) => {
+    root.querySelectorAll("[data-bundle-items-list] .bundle-item-row").forEach((row, index) => {
+        row.querySelectorAll("input[name]").forEach((input) => {
+            input.name = input.name.replace(/items\[\d+]/, `items[${index}]`);
+        });
+    });
+};
+
+const bundleSyncEmpty = (root) => {
+    const list = root.querySelector("[data-bundle-items-list]");
+    const empty = root.querySelector("[data-bundle-items-empty]");
+    const hasRows = list?.querySelector(".bundle-item-row");
+    if (empty) {
+        empty.hidden = Boolean(hasRows);
+    }
+};
+
+const bundleSyncSummary = (root) => {
+    const summary = root.querySelector("[data-bundle-items-summary]");
+    const countEl = root.querySelector("[data-bundle-items-count]");
+    const totalEl = root.querySelector("[data-bundle-items-total]");
+    if (!summary || !countEl || !totalEl) {
+        return;
+    }
+
+    let units = 0;
+    let total = 0;
+    root.querySelectorAll("[data-bundle-items-list] .bundle-item-row").forEach((row) => {
+        const price = Number(row.dataset.price || 0);
+        const qty = Number(row.querySelector("[data-bundle-qty-input]")?.value || 0);
+        if (qty > 0) {
+            units += qty;
+            total += price * qty;
+        }
+    });
+
+    if (units === 0) {
+        summary.hidden = true;
+        return;
+    }
+
+    summary.hidden = false;
+    countEl.textContent = String(units);
+    totalEl.textContent = total.toLocaleString("en-US", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+    });
+};
+
+const bundleRowHtml = (item, index) => {
+    const meta = [item.sku, item.price_label].filter(Boolean).join(" · ");
+    const thumb = item.image_url
+        ? `<img src="${escLive(item.image_url)}" alt="">`
+        : '<i class="bi bi-box-seam"></i>';
+
+    return `
+        <article class="bundle-item-row is-new" data-product-id="${item.id}" data-price="${item.price ?? 0}">
+            <input type="hidden" name="items[${index}][product_id]" value="${item.id}">
+            <div class="bundle-item-thumb">${thumb}</div>
+            <div class="bundle-item-meta">
+                <strong>${escLive(item.name || "")}</strong>
+                <small>${escLive(meta)}</small>
+            </div>
+            <div class="bundle-item-qty" data-bundle-qty>
+                <button type="button" class="bundle-qty-btn" data-bundle-qty-minus aria-label="تقليل">−</button>
+                <input type="number" min="1" max="99" name="items[${index}][quantity]" value="1" class="bundle-qty-input" data-bundle-qty-input aria-label="الكمية">
+                <button type="button" class="bundle-qty-btn" data-bundle-qty-plus aria-label="زيادة">+</button>
+            </div>
+            <button type="button" class="bundle-item-remove" data-bundle-items-remove aria-label="إزالة">
+                <i class="bi bi-trash3"></i>
+            </button>
+        </article>
+    `;
+};
+
+const bundleAddItem = (root, item) => {
+    if (!item?.id) {
+        return;
+    }
+    if (bundleExistingIds(root).includes(Number(item.id))) {
+        const existing = root.querySelector(`[data-product-id="${item.id}"]`);
+        const input = existing?.querySelector("[data-bundle-qty-input]");
+        if (input) {
+            input.value = String(Math.min(99, Number(input.value || 0) + 1));
+            existing?.classList.add("is-pulse");
+            setTimeout(() => existing?.classList.remove("is-pulse"), 500);
+        }
+        bundleSyncSummary(root);
+        return;
+    }
+
+    const list = root.querySelector("[data-bundle-items-list]");
+    if (!list) {
+        return;
+    }
+
+    const index = list.querySelectorAll(".bundle-item-row").length;
+    list.insertAdjacentHTML("beforeend", bundleRowHtml(item, index));
+    bundleReindex(root);
+    bundleSyncEmpty(root);
+    bundleSyncSummary(root);
+
+    const row = list.querySelector(`[data-product-id="${item.id}"]`);
+    row?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    setTimeout(() => row?.classList.remove("is-new"), 700);
+};
+
+const bundleRenderResults = (root, items) => {
+    const box = root.querySelector("[data-bundle-items-results]");
+    if (!box) {
+        return;
+    }
+
+    box.replaceChildren();
+    if (!items.length) {
+        const empty = document.createElement("div");
+        empty.className = "product-lookup-empty";
+        empty.textContent = "لا توجد نتائج";
+        box.append(empty);
+        box.hidden = false;
+        return;
+    }
+
+    items.forEach((item) => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "product-lookup-result";
+        button.dataset.id = String(item.id);
+        const title = document.createElement("strong");
+        title.textContent = item.name || "";
+        const meta = document.createElement("small");
+        meta.textContent = [item.sku, item.barcode, item.price_label].filter(Boolean).join(" · ");
+        button.append(title, meta);
+        button.addEventListener("click", () => {
+            bundleAddItem(root, item);
+            const search = root.querySelector("[data-bundle-items-q]");
+            if (search) {
+                search.value = "";
+                search.focus();
+            }
+            box.hidden = true;
+            box.replaceChildren();
+        });
+        box.append(button);
+    });
+    box.hidden = false;
+};
+
+const bundleSearch = async (root) => {
+    const search = root.querySelector("[data-bundle-items-q]");
+    const term = (search?.value || "").trim();
+    const box = root.querySelector("[data-bundle-items-results]");
+    if (term.length < 1) {
+        if (box) {
+            box.hidden = true;
+            box.replaceChildren();
+        }
+        return;
+    }
+
+    const params = new URLSearchParams({
+        q: term,
+        exclude: bundleExistingIds(root).join(","),
+    });
+
+    try {
+        const { data } = await window.axios.get(root.dataset.endpoint, { params });
+        bundleRenderResults(root, data.items || []);
+    } catch {
+        bundleRenderResults(root, []);
+    }
+};
+
+const bindBundleItemsEditors = () => {
+    document.querySelectorAll("[data-bundle-items]").forEach((root) => {
+        if (!(root instanceof HTMLElement) || root.dataset.bound === "1") {
+            return;
+        }
+        root.dataset.bound = "1";
+
+        let timer = null;
+        const search = root.querySelector("[data-bundle-items-q]");
+
+        search?.addEventListener("input", () => {
+            clearTimeout(timer);
+            timer = setTimeout(() => bundleSearch(root), 220);
+        });
+
+        search?.addEventListener("keydown", (event) => {
+            if (event.key === "Escape") {
+                const box = root.querySelector("[data-bundle-items-results]");
+                if (box) {
+                    box.hidden = true;
+                    box.replaceChildren();
+                }
+                return;
+            }
+            if (event.key === "Enter") {
+                event.preventDefault();
+                const first = root.querySelector("[data-bundle-items-results] .product-lookup-result");
+                first?.click();
+            }
+        });
+
+        root.addEventListener("click", (event) => {
+            const remove = event.target.closest("[data-bundle-items-remove]");
+            if (remove) {
+                event.preventDefault();
+                remove.closest(".bundle-item-row")?.remove();
+                bundleReindex(root);
+                bundleSyncEmpty(root);
+                bundleSyncSummary(root);
+                return;
+            }
+
+            const minus = event.target.closest("[data-bundle-qty-minus]");
+            if (minus) {
+                event.preventDefault();
+                const row = minus.closest(".bundle-item-row");
+                const input = row?.querySelector("[data-bundle-qty-input]");
+                if (input) {
+                    input.value = String(Math.max(1, Number(input.value || 1) - 1));
+                    bundleSyncSummary(root);
+                }
+                return;
+            }
+
+            const plus = event.target.closest("[data-bundle-qty-plus]");
+            if (plus) {
+                event.preventDefault();
+                const row = plus.closest(".bundle-item-row");
+                const input = row?.querySelector("[data-bundle-qty-input]");
+                if (input) {
+                    input.value = String(Math.min(99, Number(input.value || 1) + 1));
+                    bundleSyncSummary(root);
+                }
+            }
+        });
+
+        root.addEventListener("input", (event) => {
+            if (event.target.closest("[data-bundle-qty-input]")) {
+                bundleSyncSummary(root);
+            }
+        });
+
+        bundleSyncEmpty(root);
+        bundleSyncSummary(root);
+    });
+};
+
+document.addEventListener("click", (event) => {
+    document.querySelectorAll("[data-bundle-items]").forEach((root) => {
+        if (!root.contains(event.target)) {
+            const box = root.querySelector("[data-bundle-items-results]");
+            if (box) {
+                box.hidden = true;
+            }
+        }
+    });
+});
+
+bindBundleItemsEditors();
+window.addEventListener("admin:content-ready", bindBundleItemsEditors);
+
+const syncHomeSectionContentType = () => {
+    const selected = document.querySelector('input[name="content_type"]:checked');
+    if (!selected) {
+        return;
+    }
+    const isBundle = selected.value === "bundles";
+    const productsWrap = document.getElementById("home-section-products-wrap");
+    const bundlesHint = document.getElementById("home-section-bundles-hint");
+    if (productsWrap) {
+        productsWrap.hidden = isBundle;
+    }
+    if (bundlesHint) {
+        bundlesHint.hidden = !isBundle;
+    }
+};
+
+const bindHomeSectionContentType = () => {
+    const radios = document.querySelectorAll('input[name="content_type"]');
+    if (!radios.length || document.body.dataset.homeSectionContentTypeBound === "1") {
+        return;
+    }
+    document.body.dataset.homeSectionContentTypeBound = "1";
+    syncHomeSectionContentType();
+    radios.forEach((radio) => {
+        radio.addEventListener("change", syncHomeSectionContentType);
+    });
+};
+
+bindHomeSectionContentType();
+window.addEventListener("admin:content-ready", bindHomeSectionContentType);
+
+const syncHomeSectionColorToggle = (checkbox) => {
+    const target = document.querySelector(checkbox.dataset.homeSectionColorToggle);
+    if (!target) {
+        return;
+    }
+    const useDefault = checkbox.checked;
+    target.disabled = useDefault;
+    target.classList.toggle("opacity-50", useDefault);
+};
+
+const bindHomeSectionColorToggle = () => {
+    document.querySelectorAll("[data-home-section-color-toggle]").forEach((checkbox) => {
+        if (checkbox.dataset.homeSectionColorBound === "1") {
+            return;
+        }
+        checkbox.dataset.homeSectionColorBound = "1";
+        syncHomeSectionColorToggle(checkbox);
+        checkbox.addEventListener("change", () => syncHomeSectionColorToggle(checkbox));
+    });
+};
+
+const syncHomeSectionBackgroundMode = () => {
+    const mode = document.querySelector('input[name="background_mode"]:checked')?.value || "color";
+    const colorWrap = document.getElementById("home-section-bg-color-wrap");
+    const imageWrap = document.getElementById("home-section-bg-image-wrap");
+    if (colorWrap) {
+        colorWrap.hidden = mode !== "color";
+    }
+    if (imageWrap) {
+        imageWrap.hidden = mode !== "image";
+    }
+};
+
+const bindHomeSectionBackgroundMode = () => {
+    document.querySelectorAll("[data-home-section-bg-mode]").forEach((input) => {
+        if (input.dataset.homeSectionBgModeBound === "1") {
+            return;
+        }
+        input.dataset.homeSectionBgModeBound = "1";
+        input.addEventListener("change", syncHomeSectionBackgroundMode);
+    });
+    syncHomeSectionBackgroundMode();
+};
+
+bindHomeSectionColorToggle();
+window.addEventListener("admin:content-ready", bindHomeSectionColorToggle);
+bindHomeSectionBackgroundMode();
+window.addEventListener("admin:content-ready", bindHomeSectionBackgroundMode);
+
+const bindCategoryPicker = () => {
+    document.querySelectorAll("[data-category-picker]").forEach((grid) => {
+        const root = grid.closest(".mb-3") || grid.parentElement;
+        const search = root?.querySelector("[data-category-picker-q]");
+        if (!search || search.dataset.bound === "1") {
+            return;
+        }
+        search.dataset.bound = "1";
+        search.addEventListener("input", () => {
+            const term = search.value.trim().toLowerCase();
+            grid.querySelectorAll("[data-category-picker-item]").forEach((item) => {
+                const label = (item.dataset.label || "").toLowerCase();
+                item.hidden = term !== "" && !label.includes(term);
+            });
+        });
+    });
+};
+
+bindCategoryPicker();
+window.addEventListener("admin:content-ready", bindCategoryPicker);
+
 window.adminAddProductLookup = (root, item) => {
     const target = typeof root === "string" ? document.querySelector(root) : root;
     if (target instanceof HTMLElement) {
@@ -2077,37 +2745,6 @@ const showGiftModalErrors = (form, payload) => {
     }
 };
 
-const applySelectedExistingGift = (modal) => {
-    const selectedRoot = modal?.querySelector("[data-gift-existing-picker] [data-product-lookup]");
-    const targetRoot = document.querySelector("[data-gift-product-picker] [data-product-lookup]");
-    const selectedChip = selectedRoot?.querySelector("[data-product-lookup-selected] [data-id]");
-    const selectedNode = selectedChip instanceof HTMLElement ? selectedChip.cloneNode(true) : null;
-    const alert = modal?.querySelector("[data-gift-form-error]");
-
-    if (!(selectedNode instanceof HTMLElement) || !(targetRoot instanceof HTMLElement)) {
-        if (alert) {
-            alert.hidden = false;
-            alert.textContent = "اختر منتجاً موجوداً أولاً ليتم استخدامه كهدية.";
-        }
-        return;
-    }
-
-    const selectedBox = targetRoot.querySelector("[data-product-lookup-selected]");
-    if (selectedBox) {
-        selectedBox.replaceChildren();
-        selectedBox.append(selectedNode);
-        lookupEmptyState(targetRoot);
-    }
-
-    if (alert) {
-        alert.hidden = true;
-        alert.textContent = "";
-    }
-
-    window.bootstrap.Modal.getOrCreateInstance(modal).hide();
-    resetGiftModal(modal);
-};
-
 const bindGiftProductModal = () => {
     const modal = document.getElementById("giftProductModal");
     const form = modal?.querySelector("#giftProductForm");
@@ -2119,10 +2756,6 @@ const bindGiftProductModal = () => {
     modal.addEventListener("show.bs.modal", () => {
         resetGiftModal(modal);
         bindProductLookups();
-    });
-
-    form.querySelector("[data-gift-use-existing]")?.addEventListener("click", () => {
-        applySelectedExistingGift(modal);
     });
 
     form.addEventListener("submit", async (event) => {

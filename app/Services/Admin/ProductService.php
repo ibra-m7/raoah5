@@ -72,6 +72,7 @@ class ProductService
         }
 
         $products = Product::query()
+            ->with(['primaryImage', 'images'])
             ->whereIn('id', $ordered)
             ->get(['id', 'name', 'sku', 'barcode', 'price'])
             ->keyBy('id');
@@ -112,6 +113,7 @@ class ProductService
             ->when($giftOnly !== true && $excludeGifts, fn ($query) => $query->sellable())
             ->when($exclude !== [], fn ($query) => $query->whereNotIn('id', $exclude))
             ->orderBy('name')
+            ->with(['primaryImage', 'images'])
             ->limit(max(1, min($limit, 40)))
             ->get(['id', 'name', 'sku', 'barcode', 'price'])
             ->map(fn (Product $product) => $this->formatPickerItem($product))
@@ -119,10 +121,18 @@ class ProductService
     }
 
     /**
-     * @return array{id: int, name: string, sku: string, barcode: string, price: float, price_label: string}
+     * @return array{id: int, name: string, sku: string, barcode: string, price: float, price_label: string, image_url: string}
      */
     public function formatPickerItem(Product $product): array
     {
+        $imagePath = $product->relationLoaded('primaryImage')
+            ? $product->primaryImage?->url
+            : $product->primaryImage()->value('url');
+
+        if (! $imagePath && $product->relationLoaded('images')) {
+            $imagePath = $product->images->first()?->url;
+        }
+
         return [
             'id' => (int) $product->id,
             'name' => (string) $product->name,
@@ -130,6 +140,7 @@ class ProductService
             'barcode' => (string) ($product->barcode ?? ''),
             'price' => (float) $product->price,
             'price_label' => number_format((float) $product->price, 2).' '.AppStrings::CURRENCY,
+            'image_url' => Media::url($imagePath) ?? '',
         ];
     }
 
@@ -241,6 +252,20 @@ class ProductService
                 ->delete();
 
             return;
+        }
+
+        $gift = Product::query()->find($giftId);
+        if ($gift === null) {
+            ProductRelation::query()
+                ->where('product_id', $product->id)
+                ->where('type', ProductRelationType::Gift)
+                ->delete();
+
+            return;
+        }
+
+        if (! $gift->is_gift) {
+            $gift->update(['is_gift' => true]);
         }
 
         ProductRelation::query()
@@ -404,23 +429,86 @@ class ProductService
      *     quantity_label: string
      * }  $copy
      */
-    public function applyGeneratedCopy(Product $product, array $copy): void
+    public function applyGeneratedCopy(Product $product, array $copy, bool $onlyEmpty = false): void
     {
-        $product->update([
-            'description' => $copy['description'] !== ''
-                ? $copy['description']
-                : $product->description,
-            'category_id' => $copy['category_id'] ?? $product->category_id,
-            'benefits' => $copy['benefits'] !== []
-                ? $copy['benefits']
-                : $product->benefits,
-            'keywords' => $copy['keywords'] !== []
-                ? $copy['keywords']
-                : $product->keywords,
-            'usage_instructions' => $copy['usage_instructions'] !== ''
-                ? $copy['usage_instructions']
-                : $product->usage_instructions,
+        $updates = [];
+
+        if ($this->shouldApplyText($product->description, $copy['description'] ?? '', $onlyEmpty)) {
+            $updates['description'] = $copy['description'];
+        }
+
+        if ($this->shouldApplyList($product->benefits, $copy['benefits'] ?? [], $onlyEmpty)) {
+            $updates['benefits'] = $copy['benefits'];
+        }
+
+        if ($this->shouldApplyList($product->keywords, $copy['keywords'] ?? [], $onlyEmpty)) {
+            $updates['keywords'] = $copy['keywords'];
+        }
+
+        if ($this->shouldApplyText($product->usage_instructions, $copy['usage_instructions'] ?? '', $onlyEmpty)) {
+            $updates['usage_instructions'] = $copy['usage_instructions'];
+        }
+
+        if ((! $onlyEmpty || ! $product->category_id) && ($copy['category_id'] ?? null)) {
+            $updates['category_id'] = $copy['category_id'];
+        }
+
+        if ((float) $product->price <= 0 && ($copy['price'] ?? null)) {
+            $updates['price'] = $copy['price'];
+        }
+
+        if ((int) $product->stock <= 0 && ($copy['stock'] ?? null) !== null) {
+            $updates['stock'] = (int) $copy['stock'];
+        }
+
+        if (! $product->piece_count && ($copy['piece_count'] ?? null)) {
+            $updates['piece_count'] = $copy['piece_count'];
+        }
+
+        if (! $product->weight_label && ($copy['weight_label'] ?? '') !== '') {
+            $updates['weight_label'] = $copy['weight_label'];
+        }
+
+        if (! $product->quantity_label && ($copy['quantity_label'] ?? '') !== '') {
+            $updates['quantity_label'] = $copy['quantity_label'];
+        }
+
+        if ($updates !== []) {
+            $product->update($updates);
+        }
+    }
+
+    public function productNeedsGeneratedCopy(Product $product): bool
+    {
+        return $this->needsGeneratedCopy([
+            'description' => $product->description,
+            'benefits' => $product->benefits,
+            'keywords' => $product->keywords,
+            'usage_instructions' => $product->usage_instructions,
+            'category_id' => $product->category_id,
         ]);
+    }
+
+    private function shouldApplyText(?string $current, string $value, bool $onlyEmpty): bool
+    {
+        if (trim($value) === '') {
+            return false;
+        }
+
+        return ! $onlyEmpty || trim((string) $current) === '';
+    }
+
+    /**
+     * @param  list<string>|null  $current
+     * @param  list<string>  $value
+     */
+    private function shouldApplyList(?array $current, array $value, bool $onlyEmpty): bool
+    {
+        if ($value === []) {
+            return false;
+        }
+
+        return ! $onlyEmpty || $this->lines($current ?? []) === [];
     }
 
     /**
@@ -428,7 +516,9 @@ class ProductService
      */
     private function needsGeneratedCopy(array $data): bool
     {
-        return $this->lines($data['benefits'] ?? []) === []
+        return trim((string) ($data['description'] ?? '')) === ''
+            || empty($data['category_id'])
+            || $this->lines($data['benefits'] ?? []) === []
             || $this->csv($data['keywords'] ?? []) === []
             || trim((string) ($data['usage_instructions'] ?? '')) === '';
     }

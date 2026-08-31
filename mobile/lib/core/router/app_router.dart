@@ -15,6 +15,7 @@ import '../../features/onboarding/presentation/pages/splash_screen.dart';
 import '../../features/shop/data/models/product_model.dart';
 import '../../features/shop/presentation/pages/checkout_screen.dart';
 import '../../features/shop/presentation/widgets/cart_sheet.dart';
+import '../../features/shop/presentation/pages/bundle_details_screen.dart';
 import '../../features/shop/presentation/pages/category_browse_screen.dart';
 import '../../features/shop/presentation/pages/custom_dynamic_page_screen.dart';
 import '../../features/shop/presentation/pages/home_section_browse_screen.dart';
@@ -80,6 +81,7 @@ abstract class AppRouter {
       CategorySubcategoriesBrowseScreen.routeName;
   static const categoryBrowse = CategoryBrowseScreen.routeName;
   static const homeSectionBrowse = HomeSectionBrowseScreen.routeName;
+  static const bundleDetails = BundleDetailsScreen.routeName;
 
   // ── onGenerateRoute ───────────────────────────────────────────────────────
   static Route<dynamic> onGenerateRoute(RouteSettings settings) {
@@ -193,6 +195,17 @@ abstract class AppRouter {
           );
         }
         return _errorRoute(settings, 'تعذّر فتح المنتج — بيانات غير صحيحة');
+
+      case bundleDetails:
+        final bundleArgs = settings.arguments;
+        if (bundleArgs is BundleDetailsArgs) {
+          return _slide(
+            BundleDetailsScreen(bundle: bundleArgs.bundle),
+            settings,
+            direction: _SlideDir.up,
+          );
+        }
+        return _errorRoute(settings, 'تعذّر فتح السلة — بيانات غير صحيحة');
 
       // ── Checkout ──────────────────────────────────────────────────────────
       case checkout:

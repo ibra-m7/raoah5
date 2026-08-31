@@ -1,6 +1,6 @@
 <x-layouts.admin :title="$title">
     <div class="page-card p-4 p-md-5" style="max-width: 980px">
-        <form method="POST" action="{{ route('admin.home-sections.update', $section) }}">
+        <form method="POST" action="{{ route('admin.home-sections.update', $section) }}" enctype="multipart/form-data">
             @csrf
             @method('PUT')
             @include('admin.home-sections._form')
@@ -10,4 +10,8 @@
             </div>
         </form>
     </div>
+
+    @if ($section->showsBundles())
+        @include('admin.home-sections._bundles-manager', ['sectionBundles' => $sectionBundles ?? collect()])
+    @endif
 </x-layouts.admin>

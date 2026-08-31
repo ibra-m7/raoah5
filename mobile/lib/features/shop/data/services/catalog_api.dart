@@ -2,6 +2,7 @@ import '../../../../core/error/exceptions.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/storage/offline_cache.dart';
+import '../models/bundle_model.dart';
 import '../models/category_model.dart';
 import '../models/dynamic_page_model.dart';
 import '../models/home_feed.dart';
@@ -122,6 +123,18 @@ class CatalogApi {
       final data = _dataMap(json);
       if (data.isEmpty) return null;
       return ProductModel.fromJson(data);
+    } on ApiException catch (e) {
+      if (e.statusCode == 404) return null;
+      throw ServerException(message: e.message);
+    }
+  }
+
+  Future<BundleModel?> bundle(String id) async {
+    try {
+      final json = await _client.get('/bundles/$id', auth: false);
+      final data = _dataMap(json);
+      if (data.isEmpty) return null;
+      return BundleModel.fromJson(data);
     } on ApiException catch (e) {
       if (e.statusCode == 404) return null;
       throw ServerException(message: e.message);

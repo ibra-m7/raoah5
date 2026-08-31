@@ -35,6 +35,8 @@ class ProductResource extends JsonResource
             'discount_price' => $this->discount_price !== null ? (float) $this->discount_price : null,
             'effective_price' => (float) $this->effective_price,
             'has_discount' => (bool) $this->has_discount,
+            'promo_type' => $this->promo_type?->value,
+            'discount_percent' => (int) $this->discount_percent,
             'image_url' => $imageUrl ?? '',
             'image_urls' => $urls,
             'category_id' => (string) $this->category_id,

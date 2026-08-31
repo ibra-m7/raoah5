@@ -61,8 +61,31 @@
                     @forelse ($homeSections as $section)
                         <a href="{{ route('admin.home-sections.edit', $section) }}" class="d-flex justify-content-between text-decoration-none text-reset py-2 border-bottom">
                             <span class="fw-bold">{{ $section->title }}</span>
-                            <span class="text-muted">{{ $section->styleLabel() }}</span>
+                            <span class="text-muted">{{ $section->contentTypeLabel() }}</span>
                         </a>
+                    @empty
+                        <div class="text-muted">لا نتائج</div>
+                    @endforelse
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="page-card p-4 h-100">
+                    <h2 class="h5 fw-bold mb-3">سلات التوفير</h2>
+                    @forelse ($bundles as $bundle)
+                        @php
+                            $bundleSection = $bundle->homeSections()->first();
+                        @endphp
+                        @if ($bundleSection)
+                            <a href="{{ route('admin.home-sections.bundles.edit', [$bundleSection, $bundle]) }}" class="d-flex justify-content-between text-decoration-none text-reset py-2 border-bottom">
+                                <span class="fw-bold">{{ $bundle->name }}</span>
+                                <span class="text-muted">{{ number_format((float) $bundle->bundle_price, 2) }} {{ $strings::CURRENCY }}</span>
+                            </a>
+                        @else
+                            <div class="d-flex justify-content-between py-2 border-bottom">
+                                <span class="fw-bold">{{ $bundle->name }}</span>
+                                <span class="text-muted">{{ number_format((float) $bundle->bundle_price, 2) }} {{ $strings::CURRENCY }}</span>
+                            </div>
+                        @endif
                     @empty
                         <div class="text-muted">لا نتائج</div>
                     @endforelse

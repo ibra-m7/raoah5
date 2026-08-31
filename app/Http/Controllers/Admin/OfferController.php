@@ -23,7 +23,7 @@ class OfferController extends Controller
         $filters = $request->only(['q']);
 
         return view('admin.offers.index', [
-            'title' => AppStrings::NAV_OFFERS,
+            'title' => AppStrings::NAV_PRODUCT_DISCOUNTS,
             'type' => $type,
             'offers' => $this->offers->paginate($type, $filters),
             'counts' => $this->offers->counts(),

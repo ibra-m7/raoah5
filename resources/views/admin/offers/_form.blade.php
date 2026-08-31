@@ -34,7 +34,8 @@
     <div class="col-md-6 mb-3 d-flex align-items-end">
         <div class="form-check mb-2">
             <input class="form-check-input" type="checkbox" name="is_featured" value="1" id="is_featured" @checked(old('is_featured', $product->is_featured ?? true))>
-            <label class="form-check-label" for="is_featured">إبراز المنتج في الرئيسية</label>
+            <label class="form-check-label" for="is_featured">منتج مميز (قائمة المنتجات المميزة)</label>
+            <div class="form-hint">لا يضيف المنتج إلى أقسام الرئيسية.</div>
         </div>
     </div>
 </div>

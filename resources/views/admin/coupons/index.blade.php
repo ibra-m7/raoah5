@@ -5,6 +5,11 @@
         :create-label="$strings::ADD_COUPON"
     />
 
+    <div class="alert alert-light border mb-3">
+        <strong>أين يظهر الكوبون؟</strong>
+        <p class="mb-0 small text-muted">يُطبَّق عند إتمام الطلب في التطبيق فقط. لا يظهر في الصفحة الرئيسية.</p>
+    </div>
+
     <form method="GET" class="d-flex flex-wrap gap-2 mb-3">
         <input type="text" name="q" value="{{ $filters['q'] ?? '' }}" class="form-control" style="max-width: 240px" placeholder="ابحث بالكود أو العنوان">
         <select name="status" class="form-select" style="max-width: 140px">

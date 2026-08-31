@@ -39,6 +39,7 @@ class BannerController extends Controller
             'selectedProduct' => $this->products->pickerItems(old('link_product_id')),
             'categories' => $this->banners->categoryOptions(),
             'pages' => $this->banners->pageOptions(),
+            'bundles' => $this->banners->bundleOptions(),
         ]);
     }
 
@@ -62,6 +63,7 @@ class BannerController extends Controller
             )),
             'categories' => $this->banners->categoryOptions(),
             'pages' => $this->banners->pageOptions(),
+            'bundles' => $this->banners->bundleOptions(),
         ]);
     }
 

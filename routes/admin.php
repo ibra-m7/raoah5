@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\AdminLiveController;
 use App\Http\Controllers\Admin\AiAssistantController;
 use App\Http\Controllers\Admin\Auth\LoginController;
 use App\Http\Controllers\Admin\BannerController;
+use App\Http\Controllers\Admin\HomeSectionBundleController;
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\CouponController;
 use App\Http\Controllers\Admin\CourierController;
@@ -46,6 +47,7 @@ Route::middleware(['auth', 'admin'])->group(function () {
         ->middleware('throttle:admin-ai-copy')
         ->name('products.generate-copy');
     Route::post('products/generate-all-copy', [ProductController::class, 'generateAllContent'])->name('products.generate-all-copy');
+    Route::post('products/copy-generation-chunk', [ProductController::class, 'processContentGenerationChunk'])->name('products.copy-generation-chunk');
     Route::get('products/copy-generation-status', [ProductController::class, 'copyGenerationStatus'])->name('products.copy-generation-status');
     Route::post('products/cancel-copy-generation', [ProductController::class, 'cancelContentGeneration'])->name('products.cancel-copy-generation');
     Route::post('products/gift-quick', [ProductController::class, 'storeGiftQuick'])->name('products.gift-quick');
@@ -60,6 +62,18 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::resource('banners', BannerController::class)->except(['show']);
     Route::resource('dynamic-pages', DynamicPageController::class)->except(['show']);
     Route::resource('home-sections', HomeSectionController::class)->except(['show']);
+    Route::post('bundles/generate-copy', [HomeSectionBundleController::class, 'generateCopy'])
+        ->middleware('throttle:admin-ai-copy')
+        ->name('bundles.generate-copy');
+    Route::get('home-sections/{home_section}/bundles/create', [HomeSectionBundleController::class, 'create'])->name('home-sections.bundles.create');
+    Route::post('home-sections/{home_section}/bundles', [HomeSectionBundleController::class, 'store'])->name('home-sections.bundles.store');
+    Route::get('home-sections/{home_section}/bundles/{bundle}/edit', [HomeSectionBundleController::class, 'edit'])->name('home-sections.bundles.edit');
+    Route::get('home-sections/{home_section}/bundles/{bundle}', [HomeSectionBundleController::class, 'show'])->name('home-sections.bundles.show');
+    Route::put('home-sections/{home_section}/bundles/{bundle}', [HomeSectionBundleController::class, 'update'])->name('home-sections.bundles.update');
+    Route::delete('home-sections/{home_section}/bundles/{bundle}', [HomeSectionBundleController::class, 'destroy'])->name('home-sections.bundles.destroy');
+    Route::patch('home-sections/{home_section}/bundles/reorder', [HomeSectionBundleController::class, 'reorder'])->name('home-sections.bundles.reorder');
+    Route::redirect('bundles', 'home-sections')->name('bundles.index');
+    Route::redirect('bundles/create', 'home-sections')->name('bundles.create');
     Route::resource('display-sections', DisplaySectionController::class)->except(['show']);
     Route::get('orders', [OrderController::class, 'index'])->name('orders.index');
     Route::get('orders/{order}/edit', [OrderController::class, 'edit'])->name('orders.edit');
