@@ -275,11 +275,12 @@ class ProductImportService
         $map = [];
         try {
             for ($i = 0; $i < $zip->numFiles; $i++) {
-                $name = $zip->getNameIndex($i);
-                if (! is_string($name) || $name === '' || str_ends_with($name, '/')) {
+                $originalName = $zip->getNameIndex($i);
+                if (! is_string($originalName) || $originalName === '') {
                     continue;
                 }
-                if (str_contains($name, '..') || str_starts_with($name, '/') || str_contains($name, '\\')) {
+                $name = self::normalizeZipEntryName($originalName);
+                if ($name === null) {
                     continue;
                 }
                 $base = basename($name);
@@ -299,7 +300,7 @@ class ProductImportService
                 }
 
                 $target = $extractDir.DIRECTORY_SEPARATOR.$barcodeKey.'.'.$extension;
-                $stream = $zip->getStream($name);
+                $stream = $zip->getStream($originalName);
                 if ($stream === false) {
                     continue;
                 }
@@ -323,6 +324,16 @@ class ProductImportService
         }
 
         return [$map, $extractDir];
+    }
+
+    public static function normalizeZipEntryName(string $name): ?string
+    {
+        $name = ltrim(str_replace('\\', '/', $name), '/');
+        if ($name === '' || str_ends_with($name, '/') || str_contains($name, '..')) {
+            return null;
+        }
+
+        return $name;
     }
 
     /**

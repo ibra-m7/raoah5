@@ -1,4 +1,7 @@
+import 'package:flutter/material.dart' show Color;
+
 import '../../../../core/constants/app_strings.dart';
+import '../../../../core/theme/home_section_gradient.dart';
 import '../../../../core/widgets/app_network_image.dart';
 import '../../domain/entities/product.dart';
 import '../models/category_model.dart';
@@ -8,6 +11,7 @@ import '../models/product_model.dart';
 class BannerModel {
   final String id;
   final String title;
+  final bool showTitle;
   final String? subtitle;
   final String imageUrl;
   final String linkType;
@@ -17,6 +21,7 @@ class BannerModel {
   const BannerModel({
     required this.id,
     required this.title,
+    this.showTitle = false,
     this.subtitle,
     required this.imageUrl,
     this.linkType = 'none',
@@ -28,6 +33,7 @@ class BannerModel {
     return BannerModel(
       id: '${json['id']}',
       title: (json['title'] as String?) ?? '',
+      showTitle: json['show_title'] == true,
       subtitle: json['subtitle'] as String?,
       imageUrl: (json['image_url'] as String?) ?? '',
       linkType: (json['link_type'] as String?) ?? 'none',
@@ -42,6 +48,7 @@ class HomeSectionModel {
   final String key;
   final String title;
   final String? subtitle;
+  final String? backgroundColor;
   final List<ProductModel> products;
 
   const HomeSectionModel({
@@ -49,8 +56,12 @@ class HomeSectionModel {
     required this.key,
     required this.title,
     this.subtitle,
+    this.backgroundColor,
     this.products = const [],
   });
+
+  List<Color> get gradientColors =>
+      HomeSectionGradient.colors(backgroundColor);
 
   factory HomeSectionModel.fromJson(Map<String, dynamic> json) {
     return HomeSectionModel(
@@ -58,6 +69,7 @@ class HomeSectionModel {
       key: (json['key'] as String?) ?? '',
       title: (json['title'] as String?) ?? '',
       subtitle: json['subtitle'] as String?,
+      backgroundColor: json['background_color'] as String?,
       products: jsonMapList(json['products'], ProductModel.fromJson),
     );
   }
@@ -277,6 +289,8 @@ class StoreConfig {
   final DeliveryConfig delivery;
   final String fallbackProductImageUrl;
   final List<String> searchPlaceholders;
+  final List<String> searchSmartSuggestions;
+  final List<String> searchTrending;
 
   const StoreConfig({
     this.currency = '\u{20C1}',
@@ -287,6 +301,8 @@ class StoreConfig {
     this.delivery = const DeliveryConfig(),
     this.fallbackProductImageUrl = '',
     this.searchPlaceholders = const [],
+    this.searchSmartSuggestions = const [],
+    this.searchTrending = const [],
     this.paymentMethods = const [
       PaymentOption(
         id: 'cash',
@@ -325,6 +341,24 @@ class StoreConfig {
     return AppStrings.homeSearchHints;
   }
 
+  List<String> get smartSearchSuggestions {
+    final fromStore = searchSmartSuggestions
+        .map((p) => p.trim())
+        .where((p) => p.isNotEmpty)
+        .toList();
+    if (fromStore.isNotEmpty) return fromStore;
+    return AppStrings.searchSmartFallback;
+  }
+
+  List<String> get trendingSearchTerms {
+    final fromStore = searchTrending
+        .map((p) => p.trim())
+        .where((p) => p.isNotEmpty)
+        .toList();
+    if (fromStore.isNotEmpty) return fromStore;
+    return AppStrings.searchTrendingFallback;
+  }
+
   factory StoreConfig.fromJson(Map<String, dynamic> json) {
     final methods = <PaymentOption>[];
     final raw = json['payment_methods'];
@@ -339,6 +373,22 @@ class StoreConfig {
       for (final item in rawHints) {
         final text = item?.toString().trim() ?? '';
         if (text.isNotEmpty) placeholders.add(text);
+      }
+    }
+    final smart = <String>[];
+    final rawSmart = json['search_smart_suggestions'];
+    if (rawSmart is List) {
+      for (final item in rawSmart) {
+        final text = item?.toString().trim() ?? '';
+        if (text.isNotEmpty) smart.add(text);
+      }
+    }
+    final trending = <String>[];
+    final rawTrending = json['search_trending'];
+    if (rawTrending is List) {
+      for (final item in rawTrending) {
+        final text = item?.toString().trim() ?? '';
+        if (text.isNotEmpty) trending.add(text);
       }
     }
     return StoreConfig(
@@ -359,6 +409,8 @@ class StoreConfig {
       fallbackProductImageUrl:
           (json['fallback_product_image_url'] as String?) ?? '',
       searchPlaceholders: placeholders,
+      searchSmartSuggestions: smart,
+      searchTrending: trending,
     );
   }
 }

@@ -32,7 +32,7 @@
                         </label>
                         <input type="file" name="images_zip" accept=".zip,application/zip" class="form-control @error('images_zip') is-invalid @enderror" @if (app()->environment('production')) required @endif>
                         @error('images_zip') <div class="invalid-feedback">{{ $message }}</div> @enderror
-                        <div class="form-hint">أسماء الملفات = الباركود، مثل 1.png و 3.jpg. الحد الأقصى 50 ميجابايت. على Render يجب إضافة قرص دائم (Persistent Disk) لحفظ الصور بين عمليات النشر.</div>
+                        <div class="form-hint">أسماء الملفات = الباركود، مثل 1.png و 3.jpg. يمكن ضغط المجلد أو الملفات مباشرة. الحد الأقصى 50 ميجابايت.</div>
                     </div>
                     <div class="d-flex gap-2">
                         <button class="btn btn-brand">بدء الاستيراد</button>

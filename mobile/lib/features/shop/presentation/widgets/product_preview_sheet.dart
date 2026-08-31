@@ -1,11 +1,12 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../../../../core/constants/app_strings.dart';
-import '../../../../core/router/app_router.dart';
+import 'cart_sheet.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/widgets/app_count_badge.dart';
 import '../../../../core/widgets/app_network_image.dart';
 import '../../data/models/product_model.dart';
 import '../../data/services/catalog_api.dart';
@@ -13,7 +14,10 @@ import '../manager/cart_cubit.dart';
 import '../manager/catalog_cubit.dart';
 import '../manager/favorite_cubit.dart';
 import 'card_cart_control.dart';
+import 'celebrate_anchors.dart';
 import 'price_line.dart';
+import 'product_fly_overlay.dart';
+import 'product_gift_overlay.dart';
 import 'quantity_label_chip.dart';
 
 Future<void> showProductPreview(
@@ -36,24 +40,109 @@ Future<void> showProductPreview(
   );
 }
 
+/// يفتح شيت تفاصيل منتج مكدّس فوق الحالي — ينزلق من اليسار.
+void pushStackedProductPreview(BuildContext context, ProductModel product) {
+  Navigator.of(context, rootNavigator: true).push(
+    _StackedPreviewRoute(product: product),
+  );
+}
+
+class _StackedPreviewRoute extends PageRouteBuilder<void> {
+  _StackedPreviewRoute({required ProductModel product})
+      : super(
+          opaque: false,
+          barrierDismissible: false,
+          barrierColor: Colors.transparent,
+          transitionDuration: const Duration(milliseconds: 400),
+          reverseTransitionDuration: const Duration(milliseconds: 360),
+          pageBuilder: (context, animation, secondaryAnimation) =>
+              Material(
+            type: MaterialType.transparency,
+            child: ProductPreviewSheet(
+              product: product,
+              heroTag:
+                  'stacked_preview_${product.id}_${DateTime.now().microsecondsSinceEpoch}',
+              isStacked: true,
+            ),
+          ),
+          transitionsBuilder:
+              (context, animation, secondaryAnimation, child) =>
+                  _StackedPreviewTransition(animation: animation, child: child),
+        );
+}
+
+class _StackedPreviewTransition extends AnimatedWidget {
+  final Widget child;
+
+  const _StackedPreviewTransition({
+    required Animation<double> animation,
+    required this.child,
+  }) : super(listenable: animation);
+
+  @override
+  Widget build(BuildContext context) {
+    final animation = listenable as Animation<double>;
+    final t = animation.value;
+    final size = MediaQuery.sizeOf(context);
+
+    if (animation.status != AnimationStatus.reverse) {
+      final slide = 1.0 - Curves.easeOutCubic.transform(t);
+      return Transform.translate(
+        offset: Offset(-size.width * slide, 0),
+        child: child,
+      );
+    }
+
+    final foldT = Curves.easeIn.transform(1.0 - t);
+    final scale = 1.0 - foldT * 0.82;
+    final tx = -size.width * 0.36 * foldT;
+    final ty = size.height * 0.36 * foldT;
+
+    return Opacity(
+      opacity: (1.0 - foldT * 0.55).clamp(0.0, 1.0),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(26 * foldT),
+        child: Transform(
+          alignment: Alignment.center,
+          transform: Matrix4.identity()
+            ..translateByDouble(tx, ty, 0.0, 1.0)
+            ..rotateZ(-foldT * 0.10)
+            ..scaleByDouble(scale, scale, 1.0, 1.0),
+          child: child,
+        ),
+      ),
+    );
+  }
+}
+
 class ProductPreviewSheet extends StatefulWidget {
   final ProductModel product;
   final String heroTag;
+  final bool isStacked;
 
   const ProductPreviewSheet({
     super.key,
     required this.product,
     required this.heroTag,
+    this.isStacked = false,
   });
 
   @override
   State<ProductPreviewSheet> createState() => _ProductPreviewSheetState();
 }
 
-class _ProductPreviewSheetState extends State<ProductPreviewSheet> {
+class _ProductPreviewSheetState extends State<ProductPreviewSheet>
+    with TickerProviderStateMixin {
   late ProductModel _product;
   late final PageController _pageCtrl;
   late final ScrollController _scrollCtrl;
+  late final AnimationController _cartBounceCtrl;
+  late final Animation<double> _cartBounceScale;
+  late final AnimationController _cartReleaseCtrl;
+  late final Animation<double> _cartReleaseScale;
+  final GlobalKey _sheetKey = GlobalKey();
+  final GlobalKey _topCartKey = GlobalKey();
+  final Object _productImageAnchor = Object();
   int _page = 0;
   double _dismissDy = 0;
   List<ProductModel> _boughtTogether = const [];
@@ -75,8 +164,62 @@ class _ProductPreviewSheetState extends State<ProductPreviewSheet> {
     _product = widget.product;
     _pageCtrl = PageController();
     _scrollCtrl = ScrollController();
+    _cartBounceCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 420),
+    );
+    _cartBounceScale = Tween<double>(begin: 1, end: 1.26).animate(
+      CurvedAnimation(parent: _cartBounceCtrl, curve: Curves.elasticOut),
+    );
+    _cartReleaseCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 200),
+    );
+    _cartReleaseScale = TweenSequence<double>([
+      TweenSequenceItem(
+        tween: Tween<double>(begin: 1, end: 0.92),
+        weight: 50,
+      ),
+      TweenSequenceItem(
+        tween: Tween<double>(begin: 0.92, end: 1),
+        weight: 50,
+      ),
+    ]).animate(
+      CurvedAnimation(parent: _cartReleaseCtrl, curve: Curves.easeInOut),
+    );
+    CartNavAnchor.detailsBounce.addListener(_onCartPing);
+    CartNavAnchor.detailsRelease.addListener(_onCartRelease);
+    CartNavAnchor.detailsBoundsKey = _sheetKey;
     _refreshProduct();
     _loadRecommendations();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _bindTopCart());
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (ModalRoute.of(context)?.isCurrent == true) {
+      CartNavAnchor.detailsBoundsKey = _sheetKey;
+      WidgetsBinding.instance.addPostFrameCallback((_) => _bindTopCart());
+    }
+  }
+
+  void _onCartPing() {
+    if (!mounted) return;
+    _cartBounceCtrl.forward(from: 0);
+  }
+
+  void _onCartRelease() {
+    if (!mounted) return;
+    _cartReleaseCtrl.forward(from: 0);
+  }
+
+  void _bindTopCart() {
+    if (!mounted) return;
+    CelebratePositions.bind(
+      CartNavAnchor.detailsCartAnchor,
+      () => celebrateGlobalCenter(_topCartKey),
+    );
   }
 
   Future<void> _refreshProduct() async {
@@ -89,6 +232,14 @@ class _ProductPreviewSheetState extends State<ProductPreviewSheet> {
 
   @override
   void dispose() {
+    CartNavAnchor.detailsBounce.removeListener(_onCartPing);
+    CartNavAnchor.detailsRelease.removeListener(_onCartRelease);
+    if (CartNavAnchor.detailsBoundsKey == _sheetKey) {
+      CartNavAnchor.detailsBoundsKey = null;
+    }
+    CelebratePositions.unbind(CartNavAnchor.detailsCartAnchor);
+    _cartReleaseCtrl.dispose();
+    _cartBounceCtrl.dispose();
     _pageCtrl.dispose();
     _scrollCtrl.dispose();
     super.dispose();
@@ -96,18 +247,7 @@ class _ProductPreviewSheetState extends State<ProductPreviewSheet> {
 
   void _showProduct(ProductModel next) {
     if (next.id == p.id) return;
-    setState(() {
-      _product = next;
-      _page = 0;
-      _boughtTogether = const [];
-      _similar = const [];
-      _suggested = const [];
-      _recsLoaded = false;
-    });
-    if (_pageCtrl.hasClients) {
-      _pageCtrl.jumpToPage(0);
-    }
-    _loadRecommendations();
+    pushStackedProductPreview(context, next);
   }
 
   Future<void> _loadRecommendations() async {
@@ -121,7 +261,10 @@ class _ProductPreviewSheetState extends State<ProductPreviewSheet> {
         _suggested = recs.suggested;
         _recsLoaded = true;
       });
-    } catch (_) {}
+    } catch (_) {
+      if (!mounted || p.id != id) return;
+      setState(() => _recsLoaded = true);
+    }
   }
 
   Future<void> _addToCart([ProductModel? item]) async {
@@ -129,6 +272,63 @@ class _ProductPreviewSheetState extends State<ProductPreviewSheet> {
     if (!product.isAvailable) return;
     HapticFeedback.mediumImpact();
     context.read<CartCubit>().addToCart(product);
+
+    if (item != null) return;
+
+    final cartTop = resolveFlyEnd(
+      context,
+      preferTopCart: true,
+      topCartKey: _topCartKey,
+      boundsKey: _sheetKey,
+    );
+    var imageStart = CelebratePositions.read(_productImageAnchor);
+    if (imageStart == null ||
+        !isPointInsideBounds(imageStart, _sheetKey, margin: 20)) {
+      final box = _sheetKey.currentContext?.findRenderObject();
+      if (box is RenderBox && box.hasSize) {
+        final topLeft = box.localToGlobal(Offset.zero);
+        imageStart = Offset(
+          topLeft.dx + box.size.width / 2,
+          topLeft.dy + box.size.height - 72,
+        );
+      } else {
+        imageStart = Offset(
+          MediaQuery.sizeOf(context).width / 2,
+          MediaQuery.sizeOf(context).height * 0.72,
+        );
+      }
+    }
+    ProductFlyController.play(
+      context: context,
+      imageUrl: product.displayImage,
+      productAnchor: _productImageAnchor,
+      fallbackStart: imageStart,
+      overrideEnd: cartTop,
+      pingDetailsCart: true,
+    );
+  }
+
+  void _removeFromCart() {
+    if (!p.isAvailable) return;
+    final cart = context.read<CartCubit>().state;
+    final qty = cart.items
+        .where((i) => i.product.id == p.id)
+        .fold<int>(0, (sum, i) => sum + i.quantity);
+    if (qty <= 0) return;
+
+    context.read<CartCubit>().updateQuantity(p.id, qty - 1);
+
+    final fallbackEnd = fallbackProductFlyEnd(context, boundsKey: _sheetKey);
+    ProductFlyController.playReverse(
+      context: context,
+      imageUrl: p.displayImage,
+      productAnchor: _productImageAnchor,
+      fallbackEnd: fallbackEnd,
+      flyFromTopCart: true,
+      topCartKey: _topCartKey,
+      boundsKey: _sheetKey,
+      releaseDetailsCart: true,
+    );
   }
 
   Future<void> _share() async {
@@ -159,9 +359,9 @@ class _ProductPreviewSheetState extends State<ProductPreviewSheet> {
   }
 
   void _openCart() {
-    final nav = Navigator.of(context);
-    nav.pop();
-    nav.pushNamed(AppRouter.checkout);
+    final rootNav = Navigator.of(context, rootNavigator: true);
+    rootNav.pop();
+    showCartSheet(rootNav.context);
   }
 
   @override
@@ -202,118 +402,78 @@ class _ProductPreviewSheetState extends State<ProductPreviewSheet> {
                 : Duration.zero,
             curve: Curves.easeOutCubic,
             child: Container(
-              height: height * 0.94,
+              key: _sheetKey,
+              height: height * 0.86,
               decoration: const BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+                borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
               ),
-              clipBehavior: Clip.antiAlias,
-              child: Column(
+              clipBehavior: Clip.hardEdge,
+              child: Stack(
+                clipBehavior: Clip.hardEdge,
                 children: [
-                  Expanded(
-                    child: ListView(
-                      controller: _scrollCtrl,
-                      physics: _dismissDy > 8
-                          ? const NeverScrollableScrollPhysics()
-                          : const BouncingScrollPhysics(),
-                      padding: const EdgeInsets.only(bottom: 24),
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                        DecoratedBox(
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(22),
-                            border: Border.all(
-                              color: const Color(0x3388D498),
-                              width: 1,
-                            ),
-                          ),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(21),
-                            child: AspectRatio(
-                              aspectRatio: 1.22,
-                              child: Stack(
-                                fit: StackFit.expand,
+                  Column(
+                    children: [
+                      Expanded(
+                        child: CardStepperScrollScope(
+                          child: ListView(
+                          controller: _scrollCtrl,
+                          physics: _dismissDy > 8
+                              ? const NeverScrollableScrollPhysics()
+                              : const BouncingScrollPhysics(),
+                          padding: const EdgeInsets.only(bottom: 24),
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  PageView.builder(
-                                    controller: _pageCtrl,
-                                    itemCount: images.length,
-                                    onPageChanged: (i) =>
-                                        setState(() => _page = i),
-                                    itemBuilder: (context, i) {
-                                      final image = AppNetworkImage(
-                                        images[i],
-                                        fit: BoxFit.cover,
-                                        width: 900,
-                                        error: const ColoredBox(
-                                          color: AppTheme.primarySurface,
-                                          child: Icon(
-                                            Icons.image_not_supported_outlined,
-                                            size: 48,
-                                          ),
-                                        ),
-                                      );
-                                      if (i == 0) {
-                                        return Hero(
-                                          tag: widget.heroTag,
-                                          child: image,
-                                        );
-                                      }
-                                      return image;
-                                    },
-                                  ),
-                                  Positioned(
-                                    top: 12,
-                                    right: 12,
-                                    child: _RoundIconButton(
-                                      icon: Icons.close_rounded,
-                                      tooltip: AppStrings.close,
-                                      onTap: () => Navigator.pop(context),
-                                    ),
-                                  ),
-                                  Positioned(
-                                    top: 12,
-                                    left: 12,
-                                    child: Row(
-                                      children: [
-                                        BlocBuilder<CartCubit, CartState>(
-                                          buildWhen: (a, b) =>
-                                              a.count != b.count,
-                                          builder: (context, cart) {
-                                            return _RoundIconButton(
-                                              icon: Icons.shopping_bag_outlined,
-                                              tooltip: AppStrings.cartTitle,
-                                              badge: cart.count,
-                                              onTap: _openCart,
-                                            );
-                                          },
-                                        ),
-                                        const SizedBox(width: 8),
-                                        _RoundIconButton(
-                                          icon: Icons.ios_share_rounded,
-                                          tooltip: 'مشاركة',
-                                          onTap: _share,
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  if (images.length > 1)
-                                    Positioned(
-                                      left: 0,
-                                      right: 0,
-                                      bottom: 12,
-                                      child: _PageDots(
-                                        count: images.length,
-                                        index: _page,
+                        AspectRatio(
+                          aspectRatio: 1.22,
+                          child: Stack(
+                            fit: StackFit.expand,
+                            children: [
+                              PageView.builder(
+                                controller: _pageCtrl,
+                                itemCount: images.length,
+                                onPageChanged: (i) =>
+                                    setState(() => _page = i),
+                                itemBuilder: (context, i) {
+                                  final image = AppNetworkImage(
+                                    images[i],
+                                    fit: BoxFit.cover,
+                                    width: 900,
+                                    error: const ColoredBox(
+                                      color: AppTheme.primarySurface,
+                                      child: Icon(
+                                        Icons.image_not_supported_outlined,
+                                        size: 48,
                                       ),
                                     ),
-                                ],
+                                  );
+                                  if (i == 0) {
+                                    return CelebrateAnchor(
+                                      anchor: _productImageAnchor,
+                                      child: Hero(
+                                        tag: widget.heroTag,
+                                        child: image,
+                                      ),
+                                    );
+                                  }
+                                  return image;
+                                },
                               ),
-                            ),
+                              if (images.length > 1)
+                                Positioned(
+                                  left: 0,
+                                  right: 0,
+                                  bottom: 12,
+                                  child: _PageDots(
+                                    count: images.length,
+                                    index: _page,
+                                  ),
+                                ),
+                            ],
                           ),
                         ),
                         const SizedBox(height: 18),
@@ -330,7 +490,7 @@ class _ProductPreviewSheetState extends State<ProductPreviewSheet> {
                                   softWrap: false,
                                   style: const TextStyle(
                                     fontSize: 16,
-                                    fontWeight: FontWeight.w900,
+                                    fontWeight: FontWeight.w500,
                                     color: AppTheme.darkText,
                                     height: 1.2,
                                   ),
@@ -386,6 +546,10 @@ class _ProductPreviewSheetState extends State<ProductPreviewSheet> {
                             ),
                           ),
                         ],
+                        if (p.hasGiftProduct) ...[
+                          const SizedBox(height: 12),
+                          ProductGiftDetailCard(gift: p.giftProduct!),
+                        ],
                             ],
                           ),
                         ),
@@ -410,8 +574,52 @@ class _ProductPreviewSheetState extends State<ProductPreviewSheet> {
                           ),
                       ],
                     ),
+                    ),
                   ),
                   const _StickyCartBar(),
+                    ],
+                  ),
+                  Positioned(
+                    top: 12,
+                    left: 12,
+                    child: Row(
+                      children: [
+                        ScaleTransition(
+                          scale: _cartReleaseScale,
+                          child: ScaleTransition(
+                            scale: _cartBounceScale,
+                            child: BlocBuilder<CartCubit, CartState>(
+                              buildWhen: (a, b) => a.count != b.count,
+                              builder: (context, cart) => _RoundIconButton(
+                                measureKey: _topCartKey,
+                                icon: Icons.shopping_bag_outlined,
+                                tooltip: AppStrings.cartTitle,
+                                badge: cart.count,
+                                onTap: _openCart,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        _RoundIconButton(
+                          icon: Icons.ios_share_rounded,
+                          tooltip: 'مشاركة',
+                          onTap: _share,
+                        ),
+                      ],
+                    ),
+                  ),
+                  Positioned(
+                    top: 12,
+                    right: 12,
+                    child: _RoundIconButton(
+                      icon: widget.isStacked
+                          ? Icons.arrow_back_ios_new_rounded
+                          : Icons.close_rounded,
+                      tooltip: widget.isStacked ? 'رجوع' : AppStrings.close,
+                      onTap: () => Navigator.pop(context),
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -461,10 +669,7 @@ class _StickyCartBar extends StatelessWidget {
                 product: p,
                 quantity: qty,
                 onAdd: () => state._addToCart(),
-                onRemove: () {
-                  HapticFeedback.selectionClick();
-                  context.read<CartCubit>().updateQuantity(p.id, qty - 1);
-                },
+                onRemove: state._removeFromCart,
               ),
               const Spacer(),
               Column(
@@ -713,14 +918,22 @@ class _RecommendRow extends StatelessWidget {
   }
 }
 
-class _RelatedTile extends StatelessWidget {
+class _RelatedTile extends StatefulWidget {
   final ProductModel product;
   final VoidCallback onOpen;
 
   const _RelatedTile({required this.product, required this.onOpen});
 
   @override
+  State<_RelatedTile> createState() => _RelatedTileState();
+}
+
+class _RelatedTileState extends State<_RelatedTile> {
+  final Object _productImageAnchor = Object();
+
+  @override
   Widget build(BuildContext context) {
+    final product = widget.product;
     return SizedBox(
       width: 118,
       child: Material(
@@ -728,7 +941,7 @@ class _RelatedTile extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
-          onTap: onOpen,
+          onTap: widget.onOpen,
           child: Padding(
             padding: const EdgeInsets.all(8),
             child: Column(
@@ -739,11 +952,14 @@ class _RelatedTile extends StatelessWidget {
                       Positioned.fill(
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(12),
-                          child: AppNetworkImage(
-                            product.displayImage,
-                            fit: BoxFit.cover,
-                            error: const ColoredBox(
-                              color: AppTheme.primarySurface,
+                          child: CelebrateAnchor(
+                            anchor: _productImageAnchor,
+                            child: AppNetworkImage(
+                              product.displayImage,
+                              fit: BoxFit.cover,
+                              error: const ColoredBox(
+                                color: AppTheme.primarySurface,
+                              ),
                             ),
                           ),
                         ),
@@ -751,7 +967,11 @@ class _RelatedTile extends StatelessWidget {
                       PositionedDirectional(
                         start: 0,
                         bottom: 0,
-                        child: CardCartControl(product: product),
+                        child: CardCartControl(
+                          product: product,
+                          productImageAnchor: _productImageAnchor,
+                          flyToTopCart: true,
+                        ),
                       ),
                     ],
                   ),
@@ -764,7 +984,7 @@ class _RelatedTile extends StatelessWidget {
                   textAlign: TextAlign.center,
                   style: const TextStyle(
                     fontSize: 11,
-                    fontWeight: FontWeight.w700,
+                    fontWeight: FontWeight.w500,
                     height: 1.25,
                   ),
                 ),
@@ -816,12 +1036,14 @@ class _RoundIconButton extends StatelessWidget {
   final VoidCallback onTap;
   final String? tooltip;
   final int badge;
+  final GlobalKey? measureKey;
 
   const _RoundIconButton({
     required this.icon,
     required this.onTap,
     this.tooltip,
     this.badge = 0,
+    this.measureKey,
   });
 
   @override
@@ -843,6 +1065,7 @@ class _RoundIconButton extends StatelessWidget {
         ],
       ),
       child: Material(
+        key: measureKey,
         color: Colors.white.withValues(alpha: 0.96),
         shape: const CircleBorder(),
         child: InkWell(
@@ -858,19 +1081,10 @@ class _RoundIconButton extends StatelessWidget {
 
     return Tooltip(
       message: tooltip ?? '',
-      child: badge > 0
-          ? Badge(
-              label: Text(
-                '$badge',
-                style: const TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-              backgroundColor: AppTheme.primaryDark,
-              child: button,
-            )
-          : button,
+      child: AppCountBadge.wrap(
+        count: badge,
+        child: button,
+      ),
     );
   }
 }

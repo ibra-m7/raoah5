@@ -242,7 +242,7 @@ class _CategoryBrowseBody extends StatelessWidget {
                       ),
                       childCount: products.length,
                     ),
-                    gridDelegate: ProductShimmerGrid.sliverDelegate,
+                    gridDelegate: ProductShimmerGrid.sliverDelegate(context),
                   ),
                 ),
             ],

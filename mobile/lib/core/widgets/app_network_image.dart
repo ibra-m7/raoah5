@@ -1,6 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
+import '../config/env_config.dart';
 import '../theme/app_theme.dart';
 import 'brand_logo.dart';
 
@@ -8,6 +9,7 @@ import 'brand_logo.dart';
 class AppNetworkImage extends StatelessWidget {
   final String url;
   final BoxFit fit;
+  final Alignment alignment;
   final double? width;
   final double? height;
   final Widget? placeholder;
@@ -20,6 +22,7 @@ class AppNetworkImage extends StatelessWidget {
     this.url, {
     super.key,
     this.fit = BoxFit.cover,
+    this.alignment = Alignment.center,
     this.width,
     this.height,
     this.placeholder,
@@ -48,11 +51,11 @@ class AppNetworkImage extends StatelessWidget {
     final uri = Uri.tryParse(url);
     if (uri == null || !uri.hasScheme) return url;
     final host = uri.host.toLowerCase();
-    final path = uri.path.toLowerCase();
+    if (host.contains('onrender.com')) {
+      return _rewriteToCurrentApi(uri);
+    }
     final isUnsplash = host == 'images.unsplash.com' || host == 'unsplash.com';
-    final isRenderStorage =
-        host.contains('onrender.com') && path.contains('/storage/');
-    if (isUnsplash || isRenderStorage) {
+    if (isUnsplash) {
       return Uri.https('wsrv.nl', '/', {
         'url': url,
         'w': '1200',
@@ -61,6 +64,21 @@ class AppNetworkImage extends StatelessWidget {
       }).toString();
     }
     return url;
+  }
+
+  static String _rewriteToCurrentApi(Uri uri) {
+    final api = Uri.tryParse(EnvConfig.apiBaseUrl);
+    if (api == null || api.host.isEmpty) {
+      return uri.toString();
+    }
+
+    return Uri(
+      scheme: api.scheme,
+      host: api.host,
+      port: api.hasPort ? api.port : null,
+      path: uri.path,
+      query: uri.query.isEmpty ? null : uri.query,
+    ).toString();
   }
 
   int? get _memCacheWidth {
@@ -113,6 +131,7 @@ class AppNetworkImage extends StatelessWidget {
       imageUrl: resolved,
       httpHeaders: headersFor(resolved),
       fit: fit,
+      alignment: alignment,
       width: width,
       height: height,
       fadeInDuration: const Duration(milliseconds: 120),

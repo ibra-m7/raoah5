@@ -112,7 +112,7 @@ final class Media
     }
 
     /**
-     * Resolve a relative path or same-app /storage/ URL to the public disk path.
+     * Resolve a relative path or any /storage/ URL to the public disk path.
      */
     public static function localStoragePath(?string $path): ?string
     {
@@ -132,10 +132,6 @@ final class Media
 
         $parsed = parse_url($path);
         if (! is_array($parsed) || empty($parsed['path'])) {
-            return null;
-        }
-
-        if (! self::isSameAppHost($parsed['host'] ?? null)) {
             return null;
         }
 
@@ -192,25 +188,5 @@ final class Media
         $local = self::localStoragePath($path);
 
         return $local !== null && Storage::disk('public')->exists($local);
-    }
-
-    private static function isSameAppHost(?string $host): bool
-    {
-        if ($host === null || $host === '') {
-            return false;
-        }
-
-        $appHost = parse_url((string) config('app.url'), PHP_URL_HOST);
-        if (is_string($appHost) && $appHost !== '' && strcasecmp($appHost, $host) === 0) {
-            return true;
-        }
-
-        if (! app()->runningInConsole()) {
-            $requestHost = parse_url((string) request()->getSchemeAndHttpHost(), PHP_URL_HOST);
-
-            return is_string($requestHost) && $requestHost !== '' && strcasecmp($requestHost, $host) === 0;
-        }
-
-        return false;
     }
 }

@@ -33,8 +33,11 @@ class CatalogApi {
       timeout: const Duration(seconds: 60),
     );
     final data = _dataMap(json);
-    await _cache.saveMap(OfflineCache.homeFeed, data);
-    return HomeFeed.fromJson(data);
+    final feed = HomeFeed.fromJson(data);
+    if (!feed.isEmpty) {
+      await _cache.saveMap(OfflineCache.homeFeed, data);
+    }
+    return feed;
   }
 
   Future<List<CategoryModel>> categories() async {

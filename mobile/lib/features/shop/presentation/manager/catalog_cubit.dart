@@ -222,7 +222,7 @@ class CatalogCubit extends Cubit<CatalogState> {
 
     try {
       final feed = await _api.home();
-      emit(CatalogState(loading: false, feed: feed));
+      emit(CatalogState(loading: false, refreshing: false, feed: feed));
     } on ApiException catch (e) {
       _emitFailure(cached, e.message);
     } on NetworkException catch (e) {

@@ -1,14 +1,14 @@
 <?php
 
 ini_set('memory_limit', '512M');
-$url = 'https://raoah5.onrender.com/api/home';
+$url = 'http://16.171.249.18/api/home';
 $ch = curl_init($url);
 curl_setopt_array($ch, [
     CURLOPT_RETURNTRANSFER => true,
     CURLOPT_FOLLOWLOCATION => true,
     CURLOPT_TIMEOUT => 90,
     CURLOPT_HTTPHEADER => ['Accept: application/json'],
-    CURLOPT_USERAGENT => 'RaoahRenderCheck/1.0',
+    CURLOPT_USERAGENT => 'RaoahHomeCheck/1.0',
 ]);
 $body = curl_exec($ch);
 $code = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);

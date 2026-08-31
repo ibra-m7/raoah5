@@ -124,6 +124,9 @@ class ApiClient {
           request(_uri(base, path)),
           timeout: timeout,
         );
+        if (_shouldTryNextBase(path, json) && bases.any((b) => !tried.contains(b))) {
+          continue;
+        }
         _workingBase = base;
         return json;
       } on TimeoutException catch (e) {
@@ -137,9 +140,27 @@ class ApiClient {
 
     throw NetworkException(
       message: lastError is TimeoutException
-          ? 'الخادم يستيقظ الآن. انتظر لحظات ثم حدّث الصفحة.'
+          ? 'انتهت مهلة الاتصال بالخادم. حاول مجدداً.'
           : 'تعذّر الاتصال بالخادم. تحقق من الإنترنت ثم حدّث الصفحة.',
     );
+  }
+
+  bool _shouldTryNextBase(String path, Map<String, dynamic> json) {
+    final normalized = path.startsWith('/') ? path : '/$path';
+    if (normalized != '/home') return false;
+
+    final data = json['data'];
+    if (data is! Map) return false;
+
+    final products = data['products'];
+    final categories = data['categories'];
+    final displaySections = data['display_sections'];
+    final hasProducts = products is List && products.isNotEmpty;
+    final hasCategories = categories is List && categories.isNotEmpty;
+    final hasDisplay =
+        displaySections is List && displaySections.isNotEmpty;
+
+    return !hasProducts && !hasCategories && !hasDisplay;
   }
 
   Future<Map<String, dynamic>> _sendOnce(

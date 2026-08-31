@@ -8,13 +8,16 @@ import '../../features/auth/presentation/pages/otp_verify_screen.dart';
 import '../../features/auth/presentation/pages/phone_login_screen.dart';
 import '../../features/auth/presentation/pages/profile_screen.dart';
 import '../../features/auth/presentation/pages/register_screen.dart';
+import '../../features/auth/presentation/pages/settings_screen.dart';
 import '../../features/notifications/presentation/pages/notifications_screen.dart';
 import '../../features/onboarding/presentation/pages/onboarding_screen.dart';
 import '../../features/onboarding/presentation/pages/splash_screen.dart';
 import '../../features/shop/data/models/product_model.dart';
 import '../../features/shop/presentation/pages/checkout_screen.dart';
+import '../../features/shop/presentation/widgets/cart_sheet.dart';
 import '../../features/shop/presentation/pages/category_browse_screen.dart';
 import '../../features/shop/presentation/pages/custom_dynamic_page_screen.dart';
+import '../../features/shop/presentation/pages/home_section_browse_screen.dart';
 import '../../features/shop/presentation/pages/invoice_screen.dart';
 import '../../features/shop/presentation/pages/favorites_screen.dart';
 import '../../features/shop/presentation/pages/groceries_section_screen.dart';
@@ -58,6 +61,7 @@ abstract class AppRouter {
   static const register       = RegisterScreen.routeName;      // '/register'
   static const main           = MainScreen.routeName;          // '/main'
   static const profile        = ProfileScreen.routeName;       // '/profile'
+  static const accountSettings  = SettingsScreen.routeName;      // '/settings'
   static const productDetails = ProductDetailsScreen.routeName;// '/product-details'
   static const checkout       = CheckoutScreen.routeName;      // '/checkout'
   static const invoice        = InvoiceScreen.routeName;       // '/invoice'
@@ -75,6 +79,7 @@ abstract class AppRouter {
   static const categorySubcategoriesBrowse =
       CategorySubcategoriesBrowseScreen.routeName;
   static const categoryBrowse = CategoryBrowseScreen.routeName;
+  static const homeSectionBrowse = HomeSectionBrowseScreen.routeName;
 
   // ── onGenerateRoute ───────────────────────────────────────────────────────
   static Route<dynamic> onGenerateRoute(RouteSettings settings) {
@@ -160,6 +165,13 @@ abstract class AppRouter {
           direction: _SlideDir.right,
         );
 
+      case AppRouter.accountSettings:
+        return _slide(
+          const SettingsScreen(),
+          settings,
+          direction: _SlideDir.right,
+        );
+
       // ── Product Details ───────────────────────────────────────────────────
       case productDetails:
         final args = settings.arguments;
@@ -184,10 +196,9 @@ abstract class AppRouter {
 
       // ── Checkout ──────────────────────────────────────────────────────────
       case checkout:
-        return _slide<int>(
-          const CheckoutScreen(),
+        return _sheet(
+          const CartSheet(),
           settings,
-          direction: _SlideDir.up,
         );
 
       case invoice:
@@ -229,20 +240,18 @@ abstract class AppRouter {
       case dynamicPage:
         final args = settings.arguments;
         if (args is DynamicPageArgs) {
-          return _slide(
+          return _sheet(
             CustomDynamicPageScreen(
               pageId: args.pageId,
               initial: args.initial,
             ),
             settings,
-            direction: _SlideDir.up,
           );
         }
         if (args is String && args.isNotEmpty) {
-          return _slide(
+          return _sheet(
             CustomDynamicPageScreen(pageId: args),
             settings,
-            direction: _SlideDir.up,
           );
         }
         return _errorRoute(settings, 'تعذّر فتح الصفحة — بيانات غير صحيحة');
@@ -308,6 +317,20 @@ abstract class AppRouter {
           direction: _SlideDir.up,
         );
 
+      case homeSectionBrowse:
+        if (settings.arguments is! HomeSectionBrowseArgs) {
+          return _errorRoute(
+            settings,
+            'تعذّر فتح القسم — بيانات غير صحيحة',
+          );
+        }
+        return _sheet(
+          HomeSectionBrowseScreen(
+            args: settings.arguments as HomeSectionBrowseArgs,
+          ),
+          settings,
+        );
+
       case '/':
         return _fade(const MainScreen(), settings);
 
@@ -366,6 +389,38 @@ abstract class AppRouter {
               reverseCurve: Curves.easeInCubic,
             ),
           ),
+          child: child,
+        );
+      },
+    );
+  }
+
+  /// شيت شفاف — يظهر الصفحة السابقة خلفه أثناء السحب للإغلاق
+  static PageRouteBuilder<T> _sheet<T>(
+    Widget page,
+    RouteSettings settings, {
+    Duration duration = const Duration(milliseconds: 280),
+  }) {
+    return PageRouteBuilder<T>(
+      settings: settings,
+      opaque: false,
+      barrierDismissible: true,
+      barrierColor: Colors.transparent,
+      transitionDuration: duration,
+      reverseTransitionDuration:
+          Duration(milliseconds: (duration.inMilliseconds * 0.8).round()),
+      pageBuilder: (_, _, _) => page,
+      transitionsBuilder: (_, animation, _, child) {
+        final curved = CurvedAnimation(
+          parent: animation,
+          curve: Curves.easeOutCubic,
+          reverseCurve: Curves.easeInCubic,
+        );
+        return SlideTransition(
+          position: Tween<Offset>(
+            begin: const Offset(0, 1),
+            end: Offset.zero,
+          ).animate(curved),
           child: child,
         );
       },

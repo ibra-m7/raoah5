@@ -258,7 +258,7 @@ class ProductController extends Controller
         }
 
         if (($result['images'] ?? 0) === 0 && ! $request->hasFile('images_zip')) {
-            $message .= ' لم تُرفَع صور ZIP — على Render يجب رفع Excel مع ZIP بعد كل نشر جديد وإلا تختفي الصور.';
+            $message .= ' لم تُرفَع صور ZIP — ارفع Excel مع ملف الصور لربط كل صورة بباركودها.';
         }
 
         return redirect()

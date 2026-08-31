@@ -11,18 +11,24 @@ import '../../../../core/constants/app_strings.dart';
 import '../../../../core/router/app_router.dart';
 import '../../../../core/theme/app_scale.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/widgets/app_count_badge.dart';
 import '../../../../core/widgets/app_network_image.dart';
 import '../../../../core/widgets/brand_logo.dart';
 import '../../../../features/auth/data/services/auth_session.dart';
 import '../../../../features/auth/presentation/manager/address_cubit.dart';
 import '../../../../features/auth/presentation/pages/profile_screen.dart';
 import '../../../../features/notifications/presentation/manager/notifications_cubit.dart';
+import '../../../../core/di/service_locator.dart';
+import '../../../../features/ai_assistant/presentation/cubit/ai_controller_cubit.dart';
+import '../../../../features/ai_assistant/presentation/widgets/ai_assistant_launch_sheet.dart';
 import '../../../../features/notifications/data/services/push_service.dart';
+import '../manager/cart_cubit.dart';
 import '../../data/models/category_model.dart';
 import '../../data/models/dynamic_page_model.dart';
+import '../../data/models/home_feed.dart';
 import '../../data/models/product_model.dart';
 import 'custom_dynamic_page_screen.dart';
-import 'category_browse_screen.dart';
+import 'home_section_browse_screen.dart';
 import '../manager/catalog_cubit.dart';
 import '../manager/favorite_cubit.dart';
 import '../manager/orders_cubit.dart';
@@ -31,10 +37,13 @@ import '../widgets/main_bottom_nav_bar.dart';
 import '../widgets/main_shell_scope.dart';
 import '../widgets/price_line.dart';
 import '../widgets/product_card.dart';
+import '../widgets/card_cart_control.dart';
 import '../widgets/product_card_shimmer.dart';
 import '../widgets/product_preview_sheet.dart';
+import '../widgets/scroll_refresh_shell.dart';
 import 'categories_screen.dart';
 import 'checkout_screen.dart';
+import '../widgets/cart_sheet.dart';
 
 // ── قص موجي لخلفيات الأقسام الترويجية (حافة علوية/سفلية ناعمة كمرجع كيو) ───
 class _SectionWaveClipper extends CustomClipper<Path> {
@@ -128,6 +137,23 @@ void _openPromoSlide(BuildContext context, _PromoSlide slide) {
   }
 }
 
+String _promoSlideTitle({
+  required BannerModel banner,
+  DynamicPageModel? page,
+  ProductModel? product,
+}) {
+  if (banner.showTitle && banner.title.trim().isNotEmpty) {
+    return banner.title.trim();
+  }
+  if (page != null && page.showTitle && page.title.trim().isNotEmpty) {
+    return page.title.trim();
+  }
+  if (banner.showTitle && product != null) {
+    return product.name.trim();
+  }
+  return '';
+}
+
 List<_PromoSlide> _promoSlidesFor(CatalogState catalog) {
   final slides = <_PromoSlide>[];
   for (final banner in catalog.banners) {
@@ -152,9 +178,11 @@ List<_PromoSlide> _promoSlidesFor(CatalogState catalog) {
     slides.add(
       _PromoSlide(
         imageUrl: image,
-        title: banner.title.trim().isNotEmpty
-            ? banner.title
-            : (page?.title ?? product?.name ?? ''),
+        title: _promoSlideTitle(
+          banner: banner,
+          page: page,
+          product: product,
+        ),
         subtitle: banner.subtitle ?? product?.quantityLabel,
         product: product,
         pageId: page?.id ?? (banner.linkType == 'page' ? banner.linkId : null),
@@ -173,33 +201,153 @@ List<_PromoSlide> _promoSlidesFor(CatalogState catalog) {
   ];
 }
 
-class _HomeNotificationsButton extends StatelessWidget {
+class _HomeNotificationsButton extends StatefulWidget {
   const _HomeNotificationsButton();
 
   @override
+  State<_HomeNotificationsButton> createState() =>
+      _HomeNotificationsButtonState();
+}
+
+class _HomeNotificationsButtonState extends State<_HomeNotificationsButton>
+    with SingleTickerProviderStateMixin {
+  static const _goldLight = Color(0xFFFFF1B8);
+  static const _goldMid = Color(0xFFE8C547);
+  static const _goldDeep = Color(0xFFB8860B);
+
+  late final AnimationController _ringCtrl;
+  late final Animation<double> _ringTurns;
+  bool _hasUnread = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _ringCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 820),
+    );
+    _ringTurns = TweenSequence<double>([
+      TweenSequenceItem(tween: Tween(begin: 0.0, end: 0.07), weight: 1),
+      TweenSequenceItem(tween: Tween(begin: 0.07, end: -0.07), weight: 2),
+      TweenSequenceItem(tween: Tween(begin: -0.07, end: 0.05), weight: 2),
+      TweenSequenceItem(tween: Tween(begin: 0.05, end: -0.03), weight: 2),
+      TweenSequenceItem(tween: Tween(begin: -0.03, end: 0.0), weight: 1),
+    ]).animate(CurvedAnimation(parent: _ringCtrl, curve: Curves.easeInOut));
+    _ringCtrl.addStatusListener(_onRingStatus);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final unread = context.read<NotificationsCubit>().state.unreadCount;
+      _syncUnreadRing(unread > 0);
+    });
+  }
+
+  @override
+  void dispose() {
+    _ringCtrl.removeStatusListener(_onRingStatus);
+    _ringCtrl.dispose();
+    super.dispose();
+  }
+
+  void _onRingStatus(AnimationStatus status) {
+    if (status != AnimationStatus.completed || !mounted || !_hasUnread) {
+      return;
+    }
+    Future<void>.delayed(const Duration(seconds: 4), () {
+      if (!mounted || !_hasUnread || _ringCtrl.isAnimating) return;
+      _ringCtrl.forward(from: 0);
+    });
+  }
+
+  void _syncUnreadRing(bool hasUnread) {
+    if (_hasUnread == hasUnread) return;
+    _hasUnread = hasUnread;
+    if (!hasUnread) {
+      _ringCtrl.stop();
+      _ringCtrl.value = 0;
+      return;
+    }
+    if (!_ringCtrl.isAnimating) {
+      Future<void>.delayed(const Duration(milliseconds: 600), () {
+        if (!mounted || !_hasUnread) return;
+        _ringCtrl.forward(from: 0);
+      });
+    }
+  }
+
+  Future<void> _ringOnce() async {
+    if (_ringCtrl.isAnimating) return;
+    await _ringCtrl.forward(from: 0);
+    if (mounted) {
+      _ringCtrl.value = 0;
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return BlocBuilder<NotificationsCubit, NotificationsState>(
-      builder: (context, state) {
-        return IconButton(
+    return BlocListener<NotificationsCubit, NotificationsState>(
+      listenWhen: (prev, curr) =>
+          (prev.unreadCount > 0) != (curr.unreadCount > 0),
+      listener: (context, state) {
+        _syncUnreadRing(state.unreadCount > 0);
+      },
+      child: BlocBuilder<NotificationsCubit, NotificationsState>(
+        builder: (context, state) {
+          final hasUnread = state.unreadCount > 0;
+
+          return IconButton(
           tooltip: 'الإشعارات',
-          onPressed: () {
+          onPressed: () async {
+            unawaited(_ringOnce());
             unawaited(context.read<NotificationsCubit>().load(silent: true));
             Navigator.of(context).pushNamed(AppRouter.notifications);
           },
-          icon: Badge(
-            isLabelVisible: state.unreadCount > 0,
-            label: Text(
-              state.unreadCount > 99 ? '99+' : '${state.unreadCount}',
-              style: const TextStyle(fontSize: 10),
-            ),
-            child: const Icon(
-              Icons.notifications_none_rounded,
-              color: AppTheme.darkText,
-              size: 26,
+          icon: AppCountBadge.wrap(
+            count: state.unreadCount,
+            child: Container(
+              width: 34,
+              height: 34,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                boxShadow: hasUnread
+                    ? [
+                        BoxShadow(
+                          color: _goldMid.withValues(alpha: 0.42),
+                          blurRadius: 14,
+                          spreadRadius: 0.5,
+                        ),
+                      ]
+                    : [
+                        BoxShadow(
+                          color: _goldDeep.withValues(alpha: 0.18),
+                          blurRadius: 8,
+                        ),
+                      ],
+              ),
+              child: RotationTransition(
+                alignment: const Alignment(0, -0.55),
+                turns: _ringTurns,
+                child: ShaderMask(
+                  blendMode: BlendMode.srcIn,
+                  shaderCallback: (bounds) => const LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [_goldLight, _goldMid, _goldDeep],
+                    stops: [0.0, 0.52, 1.0],
+                  ).createShader(bounds),
+                  child: Icon(
+                    hasUnread
+                        ? Icons.notifications_active_rounded
+                        : Icons.notifications_none_rounded,
+                    color: Colors.white,
+                    size: 26,
+                  ),
+                ),
+              ),
             ),
           ),
         );
-      },
+        },
+      ),
     );
   }
 }
@@ -210,6 +358,7 @@ class _HomeMagicHeaderDelegate extends SliverPersistentHeaderDelegate {
   final double searchH;
   final double logoRow;
   final double bannerBlend;
+  final double bannerFadeHeight;
   final VoidCallback onSearchTap;
   final List<_PromoSlide> slides;
   final bool loading;
@@ -220,6 +369,7 @@ class _HomeMagicHeaderDelegate extends SliverPersistentHeaderDelegate {
     required this.searchH,
     required this.logoRow,
     required this.bannerBlend,
+    required this.bannerFadeHeight,
     required this.onSearchTap,
     required this.slides,
     required this.loading,
@@ -234,6 +384,22 @@ class _HomeMagicHeaderDelegate extends SliverPersistentHeaderDelegate {
       searchH +
       (_hasBanner ? 14 + bannerH + bannerBlend : 12);
 
+  static double computeMaxExtent({
+    required double topPad,
+    required double bannerH,
+    required double searchH,
+    required double logoRow,
+    required double bannerBlend,
+    required bool hasBanner,
+  }) {
+    final expandedTail = 8 +
+        logoRow +
+        10 +
+        searchH +
+        (hasBanner ? 14 + bannerH + bannerBlend : 12);
+    return topPad + expandedTail;
+  }
+
   @override
   double get maxExtent => topPad + _expandedTail;
 
@@ -247,6 +413,7 @@ class _HomeMagicHeaderDelegate extends SliverPersistentHeaderDelegate {
         searchH != old.searchH ||
         logoRow != old.logoRow ||
         bannerBlend != old.bannerBlend ||
+        bannerFadeHeight != old.bannerFadeHeight ||
         loading != old.loading ||
         slides != old.slides;
   }
@@ -271,12 +438,15 @@ class _HomeMagicHeaderDelegate extends SliverPersistentHeaderDelegate {
           p,
         )!;
         final bannerInset = lerpDouble(14, 0, p)!;
-        final bannerTopRadius = lerpDouble(28, 0, p)!;
-        final bannerBottomRadius = lerpDouble(28, 22, p)!;
-        final blendH = lerpDouble(bannerBlend, 2, p)!;
+        // نصف قطر خفيف في الوضع الموسّع، وأسفل خفيف عند الانكماش (وضع الـ AppBar).
+        final bannerTopRadius = lerpDouble(10, 6, p)!;
+        final bannerBottomRadius = lerpDouble(10, 6, p)!;
+        final blendH = lerpDouble(bannerFadeHeight, 2, p)!;
         final blendOpacity = (1.0 - p).clamp(0.0, 1.0);
         final searchTop = lerpDouble(topPad + 8 + logoRow + 6, topPad + 8, p)!;
-        final searchInset = lerpDouble(12, 12, p)!;
+        // تضييق الحقل من اليسار (خصوصاً فوق البانر).
+        final searchLeft = lerpDouble(12, 56, p)!;
+        final searchRight = lerpDouble(12, 12, p)!;
         final logoScale = lerpDouble(1.0, 0.72, p)!;
 
         return AnnotatedRegion<SystemUiOverlayStyle>(
@@ -294,16 +464,6 @@ class _HomeMagicHeaderDelegate extends SliverPersistentHeaderDelegate {
                 ColoredBox(
                   color: AppTheme.background.withValues(alpha: barOpacity),
                 ),
-                if (_hasBanner && p > 0.2)
-                  Positioned(
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    height: bannerBottomRadius + 4,
-                    child: const IgnorePointer(
-                      child: ColoredBox(color: AppTheme.background),
-                    ),
-                  ),
                 if (_hasBanner)
                   Positioned(
                     left: bannerInset,
@@ -342,12 +502,15 @@ class _HomeMagicHeaderDelegate extends SliverPersistentHeaderDelegate {
                     child: IgnorePointer(
                       child: Opacity(
                         opacity: blendOpacity,
-                        child: const DecoratedBox(
+                        child: DecoratedBox(
                           decoration: BoxDecoration(
                             gradient: LinearGradient(
                               begin: Alignment.topCenter,
                               end: Alignment.bottomCenter,
-                              colors: [Color(0x1488D498), Color(0x00F0FAF3)],
+                              colors: [
+                                AppTheme.background.withValues(alpha: 0),
+                                AppTheme.background,
+                              ],
                             ),
                           ),
                         ),
@@ -415,13 +578,16 @@ class _HomeMagicHeaderDelegate extends SliverPersistentHeaderDelegate {
                 ),
                 Positioned(
                   top: searchTop,
-                  left: searchInset,
-                  right: searchInset,
+                  left: searchLeft,
+                  right: searchRight,
                   height: searchH,
                   child: HeaderSearchRow(
                     onSearchTap: onSearchTap,
                     onImage: p > 0.4,
                     chromeVisibility: chrome,
+                    // فوق البانر: زجاجي + نصف قطر أخف.
+                    glassAmount: Curves.easeOut.transform(p),
+                    searchBorderRadius: lerpDouble(14, 10, p)!,
                   ),
                 ),
                 if (p > 0.35)
@@ -468,6 +634,7 @@ class _CurvedProductCarouselSection extends StatelessWidget {
   final bool curveTop;
   final bool curveBottom;
   final bool ticker;
+  final VoidCallback? onViewAll;
 
   const _CurvedProductCarouselSection({
     required this.title,
@@ -479,6 +646,7 @@ class _CurvedProductCarouselSection extends StatelessWidget {
     this.curveTop = false,
     this.curveBottom = true,
     this.ticker = false,
+    this.onViewAll,
   });
 
   @override
@@ -565,7 +733,7 @@ class _CurvedProductCarouselSection extends StatelessWidget {
                       ),
                     ),
                     TextButton(
-                      onPressed: () {},
+                      onPressed: onViewAll,
                       style: TextButton.styleFrom(
                         foregroundColor: AppTheme.primaryDark,
                         padding: const EdgeInsetsDirectional.only(start: 8),
@@ -581,13 +749,14 @@ class _CurvedProductCarouselSection extends StatelessWidget {
                               AppStrings.homeShowAll,
                               style: Theme.of(context).textTheme.labelLarge
                                   ?.copyWith(
+                                    fontSize: 11.5,
                                     fontWeight: FontWeight.w700,
                                     color: AppTheme.primary,
                                   ),
                             ),
                             const Icon(
                               Icons.chevron_right_rounded,
-                              size: 18,
+                              size: 15,
                               color: AppTheme.primary,
                             ),
                           ],
@@ -618,6 +787,9 @@ class _CurvedProductCarouselSection extends StatelessWidget {
                             product: products[i],
                             heroTag:
                                 'home_carousel_${title}_${i}_${products[i].id}',
+                            imageWidthFactor:
+                                AppScale.homeProductImageWidthFactor,
+                            compactFooter: true,
                           ),
                         ),
                       ),
@@ -763,6 +935,7 @@ class _TickerProductRowState extends State<_TickerProductRow>
               child: ProductCard(
                 product: product,
                 heroTag: 'home_ticker_${widget.title}_${i}_${product.id}',
+                imageWidthFactor: AppScale.homeProductImageWidthFactor,
               ),
             );
           },
@@ -807,7 +980,7 @@ class _HomeRestProductsDivider extends StatelessWidget {
               'منتجاتنا',
               style: Theme.of(context).textTheme.labelMedium?.copyWith(
                 fontWeight: FontWeight.w800,
-                color: AppTheme.primaryDark,
+                color: AppTheme.darkText,
                 fontSize: scale.s(12),
               ),
             ),
@@ -832,6 +1005,89 @@ class _HomeRestProductsDivider extends StatelessWidget {
   }
 }
 
+class _HomeScrollToTopButton extends StatelessWidget {
+  final bool visible;
+  final VoidCallback onTap;
+
+  const _HomeScrollToTopButton({
+    required this.visible,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final bottomInset = MediaQuery.paddingOf(context).bottom;
+
+    return IgnorePointer(
+      ignoring: !visible,
+      child: AnimatedSlide(
+        duration: const Duration(milliseconds: 260),
+        curve: Curves.easeOutCubic,
+        offset: visible ? Offset.zero : const Offset(0, 1.4),
+        child: AnimatedOpacity(
+          duration: const Duration(milliseconds: 220),
+          opacity: visible ? 1 : 0,
+          child: Padding(
+            padding: EdgeInsets.only(bottom: bottomInset + 32),
+            child: GestureDetector(
+              onTap: onTap,
+              behavior: HitTestBehavior.opaque,
+              child: Container(
+                width: 40,
+                height: 40,
+                decoration: const BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      AppTheme.primaryLight,
+                      AppTheme.primarySurface,
+                    ],
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Color(0x295FAF72),
+                      blurRadius: 8,
+                      offset: Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Center(
+                  child: Transform.translate(
+                    offset: const Offset(0, 6),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: 12,
+                          height: 2,
+                          decoration: BoxDecoration(
+                            color: AppTheme.primaryDark,
+                            borderRadius: BorderRadius.circular(1),
+                          ),
+                        ),
+                        Transform.translate(
+                          offset: const Offset(0, -8),
+                          child: const Icon(
+                            Icons.keyboard_arrow_up_rounded,
+                            color: AppTheme.primaryDark,
+                            size: 26,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _SectionFireIcon extends StatelessWidget {
   const _SectionFireIcon();
 
@@ -851,12 +1107,14 @@ class _SectionFireIcon extends StatelessWidget {
 
 // ── شريط أقسام سريعة — دائرة ممتلئة بالصورة بدون تشويه ─────────────────────
 class _ExploreCategoriesStrip extends StatelessWidget {
-  final ValueChanged<String> onCategoryTap;
+  final String? selectedId;
+  final ValueChanged<String> onSelect;
   final List<CategoryModel> categories;
   final VoidCallback? onViewAll;
 
   const _ExploreCategoriesStrip({
-    required this.onCategoryTap,
+    required this.selectedId,
+    required this.onSelect,
     required this.categories,
     this.onViewAll,
   });
@@ -864,6 +1122,14 @@ class _ExploreCategoriesStrip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scale = AppScale.of(context);
+    final all = [
+      const CategoryModel(
+        id: '__all__',
+        name: AppStrings.homeCategoryAll,
+        iconUrl: '',
+      ),
+      ...categories,
+    ];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -884,10 +1150,10 @@ class _ExploreCategoriesStrip extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w900,
-                    color: AppTheme.primaryDark,
-                  ),
+                        fontSize: 15,
+                        fontWeight: FontWeight.w900,
+                        color: AppTheme.darkText,
+                      ),
                 ),
               ),
               TextButton(
@@ -905,13 +1171,14 @@ class _ExploreCategoriesStrip extends StatelessWidget {
                       Text(
                         AppStrings.viewAll,
                         style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                          fontWeight: FontWeight.w700,
-                          color: AppTheme.primary,
-                        ),
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w700,
+                              color: AppTheme.primary,
+                            ),
                       ),
                       const Icon(
                         Icons.chevron_right_rounded,
-                        size: 18,
+                        size: 15,
                         color: AppTheme.primary,
                       ),
                     ],
@@ -928,16 +1195,26 @@ class _ExploreCategoriesStrip extends StatelessWidget {
             physics: const BouncingScrollPhysics(),
             cacheExtent: 200,
             padding: EdgeInsets.symmetric(horizontal: scale.pagePad),
-            itemCount: categories.length,
+            itemCount: all.length,
             separatorBuilder: (_, _) => SizedBox(width: scale.s(12)),
             itemBuilder: (_, i) {
-              final cat = categories[i];
+              final cat = all[i];
+              final isAll = cat.id == '__all__';
+              final isSelected = isAll
+                  ? selectedId == null
+                  : selectedId == cat.id;
               return _ExploreCategoryTile(
-                name: _shortCategoryLabel(cat.name),
-                imageUrl: cat.displayImage.isNotEmpty
-                    ? cat.displayImage
-                    : cat.iconUrl,
-                onTap: () => onCategoryTap(cat.id),
+                name: isAll
+                    ? AppStrings.homeCategoryAll
+                    : _shortCategoryLabel(cat.name),
+                imageUrl: isAll
+                    ? ''
+                    : (cat.displayImage.isNotEmpty
+                          ? cat.displayImage
+                          : cat.iconUrl),
+                isAll: isAll,
+                isSelected: isSelected,
+                onTap: () => onSelect(isAll ? '__all__' : cat.id),
               );
             },
           ),
@@ -958,18 +1235,25 @@ class _ExploreCategoriesStrip extends StatelessWidget {
 class _ExploreCategoryTile extends StatelessWidget {
   final String name;
   final String imageUrl;
+  final bool isAll;
+  final bool isSelected;
   final VoidCallback onTap;
 
   const _ExploreCategoryTile({
     required this.name,
     required this.imageUrl,
+    required this.isAll,
+    required this.isSelected,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
     final scale = AppScale.of(context);
-    final size = scale.categoryCircle;
+    final size =
+        isSelected ? scale.categoryCircleSelected : scale.categoryCircle;
+    final ring = scale.categoryRing;
+    final iconSize = size * (isAll ? 0.42 : 0.38);
     return GestureDetector(
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
@@ -978,43 +1262,52 @@ class _ExploreCategoryTile extends StatelessWidget {
         child: Column(
           children: [
             AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              padding: EdgeInsets.all(scale.categoryRing),
+              duration: const Duration(milliseconds: 220),
+              curve: Curves.easeOutCubic,
+              width: size + ring * 2,
+              height: size + ring * 2,
+              padding: EdgeInsets.all(ring),
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: const Color(0x22000000),
-                  width: 1,
+                  color: isSelected
+                      ? AppTheme.primary
+                      : const Color(0x22000000),
+                  width: isSelected ? 2 : 1,
                 ),
               ),
-              child: Container(
-                width: size,
-                height: size,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: AppTheme.primarySurface,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.07),
-                      blurRadius: 8,
-                      offset: const Offset(0, 3),
-                    ),
-                  ],
-                ),
-                clipBehavior: Clip.antiAlias,
-                child: AppNetworkImage(
-                  imageUrl,
-                  fit: BoxFit.cover,
-                  width: size,
-                  height: size,
-                  error: ColoredBox(
+              child: ClipOval(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
                     color: AppTheme.primarySurface,
-                    child: Icon(
-                      Icons.category_rounded,
-                      color: AppTheme.mutedText,
-                      size: scale.s(24),
-                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.07),
+                        blurRadius: 8,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
                   ),
+                  child: isAll
+                      ? Icon(
+                          Icons.apps_rounded,
+                          color: AppTheme.primaryDark,
+                          size: iconSize,
+                        )
+                      : AppNetworkImage(
+                          imageUrl,
+                          fit: BoxFit.cover,
+                          width: size,
+                          height: size,
+                          error: ColoredBox(
+                            color: AppTheme.primarySurface,
+                            child: Icon(
+                              Icons.category_rounded,
+                              color: AppTheme.mutedText,
+                              size: iconSize,
+                            ),
+                          ),
+                        ),
                 ),
               ),
             ),
@@ -1026,11 +1319,11 @@ class _ExploreCategoryTile extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                  fontSize: scale.s(11),
-                  fontWeight: FontWeight.w600,
-                  color: AppTheme.darkText,
-                  height: 1.15,
-                ),
+                      fontSize: scale.s(11),
+                      fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                      color: isSelected ? AppTheme.primaryDark : AppTheme.darkText,
+                      height: 1.15,
+                    ),
               ),
             ),
           ],
@@ -1060,6 +1353,8 @@ class _MainScreenState extends State<MainScreen> {
   late int _currentIndex;
   late final PageController _pageController;
   final Set<int> _visitedTabs = {0};
+  bool _aiSheetOpen = false;
+  AiControllerCubit? _aiCubit;
 
   @override
   void initState() {
@@ -1115,7 +1410,7 @@ class _MainScreenState extends State<MainScreen> {
   }
 
   Future<void> _openCartTab() async {
-    await Navigator.of(context).pushNamed(AppRouter.checkout);
+    await showCartSheet(context);
   }
 
   void _goToTab(int i) {
@@ -1146,11 +1441,20 @@ class _MainScreenState extends State<MainScreen> {
     }
   }
 
-  void _openAiChat() {
-    Navigator.of(context).pushNamed(
-      AppRouter.chat,
-      arguments: true, // useHeroMic
-    );
+  void _closeAiSheet() {
+    if (!_aiSheetOpen) return;
+    setState(() => _aiSheetOpen = false);
+  }
+
+  void _toggleAiSheet() {
+    if (_aiSheetOpen) {
+      _closeAiSheet();
+      return;
+    }
+    _aiCubit ??= ServiceLocator.instance.createAiController(
+      cartCubit: context.read<CartCubit>(),
+    )..initConversation();
+    setState(() => _aiSheetOpen = true);
   }
 
   Widget _tabAt(int index) {
@@ -1191,18 +1495,34 @@ class _MainScreenState extends State<MainScreen> {
               statusBarColor: Colors.transparent,
             ),
             child: Scaffold(
+              extendBody: true,
+              resizeToAvoidBottomInset: true,
               backgroundColor: AppTheme.background,
-              body: PageView(
-                controller: _pageController,
-                physics: const NeverScrollableScrollPhysics(),
-                children: tabs,
+              body: Stack(
+                fit: StackFit.expand,
+                children: [
+                  PageView(
+                    controller: _pageController,
+                    physics: const NeverScrollableScrollPhysics(),
+                    children: tabs,
+                  ),
+                  if (_aiCubit != null)
+                    AiMorphFloatingPanel(
+                      isOpen: _aiSheetOpen,
+                      cubit: _aiCubit!,
+                      bottomOffset:
+                          MediaQuery.paddingOf(context).bottom + 100,
+                      onDismiss: _closeAiSheet,
+                    ),
+                ],
               ),
               bottomNavigationBar: MainBottomNavBar(
                 currentTabIndex: _currentIndex,
                 cartScreenActive: false,
-                wrapAiCenterHero: true,
+                wrapAiCenterHero: false,
+                isAiActive: _aiSheetOpen,
                 onTabTap: _goToTab,
-                onAiAssistantTap: _openAiChat,
+                onAiAssistantTap: _toggleAiSheet,
               ),
             ),
           ),
@@ -1224,13 +1544,43 @@ class _HomeTab extends StatefulWidget {
 }
 
 class _HomeTabState extends State<_HomeTab> {
+  String? _selectedCategory;
   bool _didPrecache = false;
   String _precacheSig = '';
+  bool _showScrollToTop = false;
+  late final ScrollController _scroll;
 
   @override
   void initState() {
     super.initState();
+    _scroll = ScrollController()..addListener(_onScroll);
     WidgetsBinding.instance.addPostFrameCallback((_) => _precacheVisible());
+  }
+
+  @override
+  void dispose() {
+    _scroll.removeListener(_onScroll);
+    _scroll.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (!_scroll.hasClients) return;
+    final position = _scroll.position;
+    final atEnd = position.maxScrollExtent > 64 &&
+        position.pixels >= position.maxScrollExtent - 40;
+    if (atEnd != _showScrollToTop) {
+      setState(() => _showScrollToTop = atEnd);
+    }
+  }
+
+  Future<void> _scrollToTop() async {
+    if (!_scroll.hasClients) return;
+    await _scroll.animateTo(
+      0,
+      duration: const Duration(milliseconds: 450),
+      curve: Curves.easeOutCubic,
+    );
   }
 
   void _precacheVisible() {
@@ -1269,30 +1619,27 @@ class _HomeTabState extends State<_HomeTab> {
     }
   }
 
-  void _openCategoryBrowse(String categoryId) {
-    final catalog = context.read<CatalogCubit>().state;
+  List<ProductModel> _filteredProducts(CatalogState catalog) {
+    var list = catalog.products;
+    if (_selectedCategory != null) {
+      final ids = catalog.categoryTreeIds(_selectedCategory!);
+      return list.where((p) => ids.contains(p.categoryId)).toList();
+    }
+    return list;
+  }
+
+  void _openHomeSectionBrowse(HomeSectionModel section) {
     Navigator.of(context).pushNamed(
-      AppRouter.categoryBrowse,
-      arguments: CategoryBrowseArgs(
-        categoryId: categoryId,
-        initial: catalog.categoryById(categoryId),
+      AppRouter.homeSectionBrowse,
+      arguments: HomeSectionBrowseArgs(
+        sectionKey: section.key,
+        initial: section,
       ),
     );
   }
 
   void _openSearch() {
     Navigator.of(context).pushNamed(AppRouter.search);
-  }
-
-  List<Color> _gradientFor(String key, int index) {
-    return switch (key) {
-      'fresh_groceries' => const [Color(0xFFD8F2E4), Color(0xFFF0FAF3)],
-      'best_prices' => const [Color(0xFFFFF3EB), Color(0xFFFFFBF9)],
-      _ =>
-        index.isEven
-            ? const [Color(0xFFE8F8EC), Color(0xFFF5FCF7)]
-            : const [Color(0xFFD8F2E4), Color(0xFFF0FAF3)],
-    };
   }
 
   @override
@@ -1315,182 +1662,181 @@ class _HomeTabState extends State<_HomeTab> {
               (_) => _precacheVisible(),
             );
           }
-          final isLoading = catalog.loading && catalog.products.isEmpty;
-          final products = catalog.products;
+          final filtered = _filteredProducts(catalog);
+          final browsingHome = _selectedCategory == null;
+          final isInitialLoad = catalog.loading && catalog.products.isEmpty;
+          final isRefreshing = catalog.refreshing;
+          final showFullHomeLoading = isInitialLoad;
+          final showRefreshShimmer = isRefreshing && browsingHome;
           final slides = _promoSlidesFor(catalog);
 
-          return RefreshIndicator(
-            color: AppTheme.primary,
-            edgeOffset: topPad + scale.searchH + 12,
-            onRefresh: () async {
-              await Future.wait([
-                context.read<CatalogCubit>().load(refresh: true),
-                context.read<NotificationsCubit>().load(silent: true),
-              ]);
-            },
-            child: CustomScrollView(
-              cacheExtent: 480,
-              physics: const AlwaysScrollableScrollPhysics(
-                parent: BouncingScrollPhysics(),
+          return Stack(
+            children: [
+              TopPullRefreshDetector(
+                scrollController: _scroll,
+                onRefresh: () async {
+                  await Future.wait([
+                    context.read<CatalogCubit>().load(refresh: true),
+                    context.read<NotificationsCubit>().load(silent: true),
+                  ]);
+                },
+                child: CardStepperScrollScope(
+                  child: CustomScrollView(
+                  controller: _scroll,
+                  cacheExtent: 480,
+                  physics: noGapScrollPhysics,
+                  slivers: [
+                    SliverPersistentHeader(
+                      pinned: true,
+                      delegate: _HomeMagicHeaderDelegate(
+                        topPad: topPad,
+                        bannerH: scale.bannerHeight,
+                        searchH: scale.searchH,
+                        logoRow: scale.logoRow,
+                        bannerBlend: scale.bannerBlend,
+                        bannerFadeHeight: scale.s(28),
+                        onSearchTap: _openSearch,
+                        slides: slides,
+                        loading: isInitialLoad,
+                      ),
+                    ),
+                    if (catalog.error != null && catalog.products.isEmpty)
+                      SliverFillRemaining(
+                        hasScrollBody: false,
+                        child: _EmptyState(
+                          query: catalog.error!,
+                          onClear: () => context.read<CatalogCubit>().load(),
+                        ),
+                      )
+                    else
+                      DecoratedSliver(
+                        decoration: const BoxDecoration(color: Colors.white),
+                        sliver: SliverMainAxisGroup(
+                          slivers: [
+                            if (catalog.offline)
+                              const SliverToBoxAdapter(child: _OfflineBanner()),
+                            if (showFullHomeLoading)
+                              const SliverToBoxAdapter(
+                                child: _CategoriesShimmer(),
+                              )
+                            else
+                              SliverToBoxAdapter(
+                                child: _ExploreCategoriesStrip(
+                                  selectedId: _selectedCategory,
+                                  categories: catalog.categories,
+                                  onViewAll: () =>
+                                      MainShellScope.read(context).selectTab(1),
+                                  onSelect: (id) => setState(() {
+                                    if (id == '__all__') {
+                                      _selectedCategory = null;
+                                    } else {
+                                      _selectedCategory =
+                                          _selectedCategory == id ? null : id;
+                                    }
+                                  }),
+                                ),
+                              ),
+                            if (!showFullHomeLoading &&
+                                !showRefreshShimmer &&
+                                browsingHome)
+                              ...catalog.sections.map((section) {
+                                return SliverToBoxAdapter(
+                                  child: _CurvedProductCarouselSection(
+                                    title: section.title,
+                                    subtitle: section.subtitle,
+                                    subtitleStyle: section.key == 'best_prices'
+                                        ? const TextStyle(
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.w800,
+                                            color: AppTheme.primary,
+                                            height: 1.25,
+                                          )
+                                        : null,
+                                    titleLeading:
+                                        section.key == 'best_prices' ||
+                                            section.key == 'most_requested'
+                                        ? const _SectionFireIcon()
+                                        : null,
+                                    ticker: section.key == 'most_requested',
+                                    products: section.products,
+                                    gradientColors: section.gradientColors,
+                                    curveTop: catalog.sections.first == section,
+                                    curveBottom: true,
+                                    onViewAll: () =>
+                                        _openHomeSectionBrowse(section),
+                                  ),
+                                );
+                              }),
+                            if (!showFullHomeLoading &&
+                                !showRefreshShimmer &&
+                                browsingHome &&
+                                filtered.isNotEmpty)
+                              const SliverToBoxAdapter(
+                                child: _HomeRestProductsDivider(),
+                              ),
+                            if (showFullHomeLoading || showRefreshShimmer)
+                              const SliverPadding(
+                                padding: EdgeInsets.fromLTRB(16, 0, 16, 16),
+                                sliver: ProductShimmerSliverGrid(),
+                              )
+                            else if (filtered.isEmpty && !browsingHome)
+                              SliverToBoxAdapter(
+                                child: _EmptyState(
+                                  query: '',
+                                  onClear: () => setState(() {
+                                    _selectedCategory = null;
+                                  }),
+                                ),
+                              )
+                            else if (filtered.isNotEmpty)
+                              SliverPadding(
+                                padding: const EdgeInsets.fromLTRB(16, 0, 16, 110),
+                                sliver: SliverGrid(
+                                  delegate: SliverChildBuilderDelegate(
+                                    (ctx, i) => ProductCard(
+                                      product: filtered[i],
+                                      heroTag:
+                                          'home_grid_${i}_${filtered[i].id}',
+                                      imageWidthFactor:
+                                          AppScale.homeProductImageWidthFactor,
+                                      compactFooter: true,
+                                    ),
+                                    childCount: filtered.length,
+                                  ),
+                                  gridDelegate:
+                                      SliverGridDelegateWithFixedCrossAxisCount(
+                                    crossAxisCount:
+                                        AppScale.homeGridCrossAxisCount,
+                                    mainAxisSpacing: scale.homeGridMainAxisSpacing,
+                                    crossAxisSpacing: scale.s(10),
+                                    childAspectRatio:
+                                        AppScale.homeGridCardAspect,
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                  ],
+                ),
+                ),
               ),
-              slivers: [
-                SliverPersistentHeader(
-                  pinned: true,
-                  delegate: _HomeMagicHeaderDelegate(
-                    topPad: topPad,
-                    bannerH: scale.bannerHeight,
-                    searchH: scale.searchH,
-                    logoRow: scale.logoRow,
-                    bannerBlend: scale.bannerBlend,
-                    onSearchTap: _openSearch,
-                    slides: slides,
-                    loading: isLoading,
+              Positioned(
+                bottom: 0,
+                left: 0,
+                right: 0,
+                child: Align(
+                  alignment: Alignment.bottomCenter,
+                  child: _HomeScrollToTopButton(
+                    visible: _showScrollToTop,
+                    onTap: _scrollToTop,
                   ),
                 ),
-                if (catalog.error != null && catalog.products.isEmpty)
-                  SliverFillRemaining(
-                    hasScrollBody: false,
-                    child: _EmptyState(
-                      query: catalog.error!,
-                      onClear: () => context.read<CatalogCubit>().load(),
-                    ),
-                  )
-                else ...[
-                  if (catalog.offline)
-                    const SliverToBoxAdapter(child: _OfflineBanner()),
-                  if (isLoading)
-                    const SliverToBoxAdapter(child: _CategoriesShimmer())
-                  else
-                    SliverToBoxAdapter(
-                      child: _ExploreCategoriesStrip(
-                        categories: catalog.categories,
-                        onViewAll: () =>
-                            MainShellScope.read(context).selectTab(1),
-                        onCategoryTap: _openCategoryBrowse,
-                      ),
-                    ),
-                  if (!isLoading)
-                    ...catalog.sections.asMap().entries.map((entry) {
-                      final i = entry.key;
-                      final section = entry.value;
-                      return SliverToBoxAdapter(
-                        child: _CurvedProductCarouselSection(
-                          title: section.title,
-                          subtitle: section.subtitle,
-                          subtitleStyle: section.key == 'best_prices'
-                              ? const TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w800,
-                                  color: AppTheme.primary,
-                                  height: 1.25,
-                                )
-                              : null,
-                          titleLeading:
-                              section.key == 'best_prices' ||
-                                  section.key == 'most_requested'
-                              ? const _SectionFireIcon()
-                              : null,
-                          ticker: section.key == 'most_requested',
-                          products: section.products,
-                          gradientColors: _gradientFor(section.key, i),
-                          curveTop: i == 0,
-                          curveBottom: true,
-                        ),
-                      );
-                    }),
-                  if (!isLoading && products.isNotEmpty)
-                    const SliverToBoxAdapter(child: _HomeRestProductsDivider()),
-                  if (isLoading)
-                    const SliverPadding(
-                      padding: EdgeInsets.fromLTRB(16, 0, 16, 16),
-                      sliver: _ProductGridShimmer(),
-                    )
-                  else if (products.isNotEmpty)
-                    SliverPadding(
-                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                      sliver: SliverGrid(
-                        delegate: SliverChildBuilderDelegate(
-                          (ctx, i) => ProductCard(
-                            product: products[i],
-                            heroTag: 'home_grid_${i}_${products[i].id}',
-                          ),
-                          childCount: products.length,
-                        ),
-                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: AppScale.homeGridCrossAxisCount,
-                          mainAxisSpacing: scale.s(10),
-                          crossAxisSpacing: scale.s(10),
-                          childAspectRatio: AppScale.homeGridCardAspect,
-                        ),
-                      ),
-                    ),
-                  if (!isLoading)
-                    SliverToBoxAdapter(
-                      child: Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 4, 16, 110),
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: AppTheme.surface,
-                            borderRadius: BorderRadius.circular(25),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.05),
-                                blurRadius: 16,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
-                          ),
-                          child: Row(
-                            children: [
-                              const Expanded(
-                                child: Padding(
-                                  padding: EdgeInsets.symmetric(
-                                    horizontal: 16,
-                                    vertical: 14,
-                                  ),
-                                  child: Text(
-                                    'شوف كل المنتجات اللي تناسبك!',
-                                    style: TextStyle(
-                                      fontSize: 13,
-                                      color: AppTheme.mutedText,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              Padding(
-                                padding: const EdgeInsets.all(6),
-                                child: ElevatedButton(
-                                  onPressed: () =>
-                                      MainShellScope.read(context).selectTab(1),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: AppTheme.primaryDark,
-                                    foregroundColor: Colors.white,
-                                    elevation: 0,
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 18,
-                                      vertical: 14,
-                                    ),
-                                    minimumSize: Size.zero,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(20),
-                                    ),
-                                    textStyle: const TextStyle(
-                                      fontWeight: FontWeight.w700,
-                                      fontSize: 13,
-                                    ),
-                                  ),
-                                  child: const Text('اكتشف كل العروض!'),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                ],
-              ],
-            ),
+              ),
+              TopScreenRefreshIndicator(
+                visible: isRefreshing && browsingHome,
+              ),
+            ],
           );
         },
       ),
@@ -1812,7 +2158,7 @@ class _CategoriesShimmer extends StatelessWidget {
         ),
         const SizedBox(height: 14),
         SizedBox(
-          height: 96,
+          height: 108,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -1826,8 +2172,8 @@ class _CategoriesShimmer extends StatelessWidget {
                     baseColor: const Color(0xFFDCF5EA),
                     highlightColor: const Color(0xFFF0FFF6),
                     child: Container(
-                      width: 58,
-                      height: 58,
+                      width: 66,
+                      height: 66,
                       decoration: const BoxDecoration(
                         shape: BoxShape.circle,
                         color: Colors.white,
@@ -1918,8 +2264,11 @@ class _EmptyState extends StatelessWidget {
           const SizedBox(height: 16),
           OutlinedButton.icon(
             onPressed: onClear,
-            icon: const Icon(Icons.refresh_rounded),
-            label: const Text(AppStrings.viewAll),
+            icon: const Icon(Icons.refresh_rounded, size: 18),
+            label: const Text(
+              AppStrings.viewAll,
+              style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700),
+            ),
             style: OutlinedButton.styleFrom(
               foregroundColor: AppTheme.primaryDark,
               side: const BorderSide(color: AppTheme.primaryDark),

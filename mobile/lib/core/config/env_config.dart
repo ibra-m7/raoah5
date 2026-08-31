@@ -30,20 +30,20 @@ class EnvConfig {
   /// الشبكة المحلية (نفس الواي فاي).
   static const localApi = 'http://172.20.2.95:8088/api';
 
-  /// الإنتاج على Render.
-  static const remoteApi = 'https://raoah5.onrender.com/api';
+  /// الإنتاج المؤقت على AWS EC2 (ويندوز سيرفر + Laragon).
+  static const remoteApi = 'http://16.171.249.18/api';
 
-  /// العنوان المفضّل من `.env` — إن وُجد، وإلا المحلي.
+  /// العنوان المفضّل من `.env` — إن وُجد، وإلا سيرفر AWS.
   static String get apiBaseUrl {
-    return _trimBase(dotenv.env['API_BASE_URL'] ?? localApi);
+    return _trimBase(dotenv.env['API_BASE_URL'] ?? remoteApi);
   }
 
-  /// ترتيب المحاولة: `.env` ثم المحلي ثم Render.
+  /// ترتيب المحاولة: `.env` ثم AWS ثم المحلي.
   static List<String> get apiBaseUrls {
     return {
       apiBaseUrl,
-      localApi,
       remoteApi,
+      localApi,
     }.toList();
   }
 }

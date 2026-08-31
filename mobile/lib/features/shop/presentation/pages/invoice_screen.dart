@@ -1,4 +1,4 @@
-﻿import 'dart:async';
+import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -23,6 +23,8 @@ import '../manager/catalog_cubit.dart';
 import '../manager/orders_cubit.dart';
 import '../widgets/checkout_action_bar.dart';
 import '../widgets/checkout_sheet.dart';
+import '../widgets/cart_item_groups.dart';
+import '../widgets/cart_summary_group.dart';
 import '../widgets/coupon_badge_icon.dart';
 import '../widgets/delivery_slots_sheet.dart';
 import '../widgets/notes_sheet.dart';
@@ -355,7 +357,7 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
             ),
           ),
           title: const Text(
-            'الطلب',
+            'مراجعة الطلب',
             style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16.5),
           ),
           centerTitle: true,
@@ -559,7 +561,7 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
                       ),
                       _InvoiceCard(
                         icon: Icons.shopping_cart_outlined,
-                        title: 'ملخص السلة',
+                        title: 'ملخص السلة (${paidCartProductCount(cart.items)} منتج)',
                         child: Column(
                           children: [
                             const _TableHead(),
@@ -568,9 +570,15 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
                               shrinkWrap: true,
                               physics: const NeverScrollableScrollPhysics(),
                               padding: EdgeInsets.zero,
-                              itemCount: cart.items.length,
-                              itemBuilder: (_, i) =>
-                                  _CartSummaryRow(item: cart.items[i]),
+                              itemCount: groupedCartItems(cart.items).length,
+                              itemBuilder: (_, i) {
+                                final group = groupedCartItems(cart.items)[i];
+                                return CartSummaryGroup(
+                                  item: group.paid,
+                                  gift: group.gift,
+                                  tableLayout: true,
+                                );
+                              },
                             ),
                           ],
                         ),
@@ -1124,57 +1132,6 @@ class _TableHead extends StatelessWidget {
           child: Text('الإجمالي', textAlign: TextAlign.center, style: style),
         ),
       ],
-    );
-  }
-}
-
-class _CartSummaryRow extends StatelessWidget {
-  final CartItem item;
-  const _CartSummaryRow({required this.item});
-
-  @override
-  Widget build(BuildContext context) {
-    const style = TextStyle(
-      fontWeight: FontWeight.w500,
-      fontSize: 11,
-      color: AppTheme.darkText,
-    );
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Row(
-        children: [
-          Expanded(
-            flex: 3,
-            child: Text(
-              item.product.name,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: style,
-            ),
-          ),
-          Expanded(
-            child: Text(
-              item.product.effectivePrice.toStringAsFixed(1),
-              textAlign: TextAlign.center,
-              style: style,
-            ),
-          ),
-          Expanded(
-            child: Text(
-              '${item.quantity}',
-              textAlign: TextAlign.center,
-              style: style,
-            ),
-          ),
-          Expanded(
-            child: Text(
-              item.totalPrice.toStringAsFixed(1),
-              textAlign: TextAlign.center,
-              style: style,
-            ),
-          ),
-        ],
-      ),
     );
   }
 }
