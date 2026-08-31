@@ -15,7 +15,7 @@ class CourierAuthController extends Controller
 {
     public function login(CourierLoginRequest $request): JsonResponse
     {
-        $courier = Courier::query()->where('phone', $request->validated('phone'))->first();
+        $courier = Courier::findByLoginPhone($request->validated('phone'));
 
         if ($courier === null || ! Hash::check($request->validated('password'), $courier->getAuthPassword())) {
             return ApiResponse::error('رقم الجوال أو كلمة المرور غير صحيحة.', 401);

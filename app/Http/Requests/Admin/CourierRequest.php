@@ -35,6 +35,13 @@ class CourierRequest extends FormRequest
     public function withValidator($validator): void
     {
         $validator->after(function ($validator) {
+            $rawPhone = trim((string) $this->input('phone_input', ''));
+            if ($this->input('phone') === null && $rawPhone !== '') {
+                $validator->errors()->add('phone', 'رقم الجوال غير صالح. استخدم صيغة 05xxxxxxxx أو 07xxxxxxxx.');
+            } elseif ($this->input('phone') === null) {
+                $validator->errors()->add('phone', 'أدخل رقم جوال صالح.');
+            }
+
             $handlesDelivery = $this->boolean('handles_delivery');
             $handlesPickup = $this->boolean('handles_pickup');
             if (! $handlesDelivery && ! $handlesPickup) {
@@ -61,9 +68,11 @@ class CourierRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
-        $phone = Phone::normalize((string) $this->input('phone', ''));
+        $rawPhone = trim((string) $this->input('phone', ''));
+        $phone = Phone::normalize($rawPhone);
 
         $this->merge([
+            'phone_input' => $rawPhone,
             'phone' => $phone,
             'is_active' => $this->boolean('is_active'),
             'handles_delivery' => $this->boolean('handles_delivery'),

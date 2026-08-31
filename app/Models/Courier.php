@@ -59,6 +59,25 @@ class Courier extends Authenticatable
         return Phone::display((string) $this->phone);
     }
 
+    public static function findByLoginPhone(?string $raw): ?self
+    {
+        foreach (Phone::loginLookupCandidates($raw) as $phone) {
+            $courier = static::query()->where('phone', $phone)->first();
+            if ($courier !== null) {
+                return $courier;
+            }
+        }
+
+        $digits = Phone::digits((string) $raw);
+        if (strlen($digits) >= 9) {
+            return static::query()
+                ->where('phone', 'like', '%'.substr($digits, -9))
+                ->first();
+        }
+
+        return null;
+    }
+
     public function canReceiveOrders(): bool
     {
         return $this->is_active && $this->is_online;

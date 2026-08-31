@@ -2,7 +2,6 @@
 
 namespace App\Http\Requests\Api;
 
-use App\Support\Phone;
 use Illuminate\Foundation\Http\FormRequest;
 
 class CourierLoginRequest extends FormRequest
@@ -30,8 +29,12 @@ class CourierLoginRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
+        $rawPhone = trim((string) $this->input('phone', ''));
+        $password = (string) $this->input('password', '');
+
         $this->merge([
-            'phone' => Phone::normalize((string) $this->input('phone', '')) ?? $this->input('phone'),
+            'phone' => $rawPhone,
+            'password' => $password,
         ]);
     }
 }

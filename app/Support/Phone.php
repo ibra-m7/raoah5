@@ -65,7 +65,56 @@ final class Phone
             return $cc.$digits;
         }
 
+        if (self::isValidYemenNational($digits)) {
+            return '967'.$digits;
+        }
+
         return self::normalizeTestNumber($digits);
+    }
+
+    public static function isValidYemenNational(string $national): bool
+    {
+        return (bool) preg_match('/^7\d{8}$/', $national);
+    }
+
+    /**
+     * @return list<string>
+     */
+    public static function loginLookupCandidates(?string $raw): array
+    {
+        if ($raw === null || trim($raw) === '') {
+            return [];
+        }
+
+        $candidates = [];
+        $normalized = self::normalize($raw);
+        if ($normalized !== null) {
+            $candidates[] = $normalized;
+        }
+
+        $digits = self::digits($raw);
+        if (str_starts_with($digits, '0') && strlen($digits) === 10) {
+            $digits = substr($digits, 1);
+        }
+
+        if (strlen($digits) === 9) {
+            if (self::isValidNational($digits)) {
+                $candidates[] = self::countryCode().$digits;
+            }
+            if (self::isValidYemenNational($digits)) {
+                $candidates[] = '967'.$digits;
+            }
+        }
+
+        if (str_starts_with($digits, '966') && strlen($digits) === 12) {
+            $candidates[] = $digits;
+        }
+
+        if (str_starts_with($digits, '967') && strlen($digits) === 12) {
+            $candidates[] = $digits;
+        }
+
+        return array_values(array_unique(array_filter($candidates)));
     }
 
     public static function companyE164(): ?string

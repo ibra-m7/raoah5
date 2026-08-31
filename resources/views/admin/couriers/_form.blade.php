@@ -12,7 +12,7 @@
     <label class="form-label">رقم الجوال</label>
     <input type="text" name="phone" value="{{ old('phone', $courier->exists ? $courier->phoneDisplay() : $courier->phone) }}" class="form-control @error('phone') is-invalid @enderror" required dir="ltr" placeholder="05xxxxxxxx">
     @error('phone') <div class="invalid-feedback">{{ $message }}</div> @enderror
-    <div class="form-hint">بهذا الرقم يدخل الموصل إلى تطبيق التوصيل.</div>
+    <div class="form-hint">بهذا الرقم يدخل الموصل إلى تطبيق التوصيل. استخدم 05xxxxxxxx أو 07xxxxxxxx.</div>
 </div>
 
 <div class="mb-3">
