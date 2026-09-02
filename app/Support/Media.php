@@ -2,6 +2,7 @@
 
 namespace App\Support;
 
+use App\Support\Image\ProductImageNormalizer;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -22,6 +23,13 @@ final class Media
 
         Storage::disk('public')->makeDirectory($directory);
 
+        if (self::shouldNormalizeProductImage($directory)) {
+            return self::storeNormalizedProductImage(
+                app(ProductImageNormalizer::class)->normalizeUploadedFile($file),
+                $directory,
+            );
+        }
+
         $path = $file->store($directory, 'public');
         if (! is_string($path) || $path === '') {
             throw new \RuntimeException('تعذّر حفظ الملف المرفوع.');
@@ -38,6 +46,13 @@ final class Media
 
         self::delete($oldPath);
         Storage::disk('public')->makeDirectory($directory);
+
+        if (self::shouldNormalizeProductImage($directory)) {
+            return self::storeNormalizedProductImage(
+                app(ProductImageNormalizer::class)->normalizePath($absolutePath),
+                $directory,
+            );
+        }
 
         $extension = strtolower(pathinfo($absolutePath, PATHINFO_EXTENSION) ?: 'jpg');
         $filename = Str::random(40).'.'.$extension;
@@ -56,6 +71,35 @@ final class Media
 
         if (! $stored) {
             throw new \RuntimeException('تعذّر حفظ ملف الصورة.');
+        }
+
+        return $path;
+    }
+
+    private static function shouldNormalizeProductImage(string $directory): bool
+    {
+        return trim(str_replace('\\', '/', $directory), '/') === 'products';
+    }
+
+    private static function storeNormalizedProductImage(string $tempPath, string $directory): string
+    {
+        $path = trim($directory, '/').'/'.Str::random(40).'.jpg';
+
+        $stream = fopen($tempPath, 'rb');
+        if ($stream === false) {
+            @unlink($tempPath);
+            throw new \RuntimeException('تعذّر قراءة الصورة المعالجة.');
+        }
+
+        try {
+            $stored = Storage::disk('public')->put($path, $stream);
+        } finally {
+            fclose($stream);
+            @unlink($tempPath);
+        }
+
+        if (! $stored) {
+            throw new \RuntimeException('تعذّر حفظ صورة المنتج.');
         }
 
         return $path;

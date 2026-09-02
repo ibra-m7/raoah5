@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:shimmer/shimmer.dart';
 
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/theme/app_scale.dart';
 import '../../../../core/theme/app_theme.dart';
-import '../../../../core/widgets/app_network_image.dart';
+import '../../../../core/widgets/product_thumbnail.dart';
 import '../../data/models/product_model.dart';
 import 'card_cart_control.dart';
 import 'celebrate_anchors.dart';
@@ -27,32 +26,11 @@ class ProductCard extends StatefulWidget {
   /// هامش داخل حاوية الصورة (أصغر = صورة أكبر).
   final double? imageInset;
 
-  /// عرض الصورة كنسبة من حاوية الصورة (مثلاً 0.9 = 90%).
-  final double? imageWidthFactor;
-
-  /// تكبير عرض الصورة داخل الحاوية (مع [imageWidthFactor]).
-  final double? imageWidthBoost;
-
-  /// تكبير ارتفاع الصورة داخل الحاوية (مع [imageWidthFactor]).
-  final double? imageHeightBoost;
-
-  /// تكبير بصري للصورة داخل نفس حجم الكارد.
-  final double imageScale;
-
-  /// نقطة ارتكاز التكبير (مثلاً من الأعلى).
-  final Alignment imageScaleAlignment;
-
   /// تقليل مساحة النص لإعطاء الصورة مساحة أكبر (بدون تكبير الكارد).
   final bool compactFooter;
 
   /// شريط وصندوق الهدية أصغر (مثلاً كروت البحث الضيقة).
   final bool compactGiftOverlay;
-
-  /// نقطة ارتكاز تكبير الصورة داخل الحاوية (مع [imageWidthFactor]).
-  final Alignment imageBoostAlignment;
-
-  /// سحب الصورة للأعلى داخل الحاوية (مع [imageWidthFactor]).
-  final double? imageTopLift;
 
   const ProductCard({
     super.key,
@@ -63,13 +41,6 @@ class ProductCard extends StatefulWidget {
     Color? imageWellColor,
     Color? cardColor,
     this.imageInset,
-    this.imageWidthFactor,
-    this.imageWidthBoost,
-    this.imageHeightBoost,
-    this.imageTopLift,
-    this.imageBoostAlignment = Alignment.topCenter,
-    this.imageScale = 1,
-    this.imageScaleAlignment = Alignment.center,
     this.compactFooter = false,
     this.compactGiftOverlay = false,
   }) : imageWellColor = imageWellColor ?? cardColor;
@@ -111,32 +82,16 @@ class _ProductCardState extends State<ProductCard> {
     required String heroTag,
     required ProductModel product,
     required Color wellColor,
+    required BorderRadius wellRadius,
   }) {
     return CelebrateAnchor(
       anchor: _productImageAnchor,
-      child: Hero(
-        tag: heroTag,
-        child: Padding(
-          padding: EdgeInsets.all(scale.s(widget.imageInset ?? _defaultImageInset)),
-          child: AppNetworkImage(
-            product.displayImage,
-            fit: BoxFit.cover,
-            alignment: Alignment.center,
-            placeholder: Shimmer.fromColors(
-              baseColor: const Color(0xFFEEEEEE),
-              highlightColor: const Color(0xFFFAFAFA),
-              child: Container(color: wellColor),
-            ),
-            error: ColoredBox(
-              color: wellColor,
-              child: const Icon(
-                Icons.image_not_supported_outlined,
-                color: AppTheme.mutedText,
-                size: 28,
-              ),
-            ),
-          ),
-        ),
+      child: ProductThumbnail(
+        imageUrl: product.displayImage,
+        heroTag: heroTag,
+        inset: widget.imageInset ?? _defaultImageInset,
+        backgroundColor: wellColor,
+        borderRadius: wellRadius,
       ),
     );
   }
@@ -311,12 +266,14 @@ class _ProductCardState extends State<ProductCard> {
                           fit: StackFit.expand,
                           clipBehavior: Clip.hardEdge,
                           children: [
-                            ColoredBox(color: wellColor),
-                            _buildProductImage(
-                              scale: scale,
-                              heroTag: heroTag,
-                              product: p,
-                              wellColor: wellColor,
+                            Positioned.fill(
+                              child: _buildProductImage(
+                                scale: scale,
+                                heroTag: heroTag,
+                                product: p,
+                                wellColor: wellColor,
+                                wellRadius: wellRadius,
+                              ),
                             ),
                             if (p.hasDiscount)
                               PositionedDirectional(

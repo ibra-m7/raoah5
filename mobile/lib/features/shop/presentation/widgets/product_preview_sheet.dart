@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:share_plus/share_plus.dart';
@@ -8,6 +8,7 @@ import 'cart_sheet.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/app_count_badge.dart';
 import '../../../../core/widgets/app_network_image.dart';
+import '../../../../core/widgets/product_thumbnail.dart';
 import '../../data/models/product_model.dart';
 import '../../data/services/catalog_api.dart';
 import '../manager/cart_cubit.dart';
@@ -951,17 +952,12 @@ class _RelatedTileState extends State<_RelatedTile> {
                   child: Stack(
                     children: [
                       Positioned.fill(
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(12),
-                          child: CelebrateAnchor(
-                            anchor: _productImageAnchor,
-                            child: AppNetworkImage(
-                              product.displayImage,
-                              fit: BoxFit.cover,
-                              error: const ColoredBox(
-                                color: AppTheme.primarySurface,
-                              ),
-                            ),
+                        child: CelebrateAnchor(
+                          anchor: _productImageAnchor,
+                          child: ProductThumbnail(
+                            imageUrl: product.displayImage,
+                            backgroundColor: AppTheme.productImageWell,
+                            borderRadius: BorderRadius.circular(12),
                           ),
                         ),
                       ),

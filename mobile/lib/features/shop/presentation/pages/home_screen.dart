@@ -785,7 +785,6 @@ class _CurvedProductCarouselSection extends StatelessWidget {
                       itemBuilder: (_, i) => ProductCard(
                         product: products[i],
                         heroTag: 'home_carousel_${title}_${i}_${products[i].id}',
-                        imageWidthFactor: AppScale.homeProductImageWidthFactor,
                         compactFooter: true,
                       ),
                     )
@@ -805,8 +804,6 @@ class _CurvedProductCarouselSection extends StatelessWidget {
                           product: products[i],
                           heroTag:
                               'home_carousel_${title}_${i}_${products[i].id}',
-                          imageWidthFactor:
-                              AppScale.homeProductImageWidthFactor,
                           compactFooter: true,
                         ),
                       ),
@@ -1753,8 +1750,6 @@ class _HomeTabState extends State<_HomeTab> {
                                       product: filtered[i],
                                       heroTag:
                                           'home_grid_${i}_${filtered[i].id}',
-                                      imageWidthFactor:
-                                          AppScale.homeProductImageWidthFactor,
                                       compactFooter: true,
                                     ),
                                     childCount: filtered.length,
