@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:share_plus/share_plus.dart';
@@ -700,6 +700,7 @@ class _StickyCartBar extends StatelessWidget {
                     price: total,
                     originalPrice: p.hasDiscount ? p.price * shownQty : null,
                     priceSize: 20,
+                    currencySize: 22,
                     alignment: AlignmentDirectional.centerEnd,
                     swapPrices: true,
                   ),
@@ -992,7 +993,8 @@ class _RelatedTileState extends State<_RelatedTile> {
                 PriceLine(
                   price: product.effectivePrice,
                   originalPrice: product.hasDiscount ? product.price : null,
-                  priceSize: 12,
+                  priceSize: 13,
+                  currencySize: 15,
                   alignment: Alignment.center,
                 ),
               ],

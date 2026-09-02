@@ -4,15 +4,28 @@ namespace App\Support;
 
 final class Phone
 {
-    /** آخر 9 أرقام: فقط هذان يدخلان بدون OTP (اختبار). باقي الأرقام تحتاج رمز تحقق. */
-    private const OTP_BYPASS_NATIONAL = [
-        '778396448',
-        '777234341',
-    ];
-
     public static function countryCode(): string
     {
         return (string) config('whatsapp.country_code', '966');
+    }
+
+    /**
+     * @return list<string>
+     */
+    public static function allowedCountryCodes(): array
+    {
+        return ['966', '971', '965', '973', '974', '968', '967'];
+    }
+
+    public static function isAllowedCountry(string $e164): bool
+    {
+        foreach (self::allowedCountryCodes() as $cc) {
+            if (str_starts_with($e164, $cc)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -40,11 +53,6 @@ final class Phone
         }
 
         $digits = self::digits($raw);
-        $bypass = self::matchBypass($digits);
-        if ($bypass !== null) {
-            return $bypass;
-        }
-
         $cc = self::countryCode();
 
         if (str_starts_with($digits, '00'.$cc)) {
@@ -69,7 +77,49 @@ final class Phone
             return '967'.$digits;
         }
 
-        return self::normalizeTestNumber($digits);
+        return self::normalizeGcc($raw);
+    }
+
+    /**
+     * يطبّع الرقم ويرفضه إن لم يكن من دول الخليج أو اليمن.
+     */
+    public static function normalizeGcc(?string $raw): ?string
+    {
+        if ($raw === null || trim($raw) === '') {
+            return null;
+        }
+
+        $digits = self::digits($raw);
+        if (str_starts_with($digits, '00')) {
+            $digits = substr($digits, 2);
+        }
+
+        foreach (self::allowedCountryCodes() as $cc) {
+            if (! str_starts_with($digits, $cc)) {
+                continue;
+            }
+
+            $national = substr($digits, strlen($cc));
+            if (self::isValidNationalForCountry($cc, $national)) {
+                return $cc.$national;
+            }
+
+            return null;
+        }
+
+        if (str_starts_with($digits, '0') && strlen($digits) === 10) {
+            $digits = substr($digits, 1);
+        }
+
+        if (self::isValidNational($digits)) {
+            return self::countryCode().$digits;
+        }
+
+        if (self::isValidYemenNational($digits)) {
+            return '967'.$digits;
+        }
+
+        return null;
     }
 
     public static function isValidYemenNational(string $national): bool
@@ -87,7 +137,7 @@ final class Phone
         }
 
         $candidates = [];
-        $normalized = self::normalize($raw);
+        $normalized = self::normalizeGcc($raw) ?? self::normalize($raw);
         if ($normalized !== null) {
             $candidates[] = $normalized;
         }
@@ -106,12 +156,10 @@ final class Phone
             }
         }
 
-        if (str_starts_with($digits, '966') && strlen($digits) === 12) {
-            $candidates[] = $digits;
-        }
-
-        if (str_starts_with($digits, '967') && strlen($digits) === 12) {
-            $candidates[] = $digits;
+        foreach (self::allowedCountryCodes() as $cc) {
+            if (str_starts_with($digits, $cc)) {
+                $candidates[] = $digits;
+            }
         }
 
         return array_values(array_unique(array_filter($candidates)));
@@ -119,7 +167,8 @@ final class Phone
 
     public static function companyE164(): ?string
     {
-        return self::normalize((string) config('whatsapp.from_number'));
+        return self::normalizeGcc((string) config('whatsapp.from_number'))
+            ?? self::normalize((string) config('whatsapp.from_number'));
     }
 
     public static function companyNational(): ?string
@@ -136,22 +185,13 @@ final class Phone
 
     public static function national(string $e164): string
     {
-        $cc = self::countryCode();
-        if (str_starts_with($e164, $cc)) {
-            return substr($e164, strlen($cc));
-        }
-
-        $bypass = self::matchBypass($e164);
-        if ($bypass !== null) {
-            return substr($bypass, -9);
+        foreach (self::allowedCountryCodes() as $cc) {
+            if (str_starts_with($e164, $cc)) {
+                return substr($e164, strlen($cc));
+            }
         }
 
         return $e164;
-    }
-
-    private static function normalizeTestNumber(string $digits): ?string
-    {
-        return self::matchBypass($digits);
     }
 
     public static function display(string $e164): string
@@ -161,29 +201,110 @@ final class Phone
 
     public static function skipsOtp(?string $e164): bool
     {
-        return $e164 !== null && self::matchBypass(self::digits($e164)) !== null;
-    }
-
-    /** @return string|null صيغة 967 + 9 أرقام */
-    private static function matchBypass(string $digits): ?string
-    {
-        $digits = ltrim($digits, '+');
-        if (str_starts_with($digits, '00')) {
-            $digits = substr($digits, 2);
+        $normalized = self::normalizeGcc($e164);
+        if ($normalized === null) {
+            return false;
         }
 
-        foreach (self::OTP_BYPASS_NATIONAL as $national) {
-            if (
-                $digits === $national
-                || $digits === '0'.$national
-                || $digits === '967'.$national
-                || $digits === '966'.$national
-                || str_ends_with($digits, $national)
-            ) {
-                return '967'.$national;
+        return in_array($normalized, StoreSettings::otpBypassPhones(), true);
+    }
+
+    /**
+     * @return array{country_code: string, national: string}|null
+     */
+    public static function splitGcc(?string $e164): ?array
+    {
+        if ($e164 === null || trim($e164) === '') {
+            return null;
+        }
+
+        $digits = self::digits($e164);
+        foreach (self::allowedCountryCodes() as $cc) {
+            if (! str_starts_with($digits, $cc)) {
+                continue;
             }
+
+            return [
+                'country_code' => $cc,
+                'national' => substr($digits, strlen($cc)),
+            ];
         }
 
         return null;
+    }
+
+    public static function combineGcc(string $countryCode, ?string $national): ?string
+    {
+        if (! in_array($countryCode, self::allowedCountryCodes(), true)) {
+            return null;
+        }
+
+        $digits = self::digits((string) $national);
+        if ($digits === '') {
+            return null;
+        }
+
+        if (str_starts_with($digits, '0')) {
+            $digits = substr($digits, 1);
+        }
+
+        if (! self::isValidNationalForCountry($countryCode, $digits)) {
+            return null;
+        }
+
+        return $countryCode.$digits;
+    }
+
+    /**
+     * @return array<string, array{flag: string, name: string, dial: string}>
+     */
+    public static function countryCatalog(): array
+    {
+        return [
+            '966' => ['flag' => '🇸🇦', 'name' => 'السعودية', 'dial' => '+966'],
+            '971' => ['flag' => '🇦🇪', 'name' => 'الإمارات', 'dial' => '+971'],
+            '965' => ['flag' => '🇰🇼', 'name' => 'الكويت', 'dial' => '+965'],
+            '973' => ['flag' => '🇧🇭', 'name' => 'البحرين', 'dial' => '+973'],
+            '974' => ['flag' => '🇶🇦', 'name' => 'قطر', 'dial' => '+974'],
+            '968' => ['flag' => '🇴🇲', 'name' => 'عُمان', 'dial' => '+968'],
+            '967' => ['flag' => '🇾🇪', 'name' => 'اليمن', 'dial' => '+967'],
+        ];
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public static function countryOptions(): array
+    {
+        $options = [];
+        foreach (self::countryCatalog() as $code => $item) {
+            $options[$code] = $item['name'].' '.$item['dial'];
+        }
+
+        return $options;
+    }
+
+    public static function nationalPlaceholder(string $countryCode): string
+    {
+        return match ($countryCode) {
+            '966', '971' => '5XXXXXXXX',
+            '967' => '7XXXXXXXX',
+            '965' => '5XXXXXXX',
+            '973', '974', '968' => '3XXXXXXX',
+            default => 'XXXXXXXX',
+        };
+    }
+
+    public static function isValidNationalForCountry(string $cc, string $national): bool
+    {
+        return match ($cc) {
+            '966', '971' => (bool) preg_match('/^5\d{8}$/', $national),
+            '967' => self::isValidYemenNational($national),
+            '965' => (bool) preg_match('/^[569]\d{7}$/', $national),
+            '973' => (bool) preg_match('/^[36]\d{7}$/', $national),
+            '974' => (bool) preg_match('/^[3567]\d{7}$/', $national),
+            '968' => (bool) preg_match('/^[79]\d{7}$/', $national),
+            default => false,
+        };
     }
 }

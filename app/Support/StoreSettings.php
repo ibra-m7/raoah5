@@ -140,6 +140,28 @@ final class StoreSettings
         return $items;
     }
 
+    /**
+     * @return list<string>
+     */
+    public static function otpBypassPhones(): array
+    {
+        $raw = Setting::getValue(Constants::SETTING_OTP_BYPASS_PHONES, '[]');
+        $decoded = json_decode((string) $raw, true);
+        if (! is_array($decoded)) {
+            return [];
+        }
+
+        $phones = [];
+        foreach ($decoded as $phone) {
+            $value = trim((string) $phone);
+            if ($value !== '') {
+                $phones[] = $value;
+            }
+        }
+
+        return array_values(array_unique($phones));
+    }
+
     public static function payload(): array
     {
         return [

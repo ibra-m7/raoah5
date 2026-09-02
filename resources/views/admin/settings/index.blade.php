@@ -31,6 +31,12 @@
                         العروض والتسويق
                     </button>
                 </li>
+                <li class="nav-item" role="presentation">
+                    <button type="button" class="nav-link {{ $tab === 'privacy' ? 'active' : '' }}" id="tab-privacy" data-bs-toggle="tab" data-bs-target="#pane-privacy" data-settings-tab="privacy" role="tab" aria-controls="pane-privacy" aria-selected="{{ $tab === 'privacy' ? 'true' : 'false' }}">
+                        <i class="bi bi-shield-lock"></i>
+                        الخصوصية
+                    </button>
+                </li>
             </ul>
 
             <div class="tab-content p-4 p-md-5">
@@ -83,16 +89,12 @@
                     <p class="settings-pane-lead mb-3">الرقم الذي يُفتح عند الضغط على «راسلنا» في التطبيق.</p>
                     <div class="mb-4">
                         <label class="form-label">رقم واتساب راسلنا</label>
-                        <input
-                            type="text"
-                            name="message_us_phone"
-                            value="{{ old('message_us_phone', $settings['message_us_phone']) }}"
-                            class="form-control @error('message_us_phone') is-invalid @enderror"
-                            placeholder="967778396448"
-                            dir="ltr"
-                        >
-                        @error('message_us_phone') <div class="invalid-feedback">{{ $message }}</div> @enderror
-                        <div class="form-hint">أدخل الرقم بصيغة دولية بدون + أو مسافات.</div>
+                        <x-admin.gcc-phone-input
+                            country-name="message_us_phone_country"
+                            national-name="message_us_phone"
+                            :e164="old('message_us_phone_full', $settings['message_us_phone'])"
+                        />
+                        <div class="form-hint mt-2">اختر الدولة ثم أدخل الرقم بدون رمز الدولة.</div>
                     </div>
 
                     <h3 class="h6 fw-bold mb-1">أرقام خدمة العملاء</h3>
@@ -147,6 +149,21 @@
                             <span>طرق الدفع</span>
                         </a>
                     </div>
+
+                    <hr class="my-4">
+                    <h3 class="h6 fw-bold mb-1 text-danger">منطقة خطرة</h3>
+                    <p class="settings-pane-lead mb-3">إجراءات لا يمكن التراجع عنها تخص كتالوج المنتجات.</p>
+                    <div class="settings-danger mb-0">
+                        <h2 class="settings-danger-title">حذف كل المنتجات</h2>
+                        <p class="settings-danger-lead">يحذف كل المنتجات من الكتالوج والتطبيق نهائياً. تبقى الطلبات السابقة في السجل بدون ربط بالمنتج.</p>
+                        <p class="settings-danger-count">المنتجات الحالية: <strong>{{ $productCount }}</strong></p>
+                        <label class="form-label" for="wipe-products-confirmation">اكتب «{{ $strings::WIPE_PRODUCTS_CONFIRMATION_PHRASE }}» للتأكيد</label>
+                        <input type="text" id="wipe-products-confirmation" name="confirmation" form="wipe-products-form" value="{{ old('confirmation') }}" class="form-control @error('confirmation') is-invalid @enderror" autocomplete="off" {{ $productCount === 0 ? 'disabled' : '' }} placeholder="{{ $strings::WIPE_PRODUCTS_CONFIRMATION_PHRASE }}" data-wipe-products-input>
+                        @error('confirmation') <div class="invalid-feedback d-block">{{ $message }}</div> @enderror
+                        <button type="submit" form="wipe-products-form" class="btn btn-outline-danger rounded-pill mt-3" {{ $productCount === 0 ? 'disabled' : '' }}>
+                            حذف كل المنتجات
+                        </button>
+                    </div>
                 </div>
 
                 <div class="tab-pane fade {{ $tab === 'marketing' ? 'show active' : '' }}" id="pane-marketing" role="tabpanel" aria-labelledby="tab-marketing" tabindex="0">
@@ -199,28 +216,33 @@
                     </div>
                 </div>
 
+                <div class="tab-pane fade {{ $tab === 'privacy' ? 'show active' : '' }}" id="pane-privacy" role="tabpanel" aria-labelledby="tab-privacy" tabindex="0">
+                    <h2 class="settings-pane-title">الخصوصية</h2>
+                    <p class="settings-pane-lead mb-4">إدارة أرقام الدخول المباشر إلى التطبيق.</p>
+
+                    <x-admin.otp-bypass-phones-picker
+                        :phones="old('otp_bypass_phones', $settings['otp_bypass_phones'])"
+                    />
+                </div>
+
                 <div class="pt-2">
                     <button class="btn btn-brand">{{ $strings::SAVE }}</button>
                 </div>
             </div>
         </form>
-    </div>
 
-    <div class="page-card p-4 p-md-5 overflow-hidden mt-3" style="max-width: 920px">
-        <form method="POST" action="{{ route('admin.settings.products.destroy-all') }}" data-wipe-products-form data-wipe-phrase="{{ $strings::WIPE_PRODUCTS_CONFIRMATION_PHRASE }}" data-wipe-confirm="{{ $strings::CONFIRM_WIPE_PRODUCTS }}">
+        <form
+            id="wipe-products-form"
+            method="POST"
+            action="{{ route('admin.settings.products.destroy-all') }}"
+            data-wipe-products-form
+            data-wipe-phrase="{{ $strings::WIPE_PRODUCTS_CONFIRMATION_PHRASE }}"
+            data-wipe-confirm="{{ $strings::CONFIRM_WIPE_PRODUCTS }}"
+            class="d-none"
+            aria-hidden="true"
+        >
             @csrf
             @method('DELETE')
-            <div class="settings-danger mb-0">
-                <h2 class="settings-danger-title">حذف كل المنتجات</h2>
-                <p class="settings-danger-lead">يحذف كل المنتجات من الكتالوج والتطبيق نهائياً. تبقى الطلبات السابقة في السجل بدون ربط بالمنتج.</p>
-                <p class="settings-danger-count">المنتجات الحالية: <strong>{{ $productCount }}</strong></p>
-                <label class="form-label">اكتب «{{ $strings::WIPE_PRODUCTS_CONFIRMATION_PHRASE }}» للتأكيد</label>
-                <input type="text" name="confirmation" value="{{ old('confirmation') }}" class="form-control @error('confirmation') is-invalid @enderror" autocomplete="off" {{ $productCount === 0 ? 'disabled' : '' }} placeholder="{{ $strings::WIPE_PRODUCTS_CONFIRMATION_PHRASE }}" data-wipe-products-input>
-                @error('confirmation') <div class="invalid-feedback">{{ $message }}</div> @enderror
-                <button type="submit" class="btn btn-outline-danger rounded-pill mt-3" {{ $productCount === 0 ? 'disabled' : '' }}>
-                    حذف كل المنتجات
-                </button>
-            </div>
         </form>
     </div>
 </x-layouts.admin>

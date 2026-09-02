@@ -23,6 +23,7 @@ import '../manager/catalog_cubit.dart';
 import '../manager/orders_cubit.dart';
 import '../widgets/checkout_action_bar.dart';
 import '../widgets/checkout_sheet.dart';
+import '../widgets/cart_display_entries.dart';
 import '../widgets/cart_item_groups.dart';
 import '../widgets/cart_summary_group.dart';
 import '../widgets/coupon_badge_icon.dart';
@@ -221,7 +222,8 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
     }
     try {
       await context.read<OrdersCubit>().placeOrder(
-            items: List.from(cartState.items),
+            items: paidCartItems(cartState.items),
+            bundles: cartState.bundles,
             paymentMethod: _method!,
             addressId: _isPickup ? null : address?.id,
             notes: notes,
@@ -270,10 +272,12 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
     }
   }
 
-  String _cartKey(List<CartItem> items) =>
-      items.map((i) => '${i.product.id}:${i.quantity}').join(',');
+  String _cartKey(CartState cart) => cartStateKey(
+        items: cart.items,
+        bundles: cart.bundles,
+      );
 
-  Future<void> _applyCoupon(List<CartItem> items) async {
+  Future<void> _applyCoupon(CartState cart) async {
     FocusManager.instance.primaryFocus?.unfocus();
     final value = _couponCtrl.text.trim().toUpperCase();
     if (value.isEmpty) {
@@ -291,14 +295,17 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
     try {
       final quote = await CouponsApi.instance.preview(
         code: value,
-        items: items,
+        items: cartItemsForCouponApi(
+          items: cart.items,
+          bundles: cart.bundles,
+        ),
         addressId: _isPickup ? null : context.read<AddressCubit>().state.selected?.id,
       );
       if (!mounted) return;
       setState(() {
         _quotes.removeWhere((q) => q.code.toUpperCase() == quote.code.toUpperCase());
         _quotes.add(quote);
-        _quotedCartKey = _cartKey(items);
+        _quotedCartKey = _cartKey(cart);
         _applyingCoupon = false;
         _couponError = null;
         _couponCtrl.clear();
@@ -330,7 +337,7 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
     }
     final cart = context.read<CartCubit>().state;
     final address = context.read<AddressCubit>().state.selected;
-    final key = '${address?.id}|${_cartKey(cart.items)}';
+    final key = '${address?.id}|${_cartKey(cart)}';
     if (!AuthSession.instance.isLoggedIn) {
       if (_delivery != null || _deliveryError != null || _deliveryKey != key) {
         setState(() {
@@ -351,7 +358,7 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
       );
       if (!mounted) return;
       final current =
-          '${context.read<AddressCubit>().state.selected?.id}|${_cartKey(context.read<CartCubit>().state.items)}';
+          '${context.read<AddressCubit>().state.selected?.id}|${_cartKey(context.read<CartCubit>().state)}';
       if (current != key) return;
       setState(() {
         _delivery = quote;
@@ -409,9 +416,9 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
           builder: (context, cart) {
             final subtotal = cart.total;
             final quoteValid =
-                _quotes.isNotEmpty && _quotedCartKey == _cartKey(cart.items);
+                _quotes.isNotEmpty && _quotedCartKey == _cartKey(cart);
             final quotes = quoteValid ? List<CouponQuote>.from(_quotes) : const <CouponQuote>[];
-            final currentDeliveryKey = '${address?.id}|${_cartKey(cart.items)}';
+            final currentDeliveryKey = '${address?.id}|${_cartKey(cart)}';
             if (!_isPickup && currentDeliveryKey != _deliveryKey) {
               WidgetsBinding.instance.addPostFrameCallback((_) {
                 if (mounted) _refreshDelivery();
@@ -461,9 +468,15 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
               0,
               (sum, q) => sum + q.discountAmount,
             ).clamp(0, subtotal).toDouble();
-            final productDiscount = _cartProductDiscount(cart.items);
+            final productDiscount = cartProductDiscount(
+              items: cart.items,
+              bundles: cart.bundles,
+            );
             final totalDiscount = productDiscount + discount;
-            final listSubtotal = _cartListSubtotal(cart.items);
+            final listSubtotal = cartListSubtotal(
+              items: cart.items,
+              bundles: cart.bundles,
+            );
             final effectiveShipping = free ? 0.0 : shipping;
             final grand = subtotal - discount + effectiveShipping;
             final methods = store.paymentMethods;
@@ -627,7 +640,7 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
                             CouponSectionInput(
                               controller: _couponCtrl,
                               loading: _applyingCoupon,
-                              onApply: () => _applyCoupon(cart.items),
+                              onApply: () => _applyCoupon(cart),
                             ),
                             if (quotes.isNotEmpty) ...[
                               const SizedBox(height: 10),
@@ -670,7 +683,8 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
                       ),
                       _InvoiceCard(
                         icon: Icons.shopping_cart_outlined,
-                        title: 'ملخص السلة (${paidCartProductCount(cart.items)} منتج)',
+                        title:
+                            'ملخص السلة (${paidCartProductCount(items: cart.items, bundles: cart.bundles)} منتج)',
                         child: Column(
                           children: [
                             const _TableHead(),
@@ -679,14 +693,27 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
                               shrinkWrap: true,
                               physics: const NeverScrollableScrollPhysics(),
                               padding: EdgeInsets.zero,
-                              itemCount: groupedCartItems(cart.items).length,
+                              itemCount: cart.displayEntries.length,
                               itemBuilder: (_, i) {
-                                final group = groupedCartItems(cart.items)[i];
-                                return CartSummaryGroup(
-                                  item: group.paid,
-                                  gift: group.gift,
-                                  tableLayout: true,
-                                );
+                                final entry = cart.displayEntries[i];
+                                return switch (entry) {
+                                  CartDisplayBundleEntry(:final line) =>
+                                    CartSummaryBundleGroup(
+                                      line: line,
+                                      tableLayout: true,
+                                    ),
+                                  CartDisplayProductEntry(
+                                    :final item,
+                                    :final giftItems,
+                                  ) =>
+                                    CartSummaryGroup(
+                                      item: item,
+                                      gift: giftItems.isEmpty
+                                          ? null
+                                          : giftItems.first,
+                                      tableLayout: true,
+                                    ),
+                                };
                               },
                             ),
                           ],
@@ -877,20 +904,6 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
     );
   }
 }
-
-double _cartListSubtotal(List<CartItem> items) => items.fold(
-      0.0,
-      (sum, item) => sum + item.product.price * item.quantity,
-    );
-
-double _cartProductDiscount(List<CartItem> items) => items.fold(
-      0.0,
-      (sum, item) {
-        if (!item.product.hasDiscount) return sum;
-        return sum +
-            (item.product.price - item.product.effectivePrice) * item.quantity;
-      },
-    );
 
 class _InvoiceBackButton extends StatelessWidget {
   final VoidCallback onTap;

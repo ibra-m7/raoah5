@@ -24,7 +24,8 @@ class CourierRequest extends FormRequest
 
         return [
             'name' => ['required', 'string', 'max:80'],
-            'phone' => ['required', 'string', Rule::unique('couriers', 'phone')->ignore($id)],
+            'phone_country' => ['required', 'string', Rule::in(Phone::allowedCountryCodes())],
+            'phone' => ['required', 'string', 'max:16'],
             'password' => $passwordRules,
             'is_active' => ['nullable', 'boolean'],
             'handles_delivery' => ['nullable', 'boolean'],
@@ -35,11 +36,22 @@ class CourierRequest extends FormRequest
     public function withValidator($validator): void
     {
         $validator->after(function ($validator) {
-            $rawPhone = trim((string) $this->input('phone_input', ''));
-            if ($this->input('phone') === null && $rawPhone !== '') {
-                $validator->errors()->add('phone', 'رقم الجوال غير صالح. استخدم صيغة 05xxxxxxxx أو 07xxxxxxxx.');
-            } elseif ($this->input('phone') === null) {
-                $validator->errors()->add('phone', 'أدخل رقم جوال صالح.');
+            $courier = $this->route('courier');
+            $id = $courier instanceof Courier ? $courier->id : null;
+            $normalized = $this->input('phone_normalized');
+
+            if ($normalized === null && $this->filled('phone')) {
+                $validator->errors()->add('phone', 'الرقم غير صالح للدولة المختارة.');
+            }
+
+            if ($normalized) {
+                $exists = Courier::query()
+                    ->where('phone', $normalized)
+                    ->when($id, fn ($query) => $query->where('id', '!=', $id))
+                    ->exists();
+                if ($exists) {
+                    $validator->errors()->add('phone', 'رقم الجوال مستخدم مسبقاً.');
+                }
             }
 
             $handlesDelivery = $this->boolean('handles_delivery');
@@ -68,16 +80,23 @@ class CourierRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
-        $rawPhone = trim((string) $this->input('phone', ''));
-        $phone = Phone::normalize($rawPhone);
+        $country = (string) $this->input('phone_country', Phone::countryCode());
+        $national = trim((string) $this->input('phone', ''));
+        $phone = Phone::combineGcc($country, $national);
 
         $this->merge([
-            'phone_input' => $rawPhone,
-            'phone' => $phone,
+            'phone_country' => $country,
+            'phone' => $national,
+            'phone_normalized' => $phone,
             'is_active' => $this->boolean('is_active'),
             'handles_delivery' => $this->boolean('handles_delivery'),
             'handles_pickup' => $this->boolean('handles_pickup'),
             'password' => $this->filled('password') ? $this->input('password') : null,
         ]);
+    }
+
+    public function normalizedPhone(): ?string
+    {
+        return $this->input('phone_normalized');
     }
 }

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -5,6 +7,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/circle_back_button.dart';
+import '../../../notifications/data/services/notifications_api.dart';
 import '../../../notifications/data/services/push_service.dart';
 import '../../../notifications/presentation/manager/notifications_cubit.dart';
 import '../../data/services/auth_session.dart';
@@ -22,18 +25,26 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  bool _togglingNotifications = false;
-
   Future<void> _toggleNotifications(bool enabled) async {
-    setState(() => _togglingNotifications = true);
+    final user = AuthSession.instance.user;
+    if (user == null) return;
+
+    final previous = user.notificationsEnabled;
+    await AuthSession.instance.updateUser(
+      user.copyWith(notificationsEnabled: enabled),
+    );
+
     try {
-      await PushService.instance.setEnabled(enabled);
+      await NotificationsApi.instance.setEnabled(enabled);
+      unawaited(PushService.instance.applyPreference(enabled));
       if (!mounted) return;
       try {
-        context.read<NotificationsCubit>().load();
+        context.read<NotificationsCubit>().load(silent: true);
       } catch (_) {}
-      setState(() {});
     } catch (_) {
+      await AuthSession.instance.updateUser(
+        user.copyWith(notificationsEnabled: previous),
+      );
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -51,8 +62,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
         );
       }
-    } finally {
-      if (mounted) setState(() => _togglingNotifications = false);
     }
   }
 
@@ -114,9 +123,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final user = AuthSession.instance.user;
-    final notificationsEnabled = user?.notificationsEnabled ?? true;
-
     return Directionality(
       textDirection: TextDirection.rtl,
       child: AnnotatedRegion<SystemUiOverlayStyle>(
@@ -129,10 +135,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
             scrolledUnderElevation: 0,
             centerTitle: true,
             automaticallyImplyLeading: false,
-            leading: const Padding(
-              padding: EdgeInsetsDirectional.only(start: 8),
-              child: CircleBackButton(),
-            ),
+            leadingWidth: 56,
+            leading: CircleBackButton.appBarLeading(),
             title: const Text(
               AppStrings.profileSettings,
               style: TextStyle(
@@ -145,6 +149,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
           body: ListenableBuilder(
             listenable: AuthSession.instance,
             builder: (context, _) {
+              final notificationsEnabled =
+                  AuthSession.instance.user?.notificationsEnabled ?? true;
+
               return ListView(
                 padding: const EdgeInsets.fromLTRB(18, 6, 18, 24),
                 children: [
@@ -194,25 +201,24 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             ],
                           ),
                         ),
-                        Transform.scale(
-                          scale: 0.88,
-                          child: Switch(
-                            value: notificationsEnabled,
-                            onChanged: _togglingNotifications
-                                ? null
-                                : _toggleNotifications,
-                            thumbColor:
-                                WidgetStateProperty.all(Colors.white),
-                            trackColor: WidgetStateProperty.resolveWith(
-                              (states) {
-                                if (states.contains(WidgetState.selected)) {
-                                  return AppTheme.primaryDark
-                                      .withValues(alpha: 0.35);
-                                }
-                                return AppTheme.mutedText
-                                    .withValues(alpha: 0.2);
-                              },
-                            ),
+                        Switch(
+                          value: notificationsEnabled,
+                          onChanged: _toggleNotifications,
+                          thumbColor: WidgetStateProperty.resolveWith(
+                            (states) => states.contains(WidgetState.selected)
+                                ? Colors.white
+                                : const Color(0xFFF5F5F5),
+                          ),
+                          trackColor: WidgetStateProperty.resolveWith(
+                            (states) {
+                              if (states.contains(WidgetState.selected)) {
+                                return AppTheme.primary;
+                              }
+                              return const Color(0xFFD0D8D3);
+                            },
+                          ),
+                          trackOutlineColor: WidgetStateProperty.all(
+                            Colors.transparent,
                           ),
                         ),
                       ],
@@ -254,7 +260,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               ),
                             ),
                             Icon(
-                              Icons.chevron_left_rounded,
+                              Icons.chevron_right_rounded,
                               size: 18,
                               color: AppTheme.mutedText.withValues(alpha: 0.6),
                             ),

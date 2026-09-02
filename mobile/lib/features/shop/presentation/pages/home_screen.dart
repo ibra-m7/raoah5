@@ -1242,6 +1242,7 @@ class _MainScreenState extends State<MainScreen> {
   @override
   void initState() {
     super.initState();
+    MainShellNavigation.attach(_goToTab);
     _currentIndex = widget.initialIndex.clamp(0, 3);
     _visitedTabs.add(_currentIndex);
     _pageController = PageController(initialPage: _currentIndex);
@@ -1288,6 +1289,7 @@ class _MainScreenState extends State<MainScreen> {
 
   @override
   void dispose() {
+    MainShellNavigation.detach();
     _pageController.dispose();
     super.dispose();
   }
@@ -2013,6 +2015,7 @@ class _PromoSlideCaption extends StatelessWidget {
             originalPrice: product.hasDiscount ? product.price : null,
             color: Colors.white,
             priceSize: 15,
+            currencySize: 17,
             alignment: AlignmentDirectional.centerStart,
           ),
         ],

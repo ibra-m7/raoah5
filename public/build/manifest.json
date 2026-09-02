@@ -12,12 +12,12 @@
     "src": "node_modules/bootstrap-icons/font/fonts/bootstrap-icons.woff2"
   },
   "resources/js/admin.js": {
-    "file": "assets/admin-CjQeobiQ.js",
+    "file": "assets/admin-CYdNj_-c.js",
     "name": "admin",
     "src": "resources/js/admin.js",
     "isEntry": true,
     "css": [
-      "assets/admin-DOAPkobz.css",
+      "assets/admin-BbOWyB1e.css",
       "assets/bootstrap-icons-Du8Y8EHi.css"
     ],
     "assets": [

@@ -9,6 +9,7 @@ use App\Enums\PaymentStatus;
 use App\Models\Courier;
 use App\Models\Order;
 use App\Models\Product;
+use App\Models\ProductBundle;
 use App\Models\User;
 use App\Services\Admin\AdminEventService;
 use App\Services\Coupons\CouponQuote;
@@ -57,7 +58,11 @@ class OrderService
     public function previewCoupon(User $user, array $payload): array
     {
         return DB::transaction(function () use ($user, $payload) {
-            $lines = $this->buildLines($payload['items'] ?? []);
+            $lines = $this->buildLines(
+                $payload['items'] ?? [],
+                [],
+                $payload['bundles'] ?? [],
+            );
             $subtotal = round($lines->sum('line_total'), 2);
             $quote = $this->coupons->quote($user, $payload['coupon_code'] ?? null, $lines);
             $address = $this->resolveAddress($user, $payload['address_id'] ?? null);
@@ -88,7 +93,11 @@ class OrderService
     public function create(User $user, array $payload): Order
     {
         $order = DB::transaction(function () use ($user, $payload) {
-            $lines = $this->buildLines($payload['items'] ?? []);
+            $lines = $this->buildLines(
+                $payload['items'] ?? [],
+                [],
+                $payload['bundles'] ?? [],
+            );
             $subtotal = round($lines->sum('line_total'), 2);
             $quotes = $this->resolveCouponQuotes($user, $payload, $lines);
             $freeShippingFromCoupons = $quotes->contains(fn ($quote) => $quote->freeShipping);
@@ -620,16 +629,29 @@ class OrderService
     /**
      * @param  list<array{product_id: mixed, quantity: mixed}>  $rawItems
      * @param  list<int>  $allowInactiveIds
+     * @param  list<array{bundle_id: mixed, quantity: mixed}>  $rawBundles
      * @return Collection<int, array{product: Product, quantity: int, unit_price: float, line_total: float, is_gift?: bool}>
      */
-    public function buildLines(array $rawItems, array $allowInactiveIds = []): Collection
-    {
+    public function buildLines(
+        array $rawItems,
+        array $allowInactiveIds = [],
+        array $rawBundles = [],
+    ): Collection {
         $quantities = collect($rawItems)
             ->groupBy(fn ($item) => (int) ($item['product_id'] ?? 0))
             ->map(fn ($group) => $group->sum(fn ($item) => (int) ($item['quantity'] ?? 0)))
             ->reject(fn ($qty, $id) => (int) $id < 1 || $qty < 1);
 
-        if ($quantities->isEmpty()) {
+        $bundleRequests = collect($rawBundles)
+            ->map(fn ($row) => [
+                'bundle_id' => (int) ($row['bundle_id'] ?? 0),
+                'quantity' => max(1, (int) ($row['quantity'] ?? 0)),
+            ])
+            ->filter(fn ($row) => $row['bundle_id'] > 0)
+            ->groupBy('bundle_id')
+            ->map(fn ($group) => $group->sum('quantity'));
+
+        if ($quantities->isEmpty() && $bundleRequests->isEmpty()) {
             throw ValidationException::withMessages([
                 'items' => 'أضف منتجاً واحداً على الأقل.',
             ]);
@@ -680,7 +702,114 @@ class OrderService
             ]);
         }
 
+        $lines = $this->appendBundleLines($lines, $bundleRequests, $allowInactiveIds);
+
         return $this->appendGiftLines($lines);
+    }
+
+    /**
+     * @param  Collection<int, array{product: Product, quantity: int, unit_price: float, line_total: float, is_gift?: bool}>  $lines
+     * @param  Collection<int, int>  $bundleRequests
+     * @param  list<int>  $allowInactiveIds
+     * @return Collection<int, array{product: Product, quantity: int, unit_price: float, line_total: float, is_gift?: bool}>
+     */
+    private function appendBundleLines(
+        Collection $lines,
+        Collection $bundleRequests,
+        array $allowInactiveIds = [],
+    ): Collection {
+        if ($bundleRequests->isEmpty()) {
+            return $lines;
+        }
+
+        $bundles = ProductBundle::query()
+            ->with(['items.product.primaryImage'])
+            ->whereIn('id', $bundleRequests->keys())
+            ->when(
+                $allowInactiveIds === [],
+                fn ($query) => $query->where('is_active', true),
+            )
+            ->get()
+            ->keyBy('id');
+
+        if ($bundles->count() !== $bundleRequests->count()) {
+            throw ValidationException::withMessages([
+                'bundles' => 'إحدى السلات غير متاحة حالياً.',
+            ]);
+        }
+
+        foreach ($bundleRequests as $bundleId => $bundleQty) {
+            /** @var ProductBundle $bundle */
+            $bundle = $bundles->get((int) $bundleId);
+            if ($bundle === null || $bundle->items->isEmpty()) {
+                throw ValidationException::withMessages([
+                    'bundles' => 'إحدى السلات غير متاحة حالياً.',
+                ]);
+            }
+
+            if (! $bundle->computeIsAvailable()) {
+                throw ValidationException::withMessages([
+                    'bundles' => "السلة {$bundle->name} غير متوفرة حالياً.",
+                ]);
+            }
+
+            foreach ($bundle->items as $bundleItem) {
+                $product = $bundleItem->product;
+                $needed = max(1, (int) $bundleItem->quantity) * (int) $bundleQty;
+                if ($product === null || (int) $product->stock < $needed) {
+                    throw ValidationException::withMessages([
+                        'bundles' => "الكمية غير متاحة لسلة {$bundle->name}.",
+                    ]);
+                }
+            }
+
+            $components = [];
+            $baseTotal = 0.0;
+            foreach ($bundle->items as $bundleItem) {
+                $product = $bundleItem->product;
+                if ($product === null) {
+                    continue;
+                }
+                $qty = max(1, (int) $bundleItem->quantity) * (int) $bundleQty;
+                $base = (float) $product->effective_price * $qty;
+                $baseTotal += $base;
+                $components[] = [
+                    'product' => $product,
+                    'quantity' => $qty,
+                    'base_total' => $base,
+                ];
+            }
+
+            if ($components === []) {
+                throw ValidationException::withMessages([
+                    'bundles' => "السلة {$bundle->name} فارغة.",
+                ]);
+            }
+
+            $targetTotal = round((float) $bundle->bundle_price * (int) $bundleQty, 2);
+            $allocated = 0.0;
+            foreach ($components as $index => $component) {
+                $isLast = $index === count($components) - 1;
+                $lineTotal = $isLast
+                    ? round($targetTotal - $allocated, 2)
+                    : ($baseTotal > 0
+                        ? round($targetTotal * ($component['base_total'] / $baseTotal), 2)
+                        : 0.0);
+                $allocated += $lineTotal;
+                $qty = (int) $component['quantity'];
+                $unit = $qty > 0 ? round($lineTotal / $qty, 2) : 0.0;
+
+                $lines->push([
+                    'product' => $component['product'],
+                    'quantity' => $qty,
+                    'unit_price' => $unit,
+                    'line_total' => $lineTotal,
+                    'is_gift' => false,
+                ]);
+            }
+        }
+
+        return $lines;
     }
 
     /**

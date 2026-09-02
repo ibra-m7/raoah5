@@ -148,21 +148,24 @@ class _CustomerServiceDialogBody extends StatelessWidget {
                                   ),
                                 ),
                                 const SizedBox(height: 2),
-                                Text(
-                                  contact.phone,
+                                Directionality(
                                   textDirection: TextDirection.ltr,
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w600,
-                                    color: AppTheme.mutedText
-                                        .withValues(alpha: 0.95),
+                                  child: Text(
+                                    contact.displayPhone,
+                                    textAlign: TextAlign.start,
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w600,
+                                      color: AppTheme.mutedText
+                                          .withValues(alpha: 0.95),
+                                    ),
                                   ),
                                 ),
                               ],
                             ),
                           ),
                           Icon(
-                            Icons.chevron_left_rounded,
+                            Icons.chevron_right_rounded,
                             size: 18,
                             color: AppTheme.mutedText.withValues(alpha: 0.7),
                           ),

@@ -10,9 +10,14 @@
 
 <div class="mb-3">
     <label class="form-label">رقم الجوال</label>
-    <input type="text" name="phone" value="{{ old('phone', $courier->exists ? $courier->phoneDisplay() : $courier->phone) }}" class="form-control @error('phone') is-invalid @enderror" required dir="ltr" placeholder="05xxxxxxxx">
-    @error('phone') <div class="invalid-feedback">{{ $message }}</div> @enderror
-    <div class="form-hint">بهذا الرقم يدخل الموصل إلى تطبيق التوصيل. استخدم 05xxxxxxxx أو 07xxxxxxxx.</div>
+    <x-admin.gcc-phone-input
+        country-name="phone_country"
+        national-name="phone"
+        :e164="$courier->exists ? $courier->phone : ''"
+        required
+    />
+    @error('phone') <div class="invalid-feedback d-block">{{ $message }}</div> @enderror
+    <div class="form-hint">اختر الدولة ثم أدخل الرقم بدون رمز الدولة. بهذا الرقم يدخل الموصل إلى تطبيق التوصيل.</div>
 </div>
 
 <div class="mb-3">

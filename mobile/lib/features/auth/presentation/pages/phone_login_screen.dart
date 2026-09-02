@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/error/exceptions.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/router/app_router.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/utils/gcc_phone.dart';
 import '../../../../core/widgets/brand_logo.dart';
+import '../../../../core/widgets/gcc_phone_field.dart';
 import '../../data/services/phone_auth_api.dart';
 import '../auth_flow.dart';
 import '../widgets/auth_widgets.dart';
@@ -25,6 +26,7 @@ class _PhoneLoginScreenState extends State<PhoneLoginScreen>
     with SingleTickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
   final _phoneCtrl = TextEditingController();
+  String _countryCode = GccPhone.defaultCode;
   bool _isLoading = false;
 
   late final AnimationController _animCtrl;
@@ -57,7 +59,11 @@ class _PhoneLoginScreenState extends State<PhoneLoginScreen>
     if (!_formKey.currentState!.validate()) return;
     setState(() => _isLoading = true);
     try {
-      final phone = _phoneCtrl.text.trim();
+      final phone = GccPhone.combine(_countryCode, _phoneCtrl.text.trim());
+      if (phone == null) {
+        if (mounted) _showError(AppStrings.fieldPhoneInvalid);
+        return;
+      }
       final result = await PhoneAuthApi.instance.requestOtp(phone);
       if (!mounted) return;
       if (!result.otpRequired && result.user != null) {
@@ -86,22 +92,8 @@ class _PhoneLoginScreenState extends State<PhoneLoginScreen>
     }
   }
 
-  bool _isAllowedLoginPhone(String raw) {
-    var digits = raw.replaceAll(RegExp(r'\D'), '');
-    if (digits.startsWith('00')) {
-      digits = digits.substring(2);
-    }
-    if (digits.startsWith('0')) {
-      digits = digits.substring(1);
-    }
-    if ((digits.startsWith('967') || digits.startsWith('966')) &&
-        digits.length >= 12) {
-      digits = digits.substring(3);
-    }
-    if (RegExp(r'^5\d{8}$').hasMatch(digits)) {
-      return true;
-    }
-    return digits == '778396448' || digits == '777234341';
+  bool _isValidNationalPhone(String raw) {
+    return GccPhone.countryByCode(_countryCode).isValid(raw);
   }
 
   void _showError(String msg) {
@@ -171,24 +163,25 @@ class _PhoneLoginScreenState extends State<PhoneLoginScreen>
                                     crossAxisAlignment:
                                         CrossAxisAlignment.stretch,
                                     children: [
-                                      AuthGlassField(
-                                        controller: _phoneCtrl,
-                                        label: AppStrings.fieldPhone,
-                                        hintText: AppStrings.fieldPhoneHint,
-                                        icon: Icons.phone_iphone_rounded,
-                                        keyboardType: TextInputType.phone,
+                                      AuthFieldLabel(text: AppStrings.fieldPhone),
+                                      const SizedBox(height: 8),
+                                      GccPhoneField(
+                                        countryCode: _countryCode,
+                                        onCountryChanged: (code) {
+                                          setState(() => _countryCode = code);
+                                        },
+                                        nationalController: _phoneCtrl,
                                         textInputAction: TextInputAction.done,
-                                        textDirection: TextDirection.ltr,
-                                        maxLength: 12,
-                                        inputFormatters: [
-                                          FilteringTextInputFormatter.digitsOnly,
-                                        ],
+                                        onFieldSubmitted: () {
+                                          if (_isLoading) return;
+                                          _submit();
+                                        },
                                         validator: (v) {
                                           final value = v?.trim() ?? '';
                                           if (value.isEmpty) {
                                             return AppStrings.fieldRequired;
                                           }
-                                          if (!_isAllowedLoginPhone(value)) {
+                                          if (!_isValidNationalPhone(value)) {
                                             return AppStrings.fieldPhoneInvalid;
                                           }
                                           return null;

@@ -75,6 +75,8 @@ final class Constants
 
     public const SETTING_MESSAGE_US_PHONE = 'message_us_phone';
 
+    public const SETTING_OTP_BYPASS_PHONES = 'otp_bypass_phones';
+
     public const AI_DEFAULT_MAX_PRODUCTS = 6;
 
     public const AI_DEFAULT_MODEL = 'gemini-3.6-flash';

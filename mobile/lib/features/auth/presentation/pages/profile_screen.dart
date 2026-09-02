@@ -10,6 +10,7 @@ import '../../../notifications/presentation/manager/notifications_cubit.dart';
 import '../../../shop/presentation/manager/favorite_cubit.dart';
 import '../../../shop/presentation/manager/orders_cubit.dart';
 import '../../../shop/presentation/pages/orders_screen.dart';
+import '../../../shop/presentation/widgets/main_shell_scope.dart';
 import '../../data/models/auth_user.dart';
 import '../../data/services/auth_session.dart';
 import '../../data/services/phone_auth_api.dart';
@@ -31,13 +32,15 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  Future<void> _openMyOrders() {
-    return Navigator.of(context, rootNavigator: true).push(
-      MaterialPageRoute<void>(
+  Future<void> _openMyOrders() async {
+    final tab = await Navigator.of(context, rootNavigator: true).push<int>(
+      MaterialPageRoute<int>(
         settings: const RouteSettings(name: OrdersScreen.routeName),
         builder: (_) => const OrdersScreen(),
       ),
     );
+    if (!mounted || tab == null) return;
+    MainShellNavigation.goToTab(context, tab);
   }
 
   void _confirmSignOut() {

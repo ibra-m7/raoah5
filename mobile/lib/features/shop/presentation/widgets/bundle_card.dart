@@ -6,10 +6,10 @@ import '../../../../core/constants/app_strings.dart';
 import '../../../../core/router/app_router.dart';
 import '../../../../core/theme/app_scale.dart';
 import '../../../../core/theme/app_theme.dart';
-import '../../../../core/widgets/app_network_image.dart';
 import '../../data/models/bundle_model.dart';
 import '../manager/cart_cubit.dart';
 import '../pages/bundle_details_screen.dart';
+import 'bundle_cover_images.dart';
 import 'celebrate_anchors.dart';
 import 'price_line.dart';
 import 'product_fly_overlay.dart';
@@ -111,7 +111,7 @@ class _BundleCardState extends State<BundleCard> {
                               Center(
                                 child: CelebrateAnchor(
                                   anchor: _imageAnchor,
-                                  child: _BundleCoverImages(bundle: bundle),
+                                  child: BundleCoverImages(bundle: bundle),
                                 ),
                               ),
                               if (discount > 0)
@@ -167,6 +167,7 @@ class _BundleCardState extends State<BundleCard> {
                                     : null,
                                 color: AppTheme.badgeNumber,
                                 priceSize: 13,
+                                currencySize: 16,
                                 alignment: AlignmentDirectional.centerStart,
                               ),
                             ],
@@ -257,72 +258,6 @@ class _DiscountBadge extends StatelessWidget {
           fontWeight: FontWeight.w900,
         ),
       ),
-    );
-  }
-}
-
-class _BundleCoverImages extends StatelessWidget {
-  final BundleModel bundle;
-
-  const _BundleCoverImages({required this.bundle});
-
-  @override
-  Widget build(BuildContext context) {
-    final scale = AppScale.of(context);
-    final urls = bundle.previewImageUrls;
-    if (urls.isEmpty) {
-      return AppNetworkImage(
-        '',
-        width: scale.s(64),
-        height: scale.s(64),
-        fit: BoxFit.contain,
-      );
-    }
-    if (urls.length == 1) {
-      return AppNetworkImage(
-        urls.first,
-        width: scale.s(78),
-        height: scale.s(78),
-        fit: BoxFit.contain,
-      );
-    }
-
-    final size = scale.s(48);
-    final offsets = <Offset>[
-      const Offset(0, 0),
-      const Offset(-16, 6),
-      const Offset(16, -6),
-    ];
-
-    return SizedBox(
-      width: scale.s(100),
-      height: scale.s(68),
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          for (var i = 0; i < urls.length && i < 3; i++)
-            Transform.translate(
-              offset: offsets[i],
-              child: _Thumb(url: urls[i], size: size),
-            ),
-        ],
-      ),
-    );
-  }
-}
-
-class _Thumb extends StatelessWidget {
-  final String url;
-  final double size;
-
-  const _Thumb({required this.url, required this.size});
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: size,
-      height: size,
-      child: AppNetworkImage(url, fit: BoxFit.contain),
     );
   }
 }

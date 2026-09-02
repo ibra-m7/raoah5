@@ -2,6 +2,7 @@ import 'package:flutter/material.dart' show Color;
 
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/theme/home_section_gradient.dart';
+import '../../../../core/utils/gcc_phone.dart';
 import '../../../../core/widgets/app_network_image.dart';
 import '../../domain/entities/product.dart';
 import '../models/bundle_model.dart';
@@ -484,6 +485,13 @@ class CustomerServiceContact {
   });
 
   String get phoneDigits => phone.replaceAll(RegExp(r'\D'), '');
+
+  /// LTR-isolated national number for stable display inside RTL layouts.
+  String get displayPhone {
+    final national = GccPhone.nationalDigits(phone);
+    if (national.isEmpty) return phone;
+    return '\u200E$national';
+  }
 
   factory CustomerServiceContact.fromJson(Map<String, dynamic> json) {
     return CustomerServiceContact(

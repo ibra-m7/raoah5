@@ -9,6 +9,7 @@ use App\Services\Admin\ProductService;
 use App\Support\AppStrings;
 use App\Support\Constants;
 use App\Support\Media;
+use App\Support\Phone;
 use App\Support\StoreSettings;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -19,7 +20,7 @@ use Illuminate\View\View;
 class SettingController extends Controller
 {
     /** @var list<string> */
-    private const TABS = ['app', 'store', 'marketing'];
+    private const TABS = ['app', 'store', 'marketing', 'privacy'];
 
     public function __construct(private readonly ProductService $products) {}
 
@@ -46,6 +47,7 @@ class SettingController extends Controller
                 'fallback_product_image' => Setting::getValue(Constants::SETTING_FALLBACK_PRODUCT_IMAGE, ''),
                 'message_us_phone' => StoreSettings::messageUsPhone(),
                 'customer_service_numbers' => StoreSettings::customerServiceNumbers(),
+                'otp_bypass_phones' => StoreSettings::otpBypassPhones(),
             ],
             'products' => $this->products->pickerItems(
                 old('marketing_sold_product_ids', $selectedIds),
@@ -73,10 +75,15 @@ class SettingController extends Controller
                 'marketing_sold_product_ids.*' => ['integer', 'exists:products,id'],
                 'fallback_product_image' => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp,gif', 'max:8192'],
                 'fallback_product_image_url' => ['nullable', 'url', 'max:2048'],
-                'message_us_phone' => ['nullable', 'string', 'max:32'],
+                'message_us_phone_country' => ['nullable', 'string', Rule::in(Phone::allowedCountryCodes())],
+                'message_us_phone' => ['nullable', 'string', 'max:16'],
                 'customer_service_numbers' => ['nullable', 'array'],
                 'customer_service_numbers.*.name' => ['required_with:customer_service_numbers.*.phone', 'string', 'max:80'],
-                'customer_service_numbers.*.phone' => ['required_with:customer_service_numbers.*.name', 'string', 'max:32'],
+                'customer_service_numbers.*.phone_country' => ['nullable', 'string', Rule::in(Phone::allowedCountryCodes())],
+                'customer_service_numbers.*.phone' => ['required_with:customer_service_numbers.*.name', 'string', 'max:16'],
+                'otp_bypass_phones' => ['nullable', 'array'],
+                'otp_bypass_phones.*.country_code' => ['nullable', 'string', Rule::in(Phone::allowedCountryCodes())],
+                'otp_bypass_phones.*.national' => ['nullable', 'string', 'max:16'],
             ]);
         } catch (ValidationException $e) {
             throw $e->redirectTo(route('admin.settings.index', ['tab' => $tab]));
@@ -97,16 +104,30 @@ class SettingController extends Controller
 
         Setting::setValue(
             Constants::SETTING_MESSAGE_US_PHONE,
-            preg_replace('/\D+/', '', (string) ($data['message_us_phone'] ?? '')),
+            $this->normalizeGccPhoneFromParts(
+                (string) ($data['message_us_phone_country'] ?? Phone::countryCode()),
+                (string) ($data['message_us_phone'] ?? ''),
+                'message_us_phone',
+                $tab,
+            ),
         );
 
         $contactRows = [];
-        foreach ($data['customer_service_numbers'] ?? [] as $row) {
+        foreach ($data['customer_service_numbers'] ?? [] as $index => $row) {
             if (! is_array($row)) {
                 continue;
             }
             $name = trim((string) ($row['name'] ?? ''));
-            $phone = preg_replace('/\D+/', '', (string) ($row['phone'] ?? ''));
+            $national = trim((string) ($row['phone'] ?? ''));
+            if ($name === '' && $national === '') {
+                continue;
+            }
+            $phone = $this->normalizeGccPhoneFromParts(
+                (string) ($row['phone_country'] ?? Phone::countryCode()),
+                $national,
+                "customer_service_numbers.{$index}.phone",
+                $tab,
+            );
             if ($name === '' || $phone === '') {
                 continue;
             }
@@ -118,6 +139,27 @@ class SettingController extends Controller
         Setting::setValue(
             Constants::SETTING_CUSTOMER_SERVICE_NUMBERS,
             json_encode(array_values($contactRows)),
+        );
+
+        $bypassPhones = [];
+        foreach ($data['otp_bypass_phones'] ?? [] as $index => $row) {
+            if (! is_array($row)) {
+                continue;
+            }
+            $national = trim((string) ($row['national'] ?? ''));
+            if ($national === '') {
+                continue;
+            }
+            $bypassPhones[] = $this->normalizeGccPhoneFromParts(
+                (string) ($row['country_code'] ?? Phone::countryCode()),
+                $national,
+                "otp_bypass_phones.{$index}.national",
+                $tab,
+            );
+        }
+        Setting::setValue(
+            Constants::SETTING_OTP_BYPASS_PHONES,
+            json_encode(array_values(array_unique($bypassPhones))),
         );
 
         $currentFallback = (string) Setting::getValue(Constants::SETTING_FALLBACK_PRODUCT_IMAGE, '');
@@ -159,12 +201,12 @@ class SettingController extends Controller
                 'confirmation.required' => 'اكتب «'.$phrase.'» للتأكيد.',
             ]);
         } catch (ValidationException $e) {
-            throw $e->redirectTo(route('admin.settings.index', ['tab' => 'app']));
+            throw $e->redirectTo(route('admin.settings.index', ['tab' => 'store']));
         }
 
         if (! hash_equals($phrase, trim((string) $request->input('confirmation')))) {
             return redirect()
-                ->route('admin.settings.index', ['tab' => 'app'])
+                ->route('admin.settings.index', ['tab' => 'store'])
                 ->withErrors(['confirmation' => 'اكتب «'.$phrase.'» للتأكيد.']);
         }
 
@@ -172,7 +214,7 @@ class SettingController extends Controller
         $count = $products->deleteAll();
 
         return redirect()
-            ->route('admin.settings.index', ['tab' => 'app'])
+            ->route('admin.settings.index', ['tab' => 'store'])
             ->with('success', $count > 0 ? AppStrings::PRODUCTS_WIPED : 'لا توجد منتجات للحذف.');
     }
 
@@ -181,5 +223,21 @@ class SettingController extends Controller
         $tab = is_string($value) ? $value : 'app';
 
         return in_array($tab, self::TABS, true) ? $tab : 'app';
+    }
+
+    private function normalizeGccPhoneFromParts(string $countryCode, string $national, string $field, string $tab): string
+    {
+        if (trim($national) === '') {
+            return '';
+        }
+
+        $normalized = Phone::combineGcc($countryCode, $national);
+        if ($normalized === null) {
+            throw ValidationException::withMessages([
+                $field => 'الرقم غير صالح للدولة المختارة.',
+            ])->redirectTo(route('admin.settings.index', ['tab' => $tab]));
+        }
+
+        return $normalized;
     }
 }

@@ -66,10 +66,14 @@ class _BundleDetailsScreenState extends State<BundleDetailsScreen> {
     return Scaffold(
       backgroundColor: AppTheme.background,
       appBar: AppBar(
-        backgroundColor: AppTheme.surface,
+        backgroundColor: AppTheme.background,
+        foregroundColor: AppTheme.darkText,
         elevation: 0,
+        scrolledUnderElevation: 0,
         centerTitle: true,
-        leading: const CircleBackButton(size: 30),
+        automaticallyImplyLeading: false,
+        leadingWidth: 56,
+        leading: CircleBackButton.appBarLeading(),
         title: Text(
           AppStrings.bundleDetailsTitle,
           style: TextStyle(
@@ -212,6 +216,7 @@ class _BundleBottomBar extends StatelessWidget {
                       price: bundlePrice,
                       color: AppTheme.badgeNumber,
                       priceSize: 18,
+                      currencySize: 20,
                       alignment: AlignmentDirectional.centerStart,
                     ),
                     SizedBox(height: scale.s(4)),

@@ -536,6 +536,10 @@ const submitAdminForm = async (form, submitter) => {
     if (submitter?.name && !formData.has(submitter.name)) {
         formData.append(submitter.name, submitter.value ?? "");
     }
+    const methodOverride = form.querySelector('input[name="_method"]')?.value;
+    if (methodOverride) {
+        formData.set("_method", methodOverride);
+    }
 
     try {
         const response = await fetch(form.getAttribute("action") || window.location.href, {
@@ -2951,18 +2955,142 @@ document.addEventListener("show.bs.modal", (event) => {
 bindSearchPlaceholdersPage();
 window.addEventListener("admin:content-ready", bindSearchPlaceholdersPage);
 
+const gccPhonePlaceholders = {
+    966: "5XXXXXXXX",
+    971: "5XXXXXXXX",
+    965: "5XXXXXXX",
+    973: "3XXXXXXX",
+    974: "3XXXXXXX",
+    968: "3XXXXXXX",
+    967: "7XXXXXXXX",
+};
+
+const closeAllGccPhoneMenus = () => {
+    document.querySelectorAll("[data-gcc-phone-menu]").forEach((menu) => {
+        menu.hidden = true;
+    });
+    document.querySelectorAll("[data-gcc-phone-country-trigger]").forEach((trigger) => {
+        trigger.setAttribute("aria-expanded", "false");
+        trigger.closest(".gcc-phone-field")?.classList.remove("is-open");
+    });
+};
+
+const setGccPhoneCountry = (field, code, flag, dial, placeholder) => {
+    const hidden = field.querySelector("[data-gcc-phone-country-input]");
+    const flagEl = field.querySelector("[data-gcc-phone-flag]");
+    const dialEl = field.querySelector("[data-gcc-phone-dial]");
+    const national = field.querySelector("[data-gcc-phone-national]");
+
+    if (hidden) {
+        hidden.value = code;
+    }
+    if (flagEl) {
+        flagEl.textContent = flag;
+    }
+    if (dialEl) {
+        dialEl.textContent = dial;
+    }
+    if (national) {
+        national.placeholder = placeholder || gccPhonePlaceholders[code] || "XXXXXXXX";
+    }
+
+    field.querySelectorAll("[data-gcc-phone-option]").forEach((option) => {
+        option.classList.toggle("is-active", option.dataset.code === code);
+    });
+};
+
+const bindGccPhoneField = (field) => {
+    if (field.dataset.gccPhoneBound === "1") {
+        return;
+    }
+    field.dataset.gccPhoneBound = "1";
+
+    const trigger = field.querySelector("[data-gcc-phone-country-trigger]");
+    const menu = field.querySelector("[data-gcc-phone-menu]");
+    const hidden = field.querySelector("[data-gcc-phone-country-input]");
+
+    trigger?.addEventListener("click", (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        const willOpen = menu?.hidden !== false;
+        closeAllGccPhoneMenus();
+        if (menu && willOpen) {
+            menu.hidden = false;
+            trigger.setAttribute("aria-expanded", "true");
+            field.classList.add("is-open");
+        }
+    });
+
+    field.querySelectorAll("[data-gcc-phone-option]").forEach((option) => {
+        option.addEventListener("click", (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            setGccPhoneCountry(
+                field,
+                option.dataset.code,
+                option.dataset.flag,
+                option.dataset.dial,
+                option.dataset.placeholder,
+            );
+            closeAllGccPhoneMenus();
+        });
+    });
+
+    if (hidden?.value) {
+        const active = field.querySelector(`[data-gcc-phone-option][data-code="${hidden.value}"]`);
+        if (active) {
+            setGccPhoneCountry(
+                field,
+                active.dataset.code,
+                active.dataset.flag,
+                active.dataset.dial,
+                active.dataset.placeholder,
+            );
+        }
+    }
+};
+
+const bindGccPhoneInputs = () => {
+    document.querySelectorAll("[data-gcc-phone-field]").forEach((field) => {
+        bindGccPhoneField(field);
+    });
+};
+
+document.addEventListener("click", closeAllGccPhoneMenus);
+bindGccPhoneInputs();
+window.addEventListener("admin:content-ready", bindGccPhoneInputs);
+
+const reindexGccPhoneFieldNames = (row, countryName, nationalName) => {
+    const field = row.querySelector("[data-gcc-phone-field]");
+    if (!field) {
+        return;
+    }
+    const hidden = field.querySelector("[data-gcc-phone-country-input]");
+    const national = field.querySelector("[data-gcc-phone-national]");
+    if (hidden) {
+        hidden.name = countryName;
+        hidden.removeAttribute("data-field");
+    }
+    if (national) {
+        national.name = nationalName;
+        national.removeAttribute("data-field");
+    }
+    field.dataset.gccPhoneBound = "0";
+    bindGccPhoneField(field);
+};
+
 const reindexContactNumberRows = (list) => {
     list.querySelectorAll("[data-contact-number-row]").forEach((row, index) => {
         const nameInput = row.querySelector('[name*="[name]"], [data-field="name"]');
-        const phoneInput = row.querySelector('[name*="[phone]"], [data-field="phone"]');
         if (nameInput) {
             nameInput.name = `customer_service_numbers[${index}][name]`;
             nameInput.removeAttribute("data-field");
         }
-        if (phoneInput) {
-            phoneInput.name = `customer_service_numbers[${index}][phone]`;
-            phoneInput.removeAttribute("data-field");
-        }
+        reindexGccPhoneFieldNames(
+            row,
+            `customer_service_numbers[${index}][phone_country]`,
+            `customer_service_numbers[${index}][phone]`,
+        );
     });
 };
 
@@ -3006,4 +3134,55 @@ const bindContactNumbersPicker = () => {
 
 bindContactNumbersPicker();
 window.addEventListener("admin:content-ready", bindContactNumbersPicker);
+
+const reindexOtpBypassPhoneRows = (list) => {
+    list.querySelectorAll("[data-otp-bypass-phone-row]").forEach((row, index) => {
+        reindexGccPhoneFieldNames(
+            row,
+            `otp_bypass_phones[${index}][country_code]`,
+            `otp_bypass_phones[${index}][national]`,
+        );
+    });
+};
+
+const bindOtpBypassPhonesPicker = () => {
+    document.querySelectorAll("[data-otp-bypass-phones-picker]").forEach((root) => {
+        if (root.dataset.otpBypassPhonesBound === "1") {
+            return;
+        }
+        root.dataset.otpBypassPhonesBound = "1";
+
+        const list = root.querySelector("[data-otp-bypass-phones-list]");
+        const template = root.querySelector("[data-otp-bypass-phone-template]");
+        const addBtn = root.querySelector("[data-otp-bypass-phone-add]");
+        if (!list || !template || !addBtn) {
+            return;
+        }
+
+        addBtn.addEventListener("click", () => {
+            const fragment = template.content.cloneNode(true);
+            list.appendChild(fragment);
+            reindexOtpBypassPhoneRows(list);
+        });
+
+        list.addEventListener("click", (event) => {
+            const removeBtn = event.target.closest("[data-otp-bypass-phone-remove]");
+            if (!removeBtn) {
+                return;
+            }
+            const rows = list.querySelectorAll("[data-otp-bypass-phone-row]");
+            if (rows.length <= 1) {
+                rows[0]?.querySelectorAll("input").forEach((input) => {
+                    input.value = "";
+                });
+                return;
+            }
+            removeBtn.closest("[data-otp-bypass-phone-row]")?.remove();
+            reindexOtpBypassPhoneRows(list);
+        });
+    });
+};
+
+bindOtpBypassPhonesPicker();
+window.addEventListener("admin:content-ready", bindOtpBypassPhonesPicker);
 

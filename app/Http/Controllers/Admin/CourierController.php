@@ -84,6 +84,9 @@ class CourierController extends Controller
     public function store(CourierRequest $request): RedirectResponse
     {
         $data = $request->validated();
+        $data['phone'] = $request->normalizedPhone();
+        unset($data['phone_country']);
+
         Courier::query()->create($data);
 
         return redirect()
@@ -110,6 +113,8 @@ class CourierController extends Controller
     public function update(CourierRequest $request, Courier $courier): RedirectResponse
     {
         $data = $request->validated();
+        $data['phone'] = $request->normalizedPhone();
+        unset($data['phone_country']);
         if (empty($data['password'])) {
             unset($data['password']);
         }

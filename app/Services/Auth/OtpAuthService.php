@@ -20,9 +20,9 @@ class OtpAuthService
      */
     public function request(string $rawPhone, ?string $ip): array
     {
-        $phone = Phone::normalize($rawPhone);
+        $phone = Phone::normalizeGcc($rawPhone);
         if ($phone === null) {
-            throw new OtpException('رقم الجوال غير صالح. أدخل الرقم مثل 05XXXXXXXX.');
+            throw new OtpException('رقم الجوال غير مدعوم. أدخل رقماً من دول الخليج أو اليمن.');
         }
 
         // فقط الرقمين التجريبيين يتجاوزان OTP — أي رقم آخر (حتى المسجّل) يحتاج رمز تحقق.
@@ -88,9 +88,9 @@ class OtpAuthService
      */
     public function verify(string $rawPhone, string $code): array
     {
-        $phone = Phone::normalize($rawPhone);
+        $phone = Phone::normalizeGcc($rawPhone);
         if ($phone === null) {
-            throw new OtpException('رقم الهاتف غير صالح.');
+            throw new OtpException('رقم الجوال غير مدعوم. أدخل رقماً من دول الخليج أو اليمن.');
         }
 
         $otp = PhoneOtp::query()

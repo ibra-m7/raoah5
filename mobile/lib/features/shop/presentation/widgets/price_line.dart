@@ -64,10 +64,10 @@ class PriceLine extends StatelessWidget {
       return (
         integer: integer,
         decimal: integer * 0.42,
-        currency: currencySize > 0 ? currencySize : integer * 0.55,
+        currency: currencySize > 0 ? currencySize : integer * 0.72,
         original: integer * 0.48,
         numberGap: 1,
-        currencyGap: 5,
+        currencyGap: 4,
         originalGap: 8,
       );
     }
@@ -77,10 +77,10 @@ class PriceLine extends StatelessWidget {
     return (
       integer: integer,
       decimal: base * 0.55,
-      currency: currencySize > 0 ? currencySize : integer * 0.55,
+      currency: currencySize > 0 ? currencySize : integer * 0.72,
       original: base * 0.64,
       numberGap: 1,
-      currencyGap: 5,
+      currencyGap: 4,
       originalGap: 8,
     );
   }
