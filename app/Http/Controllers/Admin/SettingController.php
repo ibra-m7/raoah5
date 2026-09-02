@@ -44,6 +44,8 @@ class SettingController extends Controller
                 'marketing_sold_count' => Setting::getValue(Constants::SETTING_MARKETING_SOLD_COUNT, 0),
                 'marketing_sold_scope' => StoreSettings::marketingSoldScope(),
                 'fallback_product_image' => Setting::getValue(Constants::SETTING_FALLBACK_PRODUCT_IMAGE, ''),
+                'message_us_phone' => StoreSettings::messageUsPhone(),
+                'customer_service_numbers' => StoreSettings::customerServiceNumbers(),
             ],
             'products' => $this->products->pickerItems(
                 old('marketing_sold_product_ids', $selectedIds),
@@ -71,6 +73,10 @@ class SettingController extends Controller
                 'marketing_sold_product_ids.*' => ['integer', 'exists:products,id'],
                 'fallback_product_image' => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp,gif', 'max:8192'],
                 'fallback_product_image_url' => ['nullable', 'url', 'max:2048'],
+                'message_us_phone' => ['nullable', 'string', 'max:32'],
+                'customer_service_numbers' => ['nullable', 'array'],
+                'customer_service_numbers.*.name' => ['required_with:customer_service_numbers.*.phone', 'string', 'max:80'],
+                'customer_service_numbers.*.phone' => ['required_with:customer_service_numbers.*.name', 'string', 'max:32'],
             ]);
         } catch (ValidationException $e) {
             throw $e->redirectTo(route('admin.settings.index', ['tab' => $tab]));
@@ -87,6 +93,31 @@ class SettingController extends Controller
         Setting::setValue(
             Constants::SETTING_MARKETING_SOLD_PRODUCT_IDS,
             json_encode(array_values(array_unique(array_map('intval', $data['marketing_sold_product_ids'] ?? []))))
+        );
+
+        Setting::setValue(
+            Constants::SETTING_MESSAGE_US_PHONE,
+            preg_replace('/\D+/', '', (string) ($data['message_us_phone'] ?? '')),
+        );
+
+        $contactRows = [];
+        foreach ($data['customer_service_numbers'] ?? [] as $row) {
+            if (! is_array($row)) {
+                continue;
+            }
+            $name = trim((string) ($row['name'] ?? ''));
+            $phone = preg_replace('/\D+/', '', (string) ($row['phone'] ?? ''));
+            if ($name === '' || $phone === '') {
+                continue;
+            }
+            $contactRows[] = [
+                'name' => $name,
+                'phone' => $phone,
+            ];
+        }
+        Setting::setValue(
+            Constants::SETTING_CUSTOMER_SERVICE_NUMBERS,
+            json_encode(array_values($contactRows)),
         );
 
         $currentFallback = (string) Setting::getValue(Constants::SETTING_FALLBACK_PRODUCT_IMAGE, '');

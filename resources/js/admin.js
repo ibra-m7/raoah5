@@ -2951,3 +2951,59 @@ document.addEventListener("show.bs.modal", (event) => {
 bindSearchPlaceholdersPage();
 window.addEventListener("admin:content-ready", bindSearchPlaceholdersPage);
 
+const reindexContactNumberRows = (list) => {
+    list.querySelectorAll("[data-contact-number-row]").forEach((row, index) => {
+        const nameInput = row.querySelector('[name*="[name]"], [data-field="name"]');
+        const phoneInput = row.querySelector('[name*="[phone]"], [data-field="phone"]');
+        if (nameInput) {
+            nameInput.name = `customer_service_numbers[${index}][name]`;
+            nameInput.removeAttribute("data-field");
+        }
+        if (phoneInput) {
+            phoneInput.name = `customer_service_numbers[${index}][phone]`;
+            phoneInput.removeAttribute("data-field");
+        }
+    });
+};
+
+const bindContactNumbersPicker = () => {
+    document.querySelectorAll("[data-contact-numbers-picker]").forEach((root) => {
+        if (root.dataset.contactNumbersBound === "1") {
+            return;
+        }
+        root.dataset.contactNumbersBound = "1";
+
+        const list = root.querySelector("[data-contact-numbers-list]");
+        const template = root.querySelector("[data-contact-number-template]");
+        const addBtn = root.querySelector("[data-contact-number-add]");
+        if (!list || !template || !addBtn) {
+            return;
+        }
+
+        addBtn.addEventListener("click", () => {
+            const fragment = template.content.cloneNode(true);
+            list.appendChild(fragment);
+            reindexContactNumberRows(list);
+        });
+
+        list.addEventListener("click", (event) => {
+            const removeBtn = event.target.closest("[data-contact-number-remove]");
+            if (!removeBtn) {
+                return;
+            }
+            const rows = list.querySelectorAll("[data-contact-number-row]");
+            if (rows.length <= 1) {
+                rows[0]?.querySelectorAll("input").forEach((input) => {
+                    input.value = "";
+                });
+                return;
+            }
+            removeBtn.closest("[data-contact-number-row]")?.remove();
+            reindexContactNumberRows(list);
+        });
+    });
+};
+
+bindContactNumbersPicker();
+window.addEventListener("admin:content-ready", bindContactNumbersPicker);
+

@@ -105,6 +105,41 @@ final class StoreSettings
         return Media::absoluteUrl('media/fallback-product').'?v='.substr(sha1($value), 0, 10);
     }
 
+    public static function messageUsPhone(): string
+    {
+        return trim((string) Setting::getValue(Constants::SETTING_MESSAGE_US_PHONE, ''));
+    }
+
+    /**
+     * @return list<array{name: string, phone: string}>
+     */
+    public static function customerServiceNumbers(): array
+    {
+        $raw = Setting::getValue(Constants::SETTING_CUSTOMER_SERVICE_NUMBERS, '[]');
+        $decoded = json_decode((string) $raw, true);
+        if (! is_array($decoded)) {
+            return [];
+        }
+
+        $items = [];
+        foreach ($decoded as $row) {
+            if (! is_array($row)) {
+                continue;
+            }
+            $name = trim((string) ($row['name'] ?? ''));
+            $phone = trim((string) ($row['phone'] ?? ''));
+            if ($name === '' || $phone === '') {
+                continue;
+            }
+            $items[] = [
+                'name' => $name,
+                'phone' => $phone,
+            ];
+        }
+
+        return $items;
+    }
+
     public static function payload(): array
     {
         return [
@@ -120,6 +155,8 @@ final class StoreSettings
             'bank_name' => self::bankName(),
             'marketing_sold_count' => self::marketingSoldCount(),
             'fallback_product_image_url' => self::fallbackProductImageUrl(),
+            'message_us_phone' => self::messageUsPhone(),
+            'customer_service_numbers' => self::customerServiceNumbers(),
             'payment_methods' => self::checkoutPaymentMethods(),
             'search_placeholders' => SearchPlaceholderService::activePhrases(),
             'search_smart_suggestions' => SearchSmartSuggestionService::activePhrases(),

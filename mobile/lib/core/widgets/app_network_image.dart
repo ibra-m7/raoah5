@@ -69,7 +69,9 @@ class AppNetworkImage extends StatelessWidget {
   static bool _shouldRewriteMediaHost(String host, String path) {
     if (host.contains('onrender.com')) return true;
     const legacy = {
+      '16.171.249.18',
       '16.16.172.215',
+      '172.20.2.192',
       '172.20.2.95',
       '172.20.2.63',
       '192.168.134.66',

@@ -40,5 +40,6 @@ function dumpBanners(string $label, array $payload): void
 }
 
 dumpBanners('LOCAL', fetch('http://127.0.0.1:8088/api/home'));
-dumpBanners('LAN', fetch('http://172.20.2.63:8088/api/home'));
-dumpBanners('AWS', fetch('http://16.171.249.18/api/home'));
+dumpBanners('LAN', fetch('http://172.20.2.192:8088/api/home'));
+dumpBanners('AWS_DOMAIN', fetch('http://bloodfinder.website/api/home'));
+dumpBanners('AWS_IP', fetch('http://16.171.249.18/api/home'));

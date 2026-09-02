@@ -348,6 +348,10 @@ abstract class AppStrings {
   static const profileAddresses = 'عناويني';
   static const profileContactUs = 'راسلنا';
   static const profileCustomerService = 'خدمة العملاء';
+  static const profileCustomerServiceHint = 'اختر الرقم المناسب للتواصل معنا';
+  static const profileCustomerServiceEmpty = 'لا توجد أرقام متاحة حالياً';
+  static const settingsSectionGeneral = 'عام';
+  static const settingsSectionAccount = 'الحساب';
   static const profilePhone = 'رقم الجوال';
   static const profileDeleteAccount = 'حذف الحساب';
   static const profileDeleteAccountConfirmTitle = 'حذف الحساب';

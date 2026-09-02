@@ -76,6 +76,30 @@
                             <span>شرائح التعريف</span>
                         </a>
                     </div>
+
+                    <hr class="my-4">
+
+                    <h3 class="h6 fw-bold mb-1">راسلنا (واتساب)</h3>
+                    <p class="settings-pane-lead mb-3">الرقم الذي يُفتح عند الضغط على «راسلنا» في التطبيق.</p>
+                    <div class="mb-4">
+                        <label class="form-label">رقم واتساب راسلنا</label>
+                        <input
+                            type="text"
+                            name="message_us_phone"
+                            value="{{ old('message_us_phone', $settings['message_us_phone']) }}"
+                            class="form-control @error('message_us_phone') is-invalid @enderror"
+                            placeholder="967778396448"
+                            dir="ltr"
+                        >
+                        @error('message_us_phone') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                        <div class="form-hint">أدخل الرقم بصيغة دولية بدون + أو مسافات.</div>
+                    </div>
+
+                    <h3 class="h6 fw-bold mb-1">أرقام خدمة العملاء</h3>
+                    <p class="settings-pane-lead mb-3">تظهر في نافذة صغيرة عند الضغط على «خدمة العملاء» داخل التطبيق.</p>
+                    <x-admin.contact-numbers-picker
+                        :rows="old('customer_service_numbers', $settings['customer_service_numbers'])"
+                    />
                 </div>
 
                 <div class="tab-pane fade {{ $tab === 'store' ? 'show active' : '' }}" id="pane-store" role="tabpanel" aria-labelledby="tab-store" tabindex="0">

@@ -4,8 +4,12 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 class EnvConfig {
   EnvConfig._();
 
-  /// IP سيرفر AWS الحالي (Laragon — بدون دومين).
-  static const productionHost = '16.171.249.18';
+  /// دومين الإنتاج الحالي.
+  static const productionHost = 'bloodfinder.website';
+
+  /// سيرفر AWS الاحتياطي عند فشل الدومين.
+  static const awsHost = '16.171.249.18';
+  static const awsApi = 'http://$awsHost/api';
 
   static String get geminiApiKey {
     final key = dotenv.env['GEMINI_API_KEY'] ?? '';
@@ -30,10 +34,10 @@ class EnvConfig {
   }
 
   /// الشبكة المحلية (نفس الواي فاي) — للتطوير فقط.
-  static const localApi = 'http://172.20.2.95:8088/api';
+  static const localApi = 'http://172.20.2.192:8088/api';
 
-  /// الإنتاج على AWS EC2.
-  static const remoteApi = 'http://$productionHost/api';
+  /// الإنتاج على الدومين.
+  static const remoteApi = 'https://$productionHost/api';
 
   /// العنوان من `.env` — وإلا سيرفر AWS.
   static String get apiBaseUrl {
@@ -60,7 +64,7 @@ class EnvConfig {
       return _resolvedOrigin!;
     }
     final uri = Uri.tryParse(apiBaseUrl);
-    if (uri == null || uri.host.isEmpty) return 'http://$productionHost';
+    if (uri == null || uri.host.isEmpty) return 'http://$awsHost';
     return uri.replace(path: '', query: null, fragment: null).toString();
   }
 
@@ -69,15 +73,22 @@ class EnvConfig {
     return host == productionHost;
   }
 
-  /// في الإنتاج: سيرفر AWS فقط. محلياً: `.env` ثم AWS ثم LAN.
+  /// في الإنتاج: الدومين (HTTPS ثم HTTP) ثم IP أمازون. محلياً: `.env` ثم الدومين ثم AWS ثم LAN.
   static List<String> get apiBaseUrls {
     final primary = apiBaseUrl;
     if (usesProductionServer) {
-      return [primary];
+      return {
+        primary,
+        remoteApi,
+        'http://$productionHost/api',
+        awsApi,
+      }.toList();
     }
     return {
       primary,
       remoteApi,
+      'http://$productionHost/api',
+      awsApi,
       localApi,
     }.toList();
   }

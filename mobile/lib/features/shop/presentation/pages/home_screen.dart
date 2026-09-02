@@ -1168,17 +1168,26 @@ class _ExploreCategoryTile extends StatelessWidget {
                           color: AppTheme.primaryDark,
                           size: iconSize,
                         )
-                      : AppNetworkImage(
-                          imageUrl,
-                          fit: BoxFit.cover,
-                          width: size,
-                          height: size,
-                          error: ColoredBox(
-                            color: AppTheme.primarySurface,
-                            child: Icon(
-                              Icons.category_rounded,
-                              color: AppTheme.mutedText,
-                              size: iconSize,
+                      : ClipOval(
+                          child: SizedBox(
+                            width: size,
+                            height: size,
+                            child: Transform.scale(
+                              scale: scale.categoryImageZoom,
+                              child: AppNetworkImage(
+                                imageUrl,
+                                fit: BoxFit.cover,
+                                width: size,
+                                height: size,
+                                error: ColoredBox(
+                                  color: AppTheme.primarySurface,
+                                  child: Icon(
+                                    Icons.category_rounded,
+                                    color: AppTheme.mutedText,
+                                    size: iconSize,
+                                  ),
+                                ),
+                              ),
                             ),
                           ),
                         ),

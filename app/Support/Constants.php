@@ -71,6 +71,10 @@ final class Constants
 
     public const SETTING_FALLBACK_PRODUCT_IMAGE = 'fallback_product_image';
 
+    public const SETTING_CUSTOMER_SERVICE_NUMBERS = 'customer_service_numbers';
+
+    public const SETTING_MESSAGE_US_PHONE = 'message_us_phone';
+
     public const AI_DEFAULT_MAX_PRODUCTS = 6;
 
     public const AI_DEFAULT_MODEL = 'gemini-3.6-flash';

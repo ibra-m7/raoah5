@@ -324,6 +324,8 @@ class StoreConfig {
   final List<String> searchPlaceholders;
   final List<String> searchSmartSuggestions;
   final List<String> searchTrending;
+  final String messageUsPhone;
+  final List<CustomerServiceContact> customerServiceNumbers;
 
   const StoreConfig({
     this.currency = '\u{20C1}',
@@ -336,6 +338,8 @@ class StoreConfig {
     this.searchPlaceholders = const [],
     this.searchSmartSuggestions = const [],
     this.searchTrending = const [],
+    this.messageUsPhone = '',
+    this.customerServiceNumbers = const [],
     this.paymentMethods = const [
       PaymentOption(
         id: 'cash',
@@ -392,6 +396,14 @@ class StoreConfig {
     return AppStrings.searchTrendingFallback;
   }
 
+  String get messageUsPhoneDigits {
+    final configured = messageUsPhone.replaceAll(RegExp(r'\D'), '');
+    if (configured.isNotEmpty) return configured;
+    return AppStrings.companyWhatsapp.replaceAll(RegExp(r'\D'), '');
+  }
+
+  bool get hasCustomerServiceNumbers => customerServiceNumbers.isNotEmpty;
+
   factory StoreConfig.fromJson(Map<String, dynamic> json) {
     final methods = <PaymentOption>[];
     final raw = json['payment_methods'];
@@ -424,6 +436,18 @@ class StoreConfig {
         if (text.isNotEmpty) trending.add(text);
       }
     }
+    final contacts = <CustomerServiceContact>[];
+    final rawContacts = json['customer_service_numbers'];
+    if (rawContacts is List) {
+      for (final item in rawContacts.whereType<Map>()) {
+        final contact = CustomerServiceContact.fromJson(
+          Map<String, dynamic>.from(item),
+        );
+        if (contact.name.isNotEmpty && contact.phoneDigits.isNotEmpty) {
+          contacts.add(contact);
+        }
+      }
+    }
     return StoreConfig(
       currency: _sarSymbol(json['currency'] as String?),
       shippingFee: (json['shipping_fee'] as num?)?.toDouble() ?? 15,
@@ -444,6 +468,27 @@ class StoreConfig {
       searchPlaceholders: placeholders,
       searchSmartSuggestions: smart,
       searchTrending: trending,
+      messageUsPhone: (json['message_us_phone'] as String?) ?? '',
+      customerServiceNumbers: contacts,
+    );
+  }
+}
+
+class CustomerServiceContact {
+  final String name;
+  final String phone;
+
+  const CustomerServiceContact({
+    required this.name,
+    required this.phone,
+  });
+
+  String get phoneDigits => phone.replaceAll(RegExp(r'\D'), '');
+
+  factory CustomerServiceContact.fromJson(Map<String, dynamic> json) {
+    return CustomerServiceContact(
+      name: (json['name'] as String?)?.trim() ?? '',
+      phone: (json['phone'] as String?)?.trim() ?? '',
     );
   }
 }
