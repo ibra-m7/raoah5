@@ -37,6 +37,7 @@ class ProductImageNormalizerTest extends TestCase
                 $image = $manager->read($output);
                 $this->assertSame($size, $image->width(), "Width mismatch for {$label}");
                 $this->assertSame($size, $image->height(), "Height mismatch for {$label}");
+                $this->assertStringEndsWith('.png', $output, "Output should be PNG for {$label}");
             } finally {
                 @unlink($output);
                 @unlink($source);
@@ -44,7 +45,21 @@ class ProductImageNormalizerTest extends TestCase
         }
     }
 
-    public function test_transparent_png_is_flattened_onto_background_without_crop(): void
+    public function test_landscape_output_has_transparent_canvas_corners(): void
+    {
+        $normalizer = new ProductImageNormalizer;
+        $source = $this->makeSampleImage(800, 400, '00ff00');
+        $output = $normalizer->normalizePath($source);
+
+        try {
+            $this->assertTrue($this->cornerPixelIsTransparent($output, 0, 0));
+        } finally {
+            @unlink($output);
+            @unlink($source);
+        }
+    }
+
+    public function test_transparent_png_preserves_alpha_on_canvas_without_crop(): void
     {
         $normalizer = new ProductImageNormalizer;
         $source = $this->makeTransparentPng(600, 300);
@@ -57,13 +72,14 @@ class ProductImageNormalizerTest extends TestCase
             $image = $manager->read($output);
             $this->assertSame(800, $image->width());
             $this->assertSame(800, $image->height());
+            $this->assertTrue($this->cornerPixelIsTransparent($output, 0, 0));
         } finally {
             @unlink($output);
             @unlink($source);
         }
     }
 
-    public function test_media_store_normalizes_product_uploads_to_jpg(): void
+    public function test_media_store_normalizes_product_uploads_to_png(): void
     {
         Storage::fake('public');
 
@@ -74,7 +90,7 @@ class ProductImageNormalizerTest extends TestCase
 
         $this->assertIsString($path);
         $this->assertStringStartsWith('products/', $path);
-        $this->assertStringEndsWith('.jpg', $path);
+        $this->assertStringEndsWith('.png', $path);
         Storage::disk('public')->assertExists($path);
 
         $manager = extension_loaded('gd')
@@ -83,8 +99,29 @@ class ProductImageNormalizerTest extends TestCase
         $stored = $manager->read(Storage::disk('public')->path($path));
         $this->assertSame(800, $stored->width());
         $this->assertSame(800, $stored->height());
+        $this->assertTrue($this->cornerPixelIsTransparent(Storage::disk('public')->path($path), 0, 0));
 
         @unlink($source);
+    }
+
+    private function cornerPixelIsTransparent(string $path, int $x, int $y): bool
+    {
+        if (! extension_loaded('gd')) {
+            $this->markTestSkipped('GD extension is required for alpha pixel assertions.');
+        }
+
+        $image = imagecreatefrompng($path);
+        if ($image === false) {
+            return false;
+        }
+
+        imagesavealpha($image, true);
+        $rgba = imagecolorat($image, $x, $y);
+        imagedestroy($image);
+
+        $alpha = ($rgba >> 24) & 0x7F;
+
+        return $alpha >= 100;
     }
 
     private function makeSampleImage(int $width, int $height, string $hex): string

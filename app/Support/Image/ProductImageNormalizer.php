@@ -32,7 +32,7 @@ final class ProductImageNormalizer
 
         $size = max(64, (int) config('products.image.size', 800));
         $quality = max(1, min(100, (int) config('products.image.quality', 82)));
-        $background = (string) config('products.image.background', '#F5F5F5');
+        $format = self::outputExtension();
 
         $manager = $this->manager();
         $image = $manager->read($absolutePath);
@@ -42,12 +42,22 @@ final class ProductImageNormalizer
 
         $image->scaleDown(width: $size, height: $size);
 
-        $canvas = $manager->create($size, $size);
-        $canvas->fill($background);
-        $canvas->place($image, 'center');
+        if ($format === 'png') {
+            $canvas = $manager->create($size, $size);
+            $canvas->place($image, 'center');
+            $output = $canvas;
+        } else {
+            $background = (string) config('products.image.background', '#F5F5F5');
+            $output = $image->contain($size, $size, $background, 'center');
+        }
 
-        $temp = sys_get_temp_dir().DIRECTORY_SEPARATOR.'product-img-'.Str::random(32).'.jpg';
-        $canvas->save($temp, quality: $quality);
+        $temp = sys_get_temp_dir().DIRECTORY_SEPARATOR.'product-img-'.Str::random(32).'.'.$format;
+
+        if ($format === 'png') {
+            $output->save($temp);
+        } else {
+            $output->save($temp, quality: $quality);
+        }
 
         if (! is_file($temp)) {
             throw new RuntimeException('تعذر حفظ الصورة المعالجة.');
@@ -63,6 +73,12 @@ final class ProductImageNormalizer
         }
 
         $size = max(64, (int) config('products.image.size', 800));
+        $format = self::outputExtension();
+
+        if (strtolower(pathinfo($absolutePath, PATHINFO_EXTENSION)) !== $format) {
+            return false;
+        }
+
         try {
             $image = $this->manager()->read($absolutePath);
         } catch (\Throwable) {
@@ -70,6 +86,13 @@ final class ProductImageNormalizer
         }
 
         return $image->width() === $size && $image->height() === $size;
+    }
+
+    public static function outputExtension(): string
+    {
+        $format = strtolower((string) config('products.image.format', 'png'));
+
+        return in_array($format, ['jpg', 'jpeg'], true) ? 'jpg' : 'png';
     }
 
     private function manager(): ImageManagerInterface

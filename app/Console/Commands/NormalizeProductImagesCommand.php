@@ -65,7 +65,7 @@ class NormalizeProductImagesCommand extends Command
 
                     try {
                         $temp = $normalizer->normalizePath($absolute);
-                        $newPath = 'products/'.Str::random(40).'.jpg';
+                        $newPath = 'products/'.Str::random(40).'.'.ProductImageNormalizer::outputExtension();
 
                         $stream = fopen($temp, 'rb');
                         if ($stream === false) {

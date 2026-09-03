@@ -83,7 +83,8 @@ final class Media
 
     private static function storeNormalizedProductImage(string $tempPath, string $directory): string
     {
-        $path = trim($directory, '/').'/'.Str::random(40).'.jpg';
+        $extension = ProductImageNormalizer::outputExtension();
+        $path = trim($directory, '/').'/'.Str::random(40).'.'.$extension;
 
         $stream = fopen($tempPath, 'rb');
         if ($stream === false) {

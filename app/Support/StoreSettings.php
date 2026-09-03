@@ -200,19 +200,37 @@ final class StoreSettings
             ->all();
 
         if ($fromStore !== []) {
-            return $fromStore;
+            return self::pinCashFirst($fromStore);
         }
 
-        return collect(PaymentMethod::checkoutOptions())
-            ->map(fn (PaymentMethod $method) => [
-                'id' => $method->value,
-                'label' => $method->label(),
-                'hint' => $method->hint(),
-                'icon' => 'bi-credit-card',
-                'icon_url' => '',
-            ])
-            ->values()
-            ->all();
+        return self::pinCashFirst(
+            collect(PaymentMethod::checkoutOptions())
+                ->map(fn (PaymentMethod $method) => [
+                    'id' => $method->value,
+                    'label' => $method->label(),
+                    'hint' => $method->hint(),
+                    'icon' => 'bi-credit-card',
+                    'icon_url' => '',
+                ])
+                ->values()
+                ->all()
+        );
+    }
+
+    /**
+     * @param  list<array{id: string, label: string, hint: string, icon: string, icon_url: string}>  $methods
+     * @return list<array{id: string, label: string, hint: string, icon: string, icon_url: string}>
+     */
+    private static function pinCashFirst(array $methods): array
+    {
+        $cash = collect($methods)->firstWhere('id', 'cash');
+        $others = collect($methods)
+            ->reject(fn (array $method) => ($method['id'] ?? '') === 'cash')
+            ->values();
+
+        return $cash !== null
+            ? collect([$cash])->merge($others)->all()
+            : $others->all();
     }
 
     /**
